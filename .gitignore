@@ -1,0 +1,13 @@
+# Gizli ayarlar
+backend/src/main/resources/application-secret.properties
+
+# Derleme çıktıları
+backend/out/
+backend/build/
+backend/.gradle/
+
+# IntelliJ
+.idea/
+
+# Mac
+.DS_Store
