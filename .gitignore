@@ -11,3 +11,16 @@ backend/.gradle/
 
 # Mac
 .DS_Store
+
+# Derleme ciktilari (VS Code/Eclipse)
+backend/bin/
+bin/
+
+# Yanlislikla olusan dosyalar
+backend/Get
+backend/Process
+backend/Run
+backend/Task
+
+# Secret her yerde gizli kalsin
+application-secret.properties
