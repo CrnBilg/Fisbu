@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/dashboard_screen.dart';
-import 'screens/login_screen.dart';
+import 'screens/auth_wrapper.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +16,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.deepPurple,
         useMaterial3: true,
       ),
-     home: const LoginScreen(),
+home: const AuthWrapper(),
     );
   }
 }

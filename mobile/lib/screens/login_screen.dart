@@ -1,6 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import '../services/auth_service.dart';
 import 'dashboard_screen.dart';
 import 'register_screen.dart';
 
@@ -17,7 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _isLoading = false;
 
-  Future<void> _handleLogin() async {
+Future<void> _handleLogin() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -30,42 +29,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    try {
-      final response = await http.post(
-        Uri.parse('https://fisbu-production-613c.up.railway.app/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
+    final result = await AuthService.login(email, password);
+
+    setState(() => _isLoading = false);
+
+    if (!mounted) return;
+
+    if (result.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Giriş başarılı')),
       );
 
-      setState(() => _isLoading = false);
-
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Giriş başarılı')),
-        );
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const DashboardScreen(),
-          ),
-        );
-      } else if (response.statusCode == 401) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email veya şifre hatalı')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Giriş başarısız: ${response.statusCode}')),
-        );
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const DashboardScreen(),
+        ),
+      );
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Bağlantı hatası: $e')),
+        SnackBar(content: Text(result.errorMessage ?? 'Giriş başarısız')),
       );
     }
   }

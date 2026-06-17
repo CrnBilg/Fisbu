@@ -1,6 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import '../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -17,7 +16,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _isLoading = false;
 
-  Future<void> _handleRegister() async {
+ Future<void> _handleRegister() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final passwordAgain = _passwordAgainController.text.trim();
@@ -38,40 +37,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
 
-    try {
-      final response = await http.post(
-        Uri.parse('https://fisbu-production-613c.up.railway.app/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
-      );
+    final result = await AuthService.register(email, password);
 
-      setState(() => _isLoading = false);
+    setState(() => _isLoading = false);
 
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kayıt başarılı. Giriş yapabilirsin.')),
-        );
-        Navigator.pop(context);
-      } else if (response.statusCode == 409) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Bu email zaten kayıtlı')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kayıt başarısız: ${response.statusCode}')),
-        );
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
+    if (!mounted) return;
+
+    if (result.success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Bağlantı hatası: $e')),
+        const SnackBar(content: Text('Kayıt başarılı. Giriş yapabilirsin.')),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.errorMessage ?? 'Kayıt başarısız')),
       );
     }
   }
-
   @override
   void dispose() {
     _nameController.dispose();

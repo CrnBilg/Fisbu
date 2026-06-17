@@ -22,5 +22,7 @@ backend/Process
 backend/Run
 backend/Task
 
+backend/.settings/
+
 # Secret her yerde gizli kalsin
 application-secret.properties
