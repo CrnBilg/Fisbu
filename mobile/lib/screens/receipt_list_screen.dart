@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'add_receipt_screen.dart';
 // Geçici fiş modeli (Hafta 2'de backend'e bağlanacak)
 class Receipt {
   final String storeName;
@@ -49,12 +49,18 @@ List<Receipt> get _receipts => [
       body: _receipts.isEmpty
           ? _buildEmptyState()
           : _buildReceiptList(),
-      floatingActionButton: FloatingActionButton(
+          floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: Fiş ekleme ekranına yönlendirilecek (Gün 9)
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddReceiptScreen(),
+            ),
+          );
         },
         child: const Icon(Icons.add),
       ),
+   
     );
   }
 
