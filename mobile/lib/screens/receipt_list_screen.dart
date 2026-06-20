@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'add_receipt_screen.dart';
+import 'receipt_detail_screen.dart';
 // Geçici fiş modeli (Hafta 2'de backend'e bağlanacak)
 class Receipt {
   final String storeName;
@@ -134,8 +135,13 @@ List<Receipt> get _receipts => [
                 color: Colors.deepPurple,
               ),
             ),
-            onTap: () {
-              // TODO: Fiş detay ekranına yönlendirilecek (Gün 10)
+           onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ReceiptDetailScreen(receipt: receipt),
+                ),
+              );
             },
           ),
         );
