@@ -59,11 +59,37 @@ public class ReceiptService {
                             HttpStatus.NOT_FOUND, "Kategori bulunamadı"));
             receipt.setCategory(category);
         }
+        
 
         return toResponse(receiptRepository.save(receipt));
     }
 
-    // Entity'den DTO'ya dönüştürme
+    public ReceiptResponse getReceiptById(String email, Long receiptId) {
+        User user = getUserByEmail(email);
+        Receipt receipt = receiptRepository.findById(receiptId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Fiş bulunamadı"));
+
+        if (!receipt.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bu fişe erişim yetkiniz yok");
+        }
+
+        return toResponse(receipt);
+    }
+
+    public void deleteReceipt(String email, Long receiptId) {
+        User user = getUserByEmail(email);
+        Receipt receipt = receiptRepository.findById(receiptId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Fiş bulunamadı"));
+
+        if (!receipt.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bu fişi silme yetkiniz yok");
+        }
+
+        receiptRepository.delete(receipt);
+    }
+
     private ReceiptResponse toResponse(Receipt receipt) {
         ReceiptResponse response = new ReceiptResponse();
         response.setId(receipt.getId());
