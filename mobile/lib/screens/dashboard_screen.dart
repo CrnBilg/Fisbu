@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'profile_screen.dart';
+import 'add_receipt_screen.dart';
+import 'receipt_list_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -62,11 +64,27 @@ class DashboardScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Son Fişlerin',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+            InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ReceiptListScreen(),
+                  ),
+                );
+              },
+              child: Row(
+                children: [
+                  const Text(
+                    'Son Fişlerin',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(Icons.chevron_right, color: Colors.grey.shade400),
+                ],
               ),
             ),
             const SizedBox(height: 8),
@@ -105,9 +123,14 @@ class DashboardScreen extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+     floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: Fiş ekleme ekranına yönlendirilecek (Hafta 2)
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddReceiptScreen(),
+            ),
+          );
         },
         child: const Icon(Icons.add),
       ),

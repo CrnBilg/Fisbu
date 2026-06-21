@@ -11,7 +11,6 @@ public class ReceiptRequest {
     private String rawOcrText;
     private Long categoryId;
 
-    // Getter ve Setter'lar
     public String getStoreName() { return storeName; }
     public void setStoreName(String storeName) { this.storeName = storeName; }
 
