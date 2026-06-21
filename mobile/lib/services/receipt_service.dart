@@ -90,4 +90,32 @@ class ReceiptService {
       throw Exception('Kategoriler yüklenemedi: ${response.statusCode}');
     }
   }
+
+// Yeni kategori ekler
+  static Future<Category> createCategory({
+    required String name,
+    required String color,
+  }) async {
+    final token = await AuthService.getToken();
+
+    final response = await http.post(
+      Uri.parse('$_baseUrl/categories'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'name': name,
+        'color': color,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return Category.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Kategori eklenemedi: ${response.statusCode}');
+    }
+  }
+
+  
 }

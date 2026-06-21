@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'auth_wrapper.dart';
+import 'categories_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -45,8 +46,13 @@ class ProfileScreen extends StatelessWidget {
               leading: const Icon(Icons.category_outlined),
               title: const Text('Kategorilerim'),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                // TODO: Kategori ekranına yönlendirilecek
+             onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CategoriesScreen(),
+                  ),
+                );
               },
             ),
             const Divider(height: 1),
