@@ -63,20 +63,8 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
     final receipt = widget.receipt;
 
     return Scaffold(
-      appBar: AppBar(
+     appBar: AppBar(
         title: const Text('Fiş Detayı'),
-        actions: [
-          IconButton(
-            icon: _isDeleting
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.delete_outline),
-            onPressed: _isDeleting ? null : _confirmDelete,
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -123,8 +111,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Detay satırları
-            _buildDetailRow(
+       _buildDetailRow(
               icon: Icons.category_outlined,
               label: 'Kategori',
               value: receipt.categoryName ?? 'Kategorisiz',
@@ -140,6 +127,30 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
               icon: Icons.store_outlined,
               label: 'Mağaza',
               value: receipt.storeName,
+            ),
+            const SizedBox(height: 32),
+
+            // Sil butonu
+            OutlinedButton.icon(
+              onPressed: _isDeleting ? null : _confirmDelete,
+              icon: _isDeleting
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.delete_outline, color: Colors.red),
+              label: const Text(
+                'Fişi Sil',
+                style: TextStyle(color: Colors.red),
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ],
         ),
