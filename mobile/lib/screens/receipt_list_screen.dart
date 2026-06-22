@@ -22,7 +22,6 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
     _loadReceipts();
   }
 
-  // Fişleri backend'den çeker
   Future<void> _loadReceipts() async {
     setState(() {
       _isLoading = true;
@@ -43,22 +42,14 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
     }
   }
 
-  // Fiş ekleme ekranına git, döndüğünde listeyi yenile
   Future<void> _goToAddReceipt() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const AddReceiptScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const AddReceiptScreen()),
     );
-
-    // AddReceiptScreen "true" döndürdüyse (yeni fiş eklendiyse) listeyi yenile
-    if (result == true) {
-      _loadReceipts();
-    }
+    if (result == true) _loadReceipts();
   }
 
-  // Fiş detayına git, silindiyse listeyi yenile
   Future<void> _goToDetail(Receipt receipt) async {
     final result = await Navigator.push(
       context,
@@ -66,10 +57,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
         builder: (context) => ReceiptDetailScreen(receipt: receipt),
       ),
     );
-
-    if (result == true) {
-      _loadReceipts();
-    }
+    if (result == true) _loadReceipts();
   }
 
   @override
@@ -92,121 +80,203 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
     }
 
     if (_errorMessage != null) {
-      return _buildErrorState();
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFF9E9EBF)),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadReceipts,
+              child: const Text('Tekrar Dene'),
+            ),
+          ],
+        ),
+      );
     }
 
     if (_receipts.isEmpty) {
-      return _buildEmptyState();
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF6C63FF).withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.receipt_long_outlined,
+                size: 48,
+                color: Color(0xFF6C63FF),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Henüz fiş yok',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A1A2E),
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'İlk fişini eklemek için + butonuna bas',
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF9E9EBF),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
-    return _buildReceiptList();
-  }
-
-  // HATA DURUMU — backend'e ulaşılamadığında
-  Widget _buildErrorState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 80,
-            color: Colors.red.shade200,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _errorMessage!,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _loadReceipts,
-            child: const Text('Tekrar Dene'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // BOŞ DURUM — henüz fiş yokken
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 80,
-            color: Colors.grey.shade300,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Henüz fiş yok',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'İlk fişini eklemek için + butonuna bas',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade400,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // DOLU DURUM — fiş kartlarının listesi
-  Widget _buildReceiptList() {
     return RefreshIndicator(
       onRefresh: _loadReceipts,
+      color: const Color(0xFF6C63FF),
       child: ListView.builder(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         itemCount: _receipts.length,
         itemBuilder: (context, index) {
           final receipt = _receipts[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 6),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
-              leading: CircleAvatar(
-                backgroundColor: Colors.deepPurple.shade50,
-                child: const Icon(
-                  Icons.receipt,
-                  color: Colors.deepPurple,
-                ),
-              ),
-              title: Text(
-                receipt.storeName,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                '${receipt.categoryName ?? "Kategorisiz"} • ${receipt.receiptDate}',
-              ),
-              trailing: Text(
-                '${receipt.totalAmount.toStringAsFixed(2)} TL',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: Colors.deepPurple,
-                ),
-              ),
-              onTap: () => _goToDetail(receipt),
-            ),
+          return _ReceiptCard(
+            receipt: receipt,
+            onTap: () => _goToDetail(receipt),
           );
         },
+      ),
+    );
+  }
+}
+
+class _ReceiptCard extends StatelessWidget {
+  final Receipt receipt;
+  final VoidCallback onTap;
+
+  const _ReceiptCard({required this.receipt, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFEEEEF5)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6C63FF).withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Sol ikon
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF6C63FF).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.receipt_outlined,
+                color: Color(0xFF6C63FF),
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // Orta bilgi
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    receipt.storeName,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1A1A2E),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6C63FF).withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          receipt.categoryName ?? 'Kategorisiz',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF6C63FF),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        receipt.receiptDate,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF9E9EBF),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Sağ tutar
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${receipt.totalAmount.toStringAsFixed(2)} TL',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF6C63FF),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Icon(
+                  Icons.chevron_right,
+                  color: Color(0xFF9E9EBF),
+                  size: 18,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

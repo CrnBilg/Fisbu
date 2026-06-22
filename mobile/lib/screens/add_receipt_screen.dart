@@ -15,7 +15,6 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
 
   DateTime? _selectedDate;
   Category? _selectedCategory;
-
   List<Category> _categories = [];
   bool _isLoadingCategories = true;
   bool _isSaving = false;
@@ -43,7 +42,6 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
     }
   }
 
-  // Tarih seçici aç
   Future<void> _pickDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -51,20 +49,26 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
       initialDate: now,
       firstDate: DateTime(2020),
       lastDate: now,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF6C63FF),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
-    if (picked != null) {
-      setState(() => _selectedDate = picked);
-    }
+    if (picked != null) setState(() => _selectedDate = picked);
   }
 
-  // Tarihi gg.aa.yyyy formatında göster
   String _formatDate(DateTime date) {
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');
     return '$day.$month.${date.year}';
   }
 
-  // Backend'in beklediği yyyy-aa-gg formatına çevir
   String _toIsoDate(DateTime date) {
     final month = date.month.toString().padLeft(2, '0');
     final day = date.day.toString().padLeft(2, '0');
@@ -75,7 +79,6 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
     final store = _storeController.text.trim();
     final amountText = _amountController.text.trim();
 
-    // Basit doğrulama
     if (store.isEmpty || amountText.isEmpty || _selectedDate == null || _selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lütfen tüm alanları doldur')),
@@ -102,11 +105,9 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
       );
 
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fiş kaydedildi')),
+        const SnackBar(content: Text('Fiş kaydedildi ✓')),
       );
-
       Navigator.pop(context, true);
     } catch (e) {
       setState(() => _isSaving = false);
@@ -128,6 +129,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F7FF),
       appBar: AppBar(
         title: const Text('Fiş Ekle'),
       ),
@@ -136,69 +138,89 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const SizedBox(height: 8),
+
             // Mağaza adı
+            _buildLabel('Mağaza Adı'),
+            const SizedBox(height: 8),
             TextField(
               controller: _storeController,
-              decoration: InputDecoration(
-                labelText: 'Mağaza Adı',
-                prefixIcon: const Icon(Icons.store_outlined),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              decoration: const InputDecoration(
+                hintText: 'örn. Migros, Zara...',
+                prefixIcon: Icon(Icons.store_outlined),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
             // Tutar
+            _buildLabel('Tutar (TL)'),
+            const SizedBox(height: 8),
             TextField(
               controller: _amountController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: 'Tutar (TL)',
-                prefixIcon: const Icon(Icons.payments_outlined),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              decoration: const InputDecoration(
+                hintText: '0.00',
+                prefixIcon: Icon(Icons.payments_outlined),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
-            // Tarih seçici
-            InkWell(
+            // Tarih
+            _buildLabel('Tarih'),
+            const SizedBox(height: 8),
+            GestureDetector(
               onTap: _pickDate,
-              borderRadius: BorderRadius.circular(12),
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: 'Tarih',
-                  prefixIcon: const Icon(Icons.calendar_today_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: _selectedDate != null
+                        ? const Color(0xFF6C63FF)
+                        : const Color(0xFFE8E8F0),
+                    width: _selectedDate != null ? 2 : 1,
                   ),
                 ),
-                child: Text(
-                  _selectedDate == null
-                      ? 'Tarih seç'
-                      : _formatDate(_selectedDate!),
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: _selectedDate == null ? Colors.grey : Colors.black,
-                  ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today_outlined,
+                      color: _selectedDate != null
+                          ? const Color(0xFF6C63FF)
+                          : const Color(0xFF9E9EBF),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      _selectedDate == null
+                          ? 'Tarih seç'
+                          : _formatDate(_selectedDate!),
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: _selectedDate == null
+                            ? const Color(0xFF9E9EBF)
+                            : const Color(0xFF1A1A2E),
+                        fontWeight: _selectedDate != null
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
-            // Kategori seçici (dropdown)
+            // Kategori
+            _buildLabel('Kategori'),
+            const SizedBox(height: 8),
             _isLoadingCategories
                 ? const Center(child: CircularProgressIndicator())
                 : DropdownButtonFormField<Category>(
-                    initialValue: _selectedCategory,
-                    decoration: InputDecoration(
-                      labelText: 'Kategori',
-                      prefixIcon: const Icon(Icons.category_outlined),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                    value: _selectedCategory,
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.category_outlined),
                     ),
                     hint: const Text('Kategori seç'),
                     items: _categories.map((category) {
@@ -211,30 +233,36 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                       setState(() => _selectedCategory = value);
                     },
                   ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 36),
 
             // Kaydet butonu
             ElevatedButton(
               onPressed: _isSaving ? null : _handleSave,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
               child: _isSaving
                   ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
-                  : const Text(
-                      'Kaydet',
-                      style: TextStyle(fontSize: 16),
-                    ),
+                  : const Text('Kaydet'),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF9E9EBF),
+        letterSpacing: 0.5,
       ),
     );
   }

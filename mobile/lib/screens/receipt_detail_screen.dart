@@ -18,7 +18,11 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Fişi Sil'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Fişi Sil',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
         content: const Text('Bu fişi silmek istediğine emin misin?'),
         actions: [
           TextButton(
@@ -27,15 +31,14 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Sil', style: TextStyle(color: Colors.red)),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Sil'),
           ),
         ],
       ),
     );
 
-    if (confirmed == true) {
-      _deleteReceipt();
-    }
+    if (confirmed == true) _deleteReceipt();
   }
 
   Future<void> _deleteReceipt() async {
@@ -43,10 +46,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
 
     try {
       await ReceiptService.deleteReceipt(widget.receipt.id);
-
       if (!mounted) return;
-
-      // Detay ekranını kapat, liste ekranına "true" gönder (listeyi yenile)
       Navigator.pop(context, true);
     } catch (e) {
       setState(() => _isDeleting = false);
@@ -63,7 +63,8 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
     final receipt = widget.receipt;
 
     return Scaffold(
-     appBar: AppBar(
+      backgroundColor: const Color(0xFFF8F7FF),
+      appBar: AppBar(
         title: const Text('Fiş Detayı'),
       ),
       body: SingleChildScrollView(
@@ -71,39 +72,56 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Üst kısım: mağaza adı ve tutar
+            // Üst kart — gradient
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(
-                color: Colors.deepPurple.shade50,
-                borderRadius: BorderRadius.circular(16),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF6C63FF), Color(0xFF9C8FFF)],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF6C63FF).withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 32,
-                    backgroundColor: Colors.deepPurple.shade100,
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     child: const Icon(
                       Icons.receipt_long,
-                      size: 32,
-                      color: Colors.deepPurple,
+                      size: 36,
+                      color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   Text(
                     receipt.storeName,
                     style: const TextStyle(
                       fontSize: 22,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: -0.3,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   Text(
                     '${receipt.totalAmount.toStringAsFixed(2)} TL',
                     style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
+                      fontSize: 36,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: -1,
                     ),
                   ),
                 ],
@@ -111,22 +129,34 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
             ),
             const SizedBox(height: 24),
 
-       _buildDetailRow(
-              icon: Icons.category_outlined,
-              label: 'Kategori',
-              value: receipt.categoryName ?? 'Kategorisiz',
-            ),
-            const Divider(),
-            _buildDetailRow(
-              icon: Icons.calendar_today_outlined,
-              label: 'Tarih',
-              value: receipt.receiptDate,
-            ),
-            const Divider(),
-            _buildDetailRow(
-              icon: Icons.store_outlined,
-              label: 'Mağaza',
-              value: receipt.storeName,
+            // Detay kartı
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFEEEEF5)),
+              ),
+              child: Column(
+                children: [
+                  _buildDetailRow(
+                    icon: Icons.category_outlined,
+                    label: 'Kategori',
+                    value: receipt.categoryName ?? 'Kategorisiz',
+                    isFirst: true,
+                  ),
+                  _buildDetailRow(
+                    icon: Icons.calendar_today_outlined,
+                    label: 'Tarih',
+                    value: receipt.receiptDate,
+                  ),
+                  _buildDetailRow(
+                    icon: Icons.store_outlined,
+                    label: 'Mağaza',
+                    value: receipt.storeName,
+                    isLast: true,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 32),
 
@@ -137,7 +167,10 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                   ? const SizedBox(
                       height: 18,
                       width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.red,
+                      ),
                     )
                   : const Icon(Icons.delete_outline, color: Colors.red),
               label: const Text(
@@ -148,7 +181,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 side: const BorderSide(color: Colors.red),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
             ),
@@ -158,31 +191,48 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
     );
   }
 
-  // Tek bir detay satırı (ikon + etiket + değer)
   Widget _buildDetailRow({
     required IconData icon,
     required String label,
     required String value,
+    bool isFirst = false,
+    bool isLast = false,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        border: isLast
+            ? null
+            : const Border(
+                bottom: BorderSide(color: Color(0xFFEEEEF5)),
+              ),
+      ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.deepPurple),
-          const SizedBox(width: 16),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6C63FF).withOpacity(0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: const Color(0xFF6C63FF), size: 18),
+          ),
+          const SizedBox(width: 14),
           Text(
             label,
             style: const TextStyle(
-              fontSize: 15,
-              color: Colors.grey,
+              fontSize: 14,
+              color: Color(0xFF9E9EBF),
+              fontWeight: FontWeight.w500,
             ),
           ),
           const Spacer(),
           Text(
             value,
             style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1A1A2E),
             ),
           ),
         ],
