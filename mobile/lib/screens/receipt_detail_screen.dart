@@ -160,6 +160,64 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
             ),
             const SizedBox(height: 32),
 
+            // Fiş fotoğrafı (varsa göster)
+            if (receipt.imageUrl != null && receipt.imageUrl!.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.network(
+                  receipt.imageUrl!,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6C63FF).withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF6C63FF),
+                        ),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6C63FF).withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.broken_image_outlined,
+                                color: Color(0xFF9E9EBF), size: 32),
+                            SizedBox(height: 8),
+                            Text(
+                              'Fotoğraf yüklenemedi',
+                              style: TextStyle(
+                                color: Color(0xFF9E9EBF),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 32),
+
+            // Sil butonu
+
             // Sil butonu
             OutlinedButton.icon(
               onPressed: _isDeleting ? null : _confirmDelete,
