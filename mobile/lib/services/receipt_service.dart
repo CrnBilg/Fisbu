@@ -1,23 +1,19 @@
-import 'dart:convert'; // JSON işlemleri için gerekli kütüphane
-import 'package:http/http.dart' as http; // HTTP istekleri için gerekli kütüphane
-import '../models/receipt.dart'; // Fiş modelini içe aktarır
-import '../models/category.dart'; // Kategori modelini içe aktarır
-import 'auth_service.dart'; // Kimlik doğrulama işlemleri için gerekli servis
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import '../models/receipt.dart';
+import '../models/category.dart';
+import 'auth_service.dart';
 
 class ReceiptService {
-  static const String _baseUrl = 'https://fisbu-production-613c.up.railway.app'; // API'nin temel URL'si
+  static const String _baseUrl = 'https://fisbu-production-613c.up.railway.app';
 
-  // Tüm fişleri listeler
-  static Future<List<Receipt>> getReceipts() async { // Kimlik doğrulama tokeni alir
-    final token = await AuthService.getToken(); // API'ye GET isteği gönderiyoruz
-
-    final response = await http.get( // API'ye GET isteği gönderiyoruz
-      Uri.parse('$_baseUrl/receipts'), //
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+  static Future<List<Receipt>> getReceipts() async {
+    final token = await AuthService.getToken();
+    final response = await http.get(
+      Uri.parse('$_baseUrl/receipts'),
+      headers: {'Authorization': 'Bearer $token'},
     );
-
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((json) => Receipt.fromJson(json)).toList();
@@ -26,15 +22,14 @@ class ReceiptService {
     }
   }
 
-  // Yeni fiş ekler
   static Future<Receipt> createReceipt({
     required String storeName,
     required double totalAmount,
     required String receiptDate,
     int? categoryId,
+    String? imageUrl,
   }) async {
     final token = await AuthService.getToken();
-
     final response = await http.post(
       Uri.parse('$_baseUrl/receipts'),
       headers: {
@@ -46,9 +41,9 @@ class ReceiptService {
         'totalAmount': totalAmount,
         'receiptDate': receiptDate,
         'categoryId': categoryId,
+        'imageUrl': imageUrl,
       }),
     );
-
     if (response.statusCode == 201) {
       return Receipt.fromJson(jsonDecode(response.body));
     } else {
@@ -56,33 +51,23 @@ class ReceiptService {
     }
   }
 
-  // Fiş siler
   static Future<void> deleteReceipt(int id) async {
     final token = await AuthService.getToken();
-
     final response = await http.delete(
       Uri.parse('$_baseUrl/receipts/$id'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
-
     if (response.statusCode != 204) {
       throw Exception('Fiş silinemedi: ${response.statusCode}');
     }
   }
 
-  // Kategorileri listeler
   static Future<List<Category>> getCategories() async {
     final token = await AuthService.getToken();
-
     final response = await http.get(
       Uri.parse('$_baseUrl/categories'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
-
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((json) => Category.fromJson(json)).toList();
@@ -91,25 +76,19 @@ class ReceiptService {
     }
   }
 
-// Yeni kategori ekler
   static Future<Category> createCategory({
     required String name,
     required String color,
   }) async {
     final token = await AuthService.getToken();
-
     final response = await http.post(
       Uri.parse('$_baseUrl/categories'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({
-        'name': name,
-        'color': color,
-      }),
+      body: jsonEncode({'name': name, 'color': color}),
     );
-
     if (response.statusCode == 201) {
       return Category.fromJson(jsonDecode(response.body));
     } else {
@@ -117,5 +96,21 @@ class ReceiptService {
     }
   }
 
-  
+  static Future<String> uploadImage(XFile image) async {
+    final token = await AuthService.getToken();
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$_baseUrl/receipts/upload'),
+    );
+    request.headers['Authorization'] = 'Bearer $token';
+    request.files.add(await http.MultipartFile.fromPath('file', image.path));
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return data['imageUrl'] as String;
+    } else {
+      throw Exception('Fotoğraf yüklenemedi: ${response.statusCode}');
+    }
+  }
 }
