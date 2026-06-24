@@ -95,15 +95,23 @@ class ReceiptService {
       throw Exception('Kategori eklenemedi: ${response.statusCode}');
     }
   }
-
-  static Future<String> uploadImage(XFile image) async {
+static Future<String> uploadImage(XFile image) async {
     final token = await AuthService.getToken();
     final request = http.MultipartRequest(
       'POST',
       Uri.parse('$_baseUrl/receipts/upload'),
     );
     request.headers['Authorization'] = 'Bearer $token';
-    request.files.add(await http.MultipartFile.fromPath('file', image.path));
+
+    // Web'de fromPath çalışmaz, bytes kullanıyoruz
+    final bytes = await image.readAsBytes();
+    final multipartFile = http.MultipartFile.fromBytes(
+      'file',
+      bytes,
+      filename: image.name,
+    );
+    request.files.add(multipartFile);
+
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
     if (response.statusCode == 200) {
