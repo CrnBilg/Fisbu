@@ -3,8 +3,26 @@ import '../services/auth_service.dart';
 import 'auth_wrapper.dart';
 import 'categories_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String? _email;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEmail();
+  }
+
+  Future<void> _loadEmail() async {
+    final email = await AuthService.getEmail();
+    setState(() => _email = email);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +30,6 @@ class ProfileScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFF8F7FF),
       body: CustomScrollView(
         slivers: [
-          // Üst gradient header
           SliverAppBar(
             expandedHeight: 200,
             floating: false,
@@ -22,10 +39,7 @@ class ProfileScreen extends StatelessWidget {
             centerTitle: false,
             title: const Text(
               'Profil',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
             ),
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
@@ -50,20 +64,16 @@ class ProfileScreen extends StatelessWidget {
                         child: const CircleAvatar(
                           radius: 40,
                           backgroundColor: Colors.white24,
-                          child: Icon(
-                            Icons.person,
-                            size: 40,
-                            color: Colors.white,
-                          ),
+                          child: Icon(Icons.person, size: 40, color: Colors.white),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                        'Kullanıcı',
-                        style: TextStyle(
+                      Text(
+                        _email ?? 'Yükleniyor...',
+                        style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -73,13 +83,11 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
 
-          // İçerik
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  // Ayarlar kartı
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -117,7 +125,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
 
-                 GestureDetector(
+                  GestureDetector(
                     onTap: () async {
                       await AuthService.logout();
                       if (!context.mounted) return;
@@ -154,8 +162,6 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-              
-                  
                 ],
               ),
             ),
@@ -183,9 +189,7 @@ class ProfileScreen extends StatelessWidget {
         decoration: BoxDecoration(
           border: isLast
               ? null
-              : const Border(
-                  bottom: BorderSide(color: Color(0xFFEEEEF5)),
-                ),
+              : const Border(bottom: BorderSide(color: Color(0xFFEEEEF5))),
         ),
         child: Row(
           children: [
@@ -207,11 +211,7 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            const Icon(
-              Icons.chevron_right,
-              color: Color(0xFF9E9EBF),
-              size: 20,
-            ),
+            const Icon(Icons.chevron_right, color: Color(0xFF9E9EBF), size: 20),
           ],
         ),
       ),

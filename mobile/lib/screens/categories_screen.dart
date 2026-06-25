@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/category.dart';
 import '../services/receipt_service.dart';
+import '../core/utils/category_helper.dart';
 
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
@@ -292,7 +293,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  Icons.label_outline,
+                  CategoryHelper.getIcon(category.name),
                   color: color,
                   size: 22,
                 ),

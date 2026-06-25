@@ -3,6 +3,9 @@ import 'add_receipt_screen.dart';
 import 'receipt_detail_screen.dart';
 import '../models/receipt.dart';
 import '../services/receipt_service.dart';
+import 'package:intl/intl.dart';
+import '../core/utils/date_formatter.dart';
+import '../core/utils/category_helper.dart';
 
 class ReceiptListScreen extends StatefulWidget {
   const ReceiptListScreen({super.key});
@@ -15,6 +18,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
   List<Receipt> _receipts = [];
   bool _isLoading = true;
   String? _errorMessage;
+  final _currencyFormat = NumberFormat('#,##0.00', 'tr_TR');
 
   @override
   void initState() {
@@ -25,6 +29,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
   Future<void> _loadReceipts() async {
     setState(() {
       _isLoading = true;
+      final _currencyFormat = NumberFormat('#,##0.00', 'tr_TR');
       _errorMessage = null;
     });
 
@@ -193,15 +198,15 @@ class _ReceiptCard extends StatelessWidget {
         child: Row(
           children: [
             // Sol ikon
-            Container(
+           Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF6C63FF).withOpacity(0.1),
+                color: CategoryHelper.getColor(receipt.categoryName).withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
-                Icons.receipt_outlined,
-                color: Color(0xFF6C63FF),
+              child: Icon(
+                CategoryHelper.getIcon(receipt.categoryName),
+                color: CategoryHelper.getColor(receipt.categoryName),
                 size: 22,
               ),
             ),
@@ -242,8 +247,8 @@ class _ReceiptCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        receipt.receiptDate,
+                    Text(
+                        DateFormatter.formatShort(receipt.receiptDate),
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF9E9EBF),
@@ -260,7 +265,7 @@ class _ReceiptCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${receipt.totalAmount.toStringAsFixed(2)} TL',
+                  '${NumberFormat('#,##0.00', 'tr_TR').format(receipt.totalAmount)} TL',
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
