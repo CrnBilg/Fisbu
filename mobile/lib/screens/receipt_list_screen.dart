@@ -161,9 +161,82 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
         itemCount: _receipts.length,
         itemBuilder: (context, index) {
           final receipt = _receipts[index];
-          return _ReceiptCard(
-            receipt: receipt,
-            onTap: () => _goToDetail(receipt),
+          return Dismissible(
+            key: Key('receipt_${receipt.id}'),
+            direction: DismissDirection.endToStart,
+            background: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade400,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 20),
+              child: const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.delete_outline, color: Colors.white, size: 26),
+                  SizedBox(height: 4),
+                  Text(
+                    'Sil',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            confirmDismiss: (direction) async {
+              return await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                  title: const Text('Fişi Sil',
+                      style: TextStyle(fontWeight: FontWeight.w700)),
+                  content: Text(
+                      '${receipt.storeName} fişini silmek istediğine emin misin?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Vazgeç'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      child: const Text('Sil'),
+                    ),
+                  ],
+                ),
+              );
+            },
+            onDismissed: (direction) async {
+              try {
+                await ReceiptService.deleteReceipt(receipt.id);
+                setState(() => _receipts.removeAt(index));
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${receipt.storeName} silindi'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              } catch (e) {
+                _loadReceipts();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Silinemedi: $e')),
+                  );
+                }
+              }
+            },
+            child: _ReceiptCard(
+              receipt: receipt,
+              onTap: () => _goToDetail(receipt),
+            ),
           );
         },
       ),

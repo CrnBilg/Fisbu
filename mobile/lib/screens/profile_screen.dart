@@ -114,6 +114,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           label: 'Bildirimler',
                           onTap: () {},
                         ),
+                        
                         _buildMenuItem(
                           icon: Icons.info_outline,
                           label: 'Hakkında',
@@ -214,6 +215,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const Icon(Icons.chevron_right, color: Color(0xFF9E9EBF), size: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMenuItemWithTrailing({
+    required IconData icon,
+    required String label,
+    required Widget trailing,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFEEEEF5))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6C63FF).withOpacity(0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: const Color(0xFF6C63FF), size: 18),
+          ),
+          const SizedBox(width: 14),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1A1A2E),
+            ),
+          ),
+          const Spacer(),
+          trailing,
+        ],
       ),
     );
   }
