@@ -140,8 +140,15 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                   ),
                   _buildDetailRow(
                     icon: Icons.calendar_today_outlined,
-                    label: 'Tarih',
+                    label: 'Fiş Tarihi',
                     value: DateFormatter.formatLong(receipt.receiptDate),
+                  ),
+                  _buildDetailRow(
+                    icon: Icons.access_time_outlined,
+                    label: 'Eklenme Tarihi',
+                    value: DateFormatter.formatLong(
+                      receipt.createdAt?.split('T').first,
+                    ),
                   ),
                   _buildDetailRow(
                     icon: Icons.store_outlined,

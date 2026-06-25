@@ -8,7 +8,6 @@ import '../models/receipt.dart';
 import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
 
-
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -51,10 +50,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }).fold(0.0, (sum, r) => sum + r.totalAmount);
   }
 
-List<Receipt> get _recentReceipts {
+  List<Receipt> get _recentReceipts {
     final sorted = List<Receipt>.from(_receipts)
       ..sort((a, b) => (b.createdAt ?? '').compareTo(a.createdAt ?? ''));
     return sorted.take(3).toList();
+  }
+
+  String? get _topCategory {
+    if (_receipts.isEmpty) return null;
+    final Map<String, double> categoryTotals = {};
+    for (final receipt in _receipts) {
+      final category = receipt.categoryName ?? 'Kategorisiz';
+      categoryTotals[category] = (categoryTotals[category] ?? 0) + receipt.totalAmount;
+    }
+    return categoryTotals.entries
+        .reduce((a, b) => a.value > b.value ? a : b)
+        .key;
+  }
+
+  double _categoryTotal(String categoryName) {
+    return _receipts
+        .where((r) => (r.categoryName ?? 'Kategorisiz') == categoryName)
+        .fold(0.0, (sum, r) => sum + r.totalAmount);
   }
 
   @override
@@ -172,6 +189,7 @@ List<Receipt> get _recentReceipts {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Hızlı erişim butonları
                     Row(
                       children: [
                         Expanded(
@@ -209,8 +227,71 @@ List<Receipt> get _recentReceipts {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 20),
 
+                    // En çok harcanan kategori kartı
+                    if (_topCategory != null && !_isLoading)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 20),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: CategoryHelper.getColor(_topCategory).withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: CategoryHelper.getColor(_topCategory).withOpacity(0.2),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: CategoryHelper.getColor(_topCategory).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                CategoryHelper.getIcon(_topCategory),
+                                color: CategoryHelper.getColor(_topCategory),
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Bu ay en çok harcama',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF9E9EBF),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _topCategory!,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: CategoryHelper.getColor(_topCategory),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            Text(
+                              '${_currencyFormat.format(_categoryTotal(_topCategory!))} TL',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: CategoryHelper.getColor(_topCategory),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    // Son fişler başlığı
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -326,7 +407,7 @@ List<Receipt> get _recentReceipts {
                                                 ),
                                               ),
                                               const SizedBox(height: 4),
-                                             Row(
+                                              Row(
                                                 children: [
                                                   Container(
                                                     padding: const EdgeInsets.symmetric(
@@ -334,20 +415,20 @@ List<Receipt> get _recentReceipts {
                                                       vertical: 2,
                                                     ),
                                                     decoration: BoxDecoration(
-                                                      color: const Color(0xFF6C63FF).withOpacity(0.08),
+                                                      color: CategoryHelper.getColor(receipt.categoryName).withOpacity(0.1),
                                                       borderRadius: BorderRadius.circular(6),
                                                     ),
                                                     child: Text(
                                                       receipt.categoryName ?? 'Kategorisiz',
-                                                      style: const TextStyle(
+                                                      style: TextStyle(
                                                         fontSize: 11,
                                                         fontWeight: FontWeight.w600,
-                                                        color: Color(0xFF6C63FF),
+                                                        color: CategoryHelper.getColor(receipt.categoryName),
                                                       ),
                                                     ),
                                                   ),
                                                   const SizedBox(width: 6),
-                                                 Text(
+                                                  Text(
                                                     DateFormatter.formatShort(receipt.receiptDate),
                                                     style: const TextStyle(
                                                       fontSize: 11,
