@@ -184,11 +184,17 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
     setState(() => _isLoading = true);
 
     try {
+      String? imageUrl;
+      if (_selectedImage != null) {
+        imageUrl = await ReceiptService.uploadImage(_selectedImage!);
+      }
+
       await ReceiptService.createReceipt(
         storeName: store,
         totalAmount: amount,
         receiptDate: _formatDate(_selectedDate!),
         categoryId: _selectedCategory?.id,
+        imageUrl: imageUrl,
       );
 
       if (mounted) {
@@ -221,8 +227,6 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
       backgroundColor: const Color(0xFFF8F7FF),
       appBar: AppBar(
         title: const Text('Fiş Ekle'),
-        backgroundColor: const Color(0xFF6C63FF),
-        foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

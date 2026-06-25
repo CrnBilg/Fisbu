@@ -6,6 +6,7 @@ class Receipt {
   final int? categoryId;
   final String? categoryName;
   final String? imageUrl;
+  final String? createdAt;
 
   Receipt({
     required this.id,
@@ -15,6 +16,7 @@ class Receipt {
     this.categoryId,
     this.categoryName,
     this.imageUrl,
+    this.createdAt,
   });
 
   factory Receipt.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class Receipt {
       categoryId: json['categoryId'] as int?,
       categoryName: json['categoryName'] as String?,
       imageUrl: json['imageUrl'] as String?,
+      createdAt: json['createdAt'] as String?,
     );
   }
 }

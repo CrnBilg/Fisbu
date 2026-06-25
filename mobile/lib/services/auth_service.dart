@@ -64,6 +64,21 @@ static Future<bool> isLoggedIn() async {
   
     return token != null;
   }
+  static Future<String?> getEmail() async {
+    final token = await getToken();
+    if (token == null) return null;
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      final payload = parts[1];
+      final normalized = base64Url.normalize(payload);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final data = jsonDecode(decoded) as Map<String, dynamic>;
+      return data['sub'] as String?;
+    } catch (e) {
+      return null;
+    }
+  }
 }
 
 class AuthResult {

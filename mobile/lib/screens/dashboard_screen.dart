@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'profile_screen.dart';
 import 'add_receipt_screen.dart';
 import 'receipt_list_screen.dart';
 import '../services/receipt_service.dart';
 import '../models/receipt.dart';
+import '../core/utils/date_formatter.dart';
+import '../core/utils/category_helper.dart';
+
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -15,6 +19,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   List<Receipt> _receipts = [];
   bool _isLoading = true;
+  final _currencyFormat = NumberFormat('#,##0.00', 'tr_TR');
 
   @override
   void initState() {
@@ -34,25 +39,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  // Bu ayki fişleri filtrele ve topla
   double get _thisMonthTotal {
     final now = DateTime.now();
-    return _receipts
-        .where((r) {
-          try {
-            final date = DateTime.parse(r.receiptDate);
-            return date.year == now.year && date.month == now.month;
-          } catch (_) {
-            return false;
-          }
-        })
-        .fold(0.0, (sum, r) => sum + r.totalAmount);
+    return _receipts.where((r) {
+      try {
+        final date = DateTime.parse(r.receiptDate);
+        return date.year == now.year && date.month == now.month;
+      } catch (_) {
+        return false;
+      }
+    }).fold(0.0, (sum, r) => sum + r.totalAmount);
   }
 
-  // Son 3 fişi getir
-  List<Receipt> get _recentReceipts {
+List<Receipt> get _recentReceipts {
     final sorted = List<Receipt>.from(_receipts)
-      ..sort((a, b) => b.receiptDate.compareTo(a.receiptDate));
+      ..sort((a, b) => (b.createdAt ?? '').compareTo(a.createdAt ?? ''));
     return sorted.take(3).toList();
   }
 
@@ -64,7 +65,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onRefresh: _loadReceipts,
         child: CustomScrollView(
           slivers: [
-            // Üst kısım — gradient header
             SliverAppBar(
               expandedHeight: 200,
               floating: false,
@@ -89,9 +89,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const ProfileScreen(),
-                      ),
+                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
                     );
                   },
                 ),
@@ -132,7 +130,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 )
                               : Text(
-                                  '${_thisMonthTotal.toStringAsFixed(2).replaceAll('.', ',')} TL',
+                                  '${_currencyFormat.format(_thisMonthTotal)} TL',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 36,
@@ -168,14 +166,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            // İçerik
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Hızlı erişim butonları
                     Row(
                       children: [
                         Expanded(
@@ -190,7 +186,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   builder: (context) => const AddReceiptScreen(),
                                 ),
                               );
-                              _loadReceipts(); // Fiş eklenince yenile
+                              _loadReceipts();
                             },
                           ),
                         ),
@@ -207,7 +203,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   builder: (context) => const ReceiptListScreen(),
                                 ),
                               );
-                              _loadReceipts(); // Fiş silinince yenile
+                              _loadReceipts();
                             },
                           ),
                         ),
@@ -215,7 +211,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 28),
 
-                    // Son fişler başlığı
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -243,7 +238,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Fişler yükleniyorsa spinner, yoksa liste veya boş durum
                     _isLoading
                         ? const Center(
                             child: Padding(
@@ -296,52 +290,84 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               )
                             : Column(
                                 children: _recentReceipts.map((receipt) {
-                                  return Card(
+                                  return Container(
                                     margin: const EdgeInsets.only(bottom: 10),
-                                    shape: RoundedRectangleBorder(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
                                       borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(color: const Color(0xFFEEEEF5)),
                                     ),
-                                    elevation: 0,
-                                    color: Colors.white,
-                                    child: ListTile(
-                                      contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 8,
-                                      ),
-                                      leading: Container(
-                                        padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF6C63FF).withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(12),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: CategoryHelper.getColor(receipt.categoryName).withOpacity(0.12),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Icon(
+                                            CategoryHelper.getIcon(receipt.categoryName),
+                                            color: CategoryHelper.getColor(receipt.categoryName),
+                                            size: 22,
+                                          ),
                                         ),
-                                        child: const Icon(
-                                          Icons.receipt_outlined,
-                                          color: Color(0xFF6C63FF),
-                                          size: 22,
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                receipt.storeName,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 15,
+                                                  color: Color(0xFF1A1A2E),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                             Row(
+                                                children: [
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 2,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(0xFF6C63FF).withOpacity(0.08),
+                                                      borderRadius: BorderRadius.circular(6),
+                                                    ),
+                                                    child: Text(
+                                                      receipt.categoryName ?? 'Kategorisiz',
+                                                      style: const TextStyle(
+                                                        fontSize: 11,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: Color(0xFF6C63FF),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                 Text(
+                                                    DateFormatter.formatShort(receipt.receiptDate),
+                                                    style: const TextStyle(
+                                                      fontSize: 11,
+                                                      color: Color(0xFF9E9EBF),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                      title: Text(
-                                        receipt.storeName,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 15,
+                                        Text(
+                                          '${_currencyFormat.format(receipt.totalAmount)} TL',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 15,
+                                            color: Color(0xFF6C63FF),
+                                          ),
                                         ),
-                                      ),
-                                      subtitle: Text(
-                                        receipt.categoryName ?? 'Kategori yok',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Color(0xFF9E9EBF),
-                                        ),
-                                      ),
-                                      trailing: Text(
-                                        '${receipt.totalAmount.toStringAsFixed(2)} TL',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 15,
-                                          color: Color(0xFF6C63FF),
-                                        ),
-                                      ),
+                                      ],
                                     ),
                                   );
                                 }).toList(),
