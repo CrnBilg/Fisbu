@@ -17,8 +17,10 @@ class ReceiptListScreen extends StatefulWidget {
 class _ReceiptListScreenState extends State<ReceiptListScreen> {
   List<Receipt> _receipts = [];
   bool _isLoading = true;
+  String _searchQuery = '';
+  String? _selectedCategory;
+  List<String> _categories = [];
   String? _errorMessage;
-  final _currencyFormat = NumberFormat('#,##0.00', 'tr_TR');
 
   @override
   void initState() {
@@ -29,15 +31,20 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
   Future<void> _loadReceipts() async {
     setState(() {
       _isLoading = true;
-      final _currencyFormat = NumberFormat('#,##0.00', 'tr_TR');
       _errorMessage = null;
     });
 
     try {
       final receipts = await ReceiptService.getReceipts();
       receipts.sort((a, b) => (b.createdAt ?? '').compareTo(a.createdAt ?? ''));
+      final categories = receipts
+          .map((r) => r.categoryName ?? 'Kategorisiz')
+          .toSet()
+          .toList()
+        ..sort();
       setState(() {
         _receipts = receipts;
+        _categories = categories;
         _isLoading = false;
       });
     } catch (e) {
@@ -46,6 +53,16 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  List<Receipt> get _filteredReceipts {
+    return _receipts.where((r) {
+      final matchesSearch = _searchQuery.isEmpty ||
+          r.storeName.toLowerCase().contains(_searchQuery.toLowerCase());
+      final matchesCategory = _selectedCategory == null ||
+          (r.categoryName ?? 'Kategorisiz') == _selectedCategory;
+      return matchesSearch && matchesCategory;
+    }).toList();
   }
 
   Future<void> _goToAddReceipt() async {
@@ -66,11 +83,84 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
     if (result == true) _loadReceipts();
   }
 
+  Widget _buildFilterChip(String label, String? value) {
+    final isSelected = _selectedCategory == value;
+    final color = value != null
+        ? CategoryHelper.getColor(value)
+        : const Color(0xFF6C63FF);
+    return GestureDetector(
+      onTap: () => setState(() => _selectedCategory = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? color : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? color : const Color(0xFFE4E4F0),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? Colors.white : const Color(0xFF6E6E8A),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Fişlerim'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(110),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Column(
+              children: [
+                TextField(
+                  onChanged: (value) => setState(() => _searchQuery = value),
+                  decoration: InputDecoration(
+                    hintText: 'Mağaza ara...',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () =>
+                                setState(() => _searchQuery = ''),
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 32,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      _buildFilterChip('Tümü', null),
+                      ..._categories.map((c) => _buildFilterChip(c, c)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
@@ -96,7 +186,8 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
                 color: Colors.red.shade50,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
+              child: Icon(Icons.error_outline,
+                  size: 48, color: Colors.red.shade300),
             ),
             const SizedBox(height: 16),
             Text(
@@ -158,9 +249,9 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
       color: const Color(0xFF6C63FF),
       child: ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-        itemCount: _receipts.length,
+        itemCount: _filteredReceipts.length,
         itemBuilder: (context, index) {
-          final receipt = _receipts[index];
+          final receipt = _filteredReceipts[index];
           return Dismissible(
             key: Key('receipt_${receipt.id}'),
             direction: DismissDirection.endToStart,
@@ -205,7 +296,8 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(context, true),
-                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      style:
+                          TextButton.styleFrom(foregroundColor: Colors.red),
                       child: const Text('Sil'),
                     ),
                   ],
@@ -271,11 +363,11 @@ class _ReceiptCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Sol ikon
-           Container(
+            Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: CategoryHelper.getColor(receipt.categoryName).withOpacity(0.12),
+                color: CategoryHelper.getColor(receipt.categoryName)
+                    .withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -285,8 +377,6 @@ class _ReceiptCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 14),
-
-            // Orta bilgi
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,7 +411,7 @@ class _ReceiptCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                    Text(
+                      Text(
                         DateFormatter.formatShort(receipt.receiptDate),
                         style: const TextStyle(
                           fontSize: 12,
@@ -333,8 +423,6 @@ class _ReceiptCard extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Sağ tutar
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
