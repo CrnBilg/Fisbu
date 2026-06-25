@@ -3,6 +3,7 @@ import '../models/receipt.dart';
 import '../services/receipt_service.dart';
 import 'package:intl/intl.dart';
 import '../core/utils/date_formatter.dart';
+import '../core/utils/category_helper.dart';
 
 class ReceiptDetailScreen extends StatefulWidget {
   final Receipt receipt;
@@ -96,7 +97,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                       color: Colors.white24,
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(Icons.receipt_long, size: 36, color: Colors.white),
+                    child: Icon(CategoryHelper.getIcon(receipt.categoryName), size: 36, color: Colors.white),
                   ),
                   const SizedBox(height: 16),
                   Text(
