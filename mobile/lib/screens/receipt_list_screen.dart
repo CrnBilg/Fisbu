@@ -35,6 +35,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
 
     try {
       final receipts = await ReceiptService.getReceipts();
+      receipts.sort((a, b) => (b.createdAt ?? '').compareTo(a.createdAt ?? ''));
       setState(() {
         _receipts = receipts;
         _isLoading = false;
