@@ -6,6 +6,7 @@ import '../services/receipt_service.dart';
 import 'package:intl/intl.dart';
 import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
+import '../core/theme/app_colors.dart';
 
 class ReceiptListScreen extends StatefulWidget {
   const ReceiptListScreen({super.key});
@@ -87,7 +88,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
     final isSelected = _selectedCategory == value;
     final color = value != null
         ? CategoryHelper.getColor(value)
-        : const Color(0xFF6C63FF);
+        : AppColors.primary;
     return GestureDetector(
       onTap: () => setState(() => _selectedCategory = value),
       child: AnimatedContainer(
@@ -95,10 +96,10 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? color : Colors.white,
+          color: isSelected ? color : AppColors.surf(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? color : const Color(0xFFE4E4F0),
+            color: isSelected ? color : AppColors.brd(context),
           ),
         ),
         child: Text(
@@ -106,7 +107,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF6E6E8A),
+            color: isSelected ? Colors.white : AppColors.textSecondary,
           ),
         ),
       ),
@@ -116,8 +117,9 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
       appBar: AppBar(
-        title: const Text('Fişlerim'),
+        title: Text('Fişlerim'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(110),
           child: Padding(
@@ -137,7 +139,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
                           )
                         : null,
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: AppColors.surf(context),
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 10),
                     border: OutlineInputBorder(
@@ -172,7 +174,9 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      );
     }
 
     if (_errorMessage != null) {
@@ -183,22 +187,22 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
+                color: AppColors.errorDim,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.error_outline,
-                  size: 48, color: Colors.red.shade300),
+              child: const Icon(Icons.error_outline,
+                  size: 48, color: AppColors.error),
             ),
             const SizedBox(height: 16),
             Text(
               _errorMessage!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF9E9EBF)),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadReceipts,
-              child: const Text('Tekrar Dene'),
+              child: Text('Tekrar Dene'),
             ),
           ],
         ),
@@ -212,31 +216,31 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: const Color(0xFF6C63FF).withOpacity(0.08),
+              decoration: const BoxDecoration(
+                color: AppColors.primaryDim,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.receipt_long_outlined,
                 size: 48,
-                color: Color(0xFF6C63FF),
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Henüz fiş yok',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1A1A2E),
+                color: AppColors.txt(context),
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'İlk fişini eklemek için + butonuna bas',
               style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF9E9EBF),
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -246,7 +250,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
 
     return RefreshIndicator(
       onRefresh: _loadReceipts,
-      color: const Color(0xFF6C63FF),
+      color: AppColors.primary,
       child: ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         itemCount: _filteredReceipts.length,
@@ -258,7 +262,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
             background: Container(
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: Colors.red.shade400,
+                color: AppColors.error,
                 borderRadius: BorderRadius.circular(16),
               ),
               alignment: Alignment.centerRight,
@@ -285,20 +289,20 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
                 builder: (context) => AlertDialog(
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20)),
-                  title: const Text('Fişi Sil',
+                  title: Text('Fişi Sil',
                       style: TextStyle(fontWeight: FontWeight.w700)),
                   content: Text(
                       '${receipt.storeName} fişini silmek istediğine emin misin?'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Vazgeç'),
+                      child: Text('Vazgeç'),
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(context, true),
-                      style:
-                          TextButton.styleFrom(foregroundColor: Colors.red),
-                      child: const Text('Sil'),
+                      style: TextButton.styleFrom(
+                          foregroundColor: AppColors.error),
+                      child: Text('Sil'),
                     ),
                   ],
                 ),
@@ -350,12 +354,12 @@ class _ReceiptCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surf(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFEEEEF5)),
+          border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF6C63FF).withOpacity(0.04),
+              color: AppColors.primary.withOpacity(0.04),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -383,10 +387,10 @@ class _ReceiptCard extends StatelessWidget {
                 children: [
                   Text(
                     receipt.storeName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF1A1A2E),
+                      color: AppColors.txt(context),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -398,24 +402,24 @@ class _ReceiptCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF6C63FF).withOpacity(0.08),
+                          color: AppColors.primaryDim,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           receipt.categoryName ?? 'Kategorisiz',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF6C63FF),
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         DateFormatter.formatShort(receipt.receiptDate),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF9E9EBF),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -428,16 +432,16 @@ class _ReceiptCard extends StatelessWidget {
               children: [
                 Text(
                   '${NumberFormat('#,##0.00', 'tr_TR').format(receipt.totalAmount)} TL',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF6C63FF),
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 const Icon(
                   Icons.chevron_right,
-                  color: Color(0xFF9E9EBF),
+                  color: AppColors.textSecondary,
                   size: 18,
                 ),
               ],

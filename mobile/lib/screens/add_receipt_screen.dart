@@ -4,6 +4,7 @@ import 'dart:io' show File;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../services/receipt_service.dart';
 import '../models/category.dart';
+import '../core/theme/app_colors.dart';
 
 class AddReceiptScreen extends StatefulWidget {
   const AddReceiptScreen({super.key});
@@ -21,7 +22,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
   List<Category> _categories = [];
   bool _isLoading = false;
   bool _isCategoriesLoading = true;
-  XFile? _selectedImage; // Seçilen fotoğraf
+  XFile? _selectedImage;
 
   @override
   void initState() {
@@ -62,7 +63,6 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
     return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
   }
 
-  // Galeriden fotoğraf seç
   Future<void> _pickImageFromGallery() async {
     final picker = ImagePicker();
     final image = await picker.pickImage(
@@ -74,7 +74,6 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
     }
   }
 
-  // Kameradan fotoğraf çek
   Future<void> _pickImageFromCamera() async {
     final picker = ImagePicker();
     final image = await picker.pickImage(
@@ -86,7 +85,6 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
     }
   }
 
-  // Fotoğraf seçim menüsü
   void _showImagePickerOptions() {
     showModalBottomSheet(
       context: context,
@@ -98,7 +96,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'Fiş Fotoğrafı',
               style: TextStyle(
                 fontSize: 16,
@@ -110,13 +108,13 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6C63FF).withOpacity(0.1),
+                  color: AppColors.primaryDim,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.photo_library_outlined,
-                    color: Color(0xFF6C63FF)),
+                    color: AppColors.primary),
               ),
-              title: const Text('Galeriden Seç'),
+              title: Text('Galeriden Seç'),
               onTap: () {
                 Navigator.pop(context);
                 _pickImageFromGallery();
@@ -126,13 +124,13 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00BFA6).withOpacity(0.1),
+                  color: AppColors.successDim,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.camera_alt_outlined,
-                    color: Color(0xFF00BFA6)),
+                    color: AppColors.success),
               ),
-              title: const Text('Kamerayla Çek'),
+              title: Text('Kamerayla Çek'),
               onTap: () {
                 Navigator.pop(context);
                 _pickImageFromCamera();
@@ -143,13 +141,14 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: AppColors.errorDim,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.delete_outline, color: Colors.red),
+                  child: const Icon(Icons.delete_outline,
+                      color: AppColors.error),
                 ),
-                title: const Text('Fotoğrafı Kaldır',
-                    style: TextStyle(color: Colors.red)),
+                title: Text('Fotoğrafı Kaldır',
+                    style: TextStyle(color: AppColors.error)),
                 onTap: () {
                   Navigator.pop(context);
                   setState(() => _selectedImage = null);
@@ -224,9 +223,9 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7FF),
+
       appBar: AppBar(
-        title: const Text('Fiş Ekle'),
+        title: Text('Fiş Ekle'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -239,60 +238,60 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
               child: Container(
                 height: 160,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surf(context),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: _selectedImage != null
-                        ? const Color(0xFF6C63FF)
-                        : const Color(0xFFEEEEF5),
+                        ? AppColors.primary
+                        : AppColors.brd(context),
                     width: _selectedImage != null ? 2 : 1,
                   ),
                 ),
                 child: _selectedImage != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(15),
-                      child: kIsWeb
-    ? Image.network(
-        _selectedImage!.path,
-        fit: BoxFit.cover,
-        width: double.infinity,
-      )
-    : Image.file(
-        File(_selectedImage!.path),
-        fit: BoxFit.cover,
-        width: double.infinity,
-      ),
+                        child: kIsWeb
+                            ? Image.network(
+                                _selectedImage!.path,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                              )
+                            : Image.file(
+                                File(_selectedImage!.path),
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                              ),
                       )
                     : Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
                             padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF6C63FF).withOpacity(0.08),
+                            decoration: const BoxDecoration(
+                              color: AppColors.primaryDim,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
                               Icons.add_photo_alternate_outlined,
                               size: 32,
-                              color: Color(0xFF6C63FF),
+                              color: AppColors.primary,
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
+                          Text(
                             'Fiş Fotoğrafı Ekle',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF6C63FF),
+                              color: AppColors.primary,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'Galeriden seç veya kamerayla çek',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF9E9EBF),
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -311,7 +310,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.surf(context),
               ),
             ),
             const SizedBox(height: 16),
@@ -328,7 +327,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.surf(context),
               ),
             ),
             const SizedBox(height: 16),
@@ -345,7 +344,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: AppColors.surf(context),
                 ),
                 child: Text(
                   _selectedDate == null
@@ -353,8 +352,9 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                       : _formatDateDisplay(_selectedDate!),
                   style: TextStyle(
                     fontSize: 16,
-                    color:
-                        _selectedDate == null ? Colors.grey : Colors.black87,
+                    color: _selectedDate == null
+                        ? AppColors.textTertiary
+                        : AppColors.txt(context),
                   ),
                 ),
               ),
@@ -363,7 +363,9 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
 
             // Kategori seçici
             _isCategoriesLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: CircularProgressIndicator(
+                        color: AppColors.primary))
                 : DropdownButtonFormField<Category>(
                     value: _selectedCategory,
                     decoration: InputDecoration(
@@ -373,9 +375,9 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: AppColors.surf(context),
                     ),
-                    hint: const Text('Kategori seç'),
+                    hint: Text('Kategori seç'),
                     items: _categories.map((category) {
                       return DropdownMenuItem(
                         value: category,
@@ -392,7 +394,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
             ElevatedButton(
               onPressed: _isLoading ? null : _handleSave,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6C63FF),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -406,7 +408,8 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text('Kaydet', style: TextStyle(fontSize: 16)),
+                  : Text('Kaydet',
+                      style: TextStyle(fontSize: 16)),
             ),
           ],
         ),

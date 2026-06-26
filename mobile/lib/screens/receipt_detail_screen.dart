@@ -4,6 +4,7 @@ import '../services/receipt_service.dart';
 import 'package:intl/intl.dart';
 import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
+import '../core/theme/app_colors.dart';
 
 class ReceiptDetailScreen extends StatefulWidget {
   final Receipt receipt;
@@ -23,17 +24,18 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Fişi Sil', style: TextStyle(fontWeight: FontWeight.w700)),
-        content: const Text('Bu fişi silmek istediğine emin misin?'),
+        title: Text('Fişi Sil',
+            style: TextStyle(fontWeight: FontWeight.w700)),
+        content: Text('Bu fişi silmek istediğine emin misin?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Vazgeç'),
+            child: Text('Vazgeç'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Sil'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: Text('Sil'),
           ),
         ],
       ),
@@ -62,9 +64,9 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
     final receipt = widget.receipt;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7FF),
+
       appBar: AppBar(
-        title: const Text('Fiş Detayı'),
+        title: Text('Fiş Detayı'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -78,12 +80,12 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF6C63FF), Color(0xFF9C8FFF)],
+                  colors: [AppColors.primary, AppColors.primaryDark],
                 ),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF6C63FF).withOpacity(0.3),
+                    color: AppColors.primary.withOpacity(0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -97,12 +99,16 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                       color: Colors.white24,
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Icon(CategoryHelper.getIcon(receipt.categoryName), size: 36, color: Colors.white),
+                    child: Icon(
+                      CategoryHelper.getIcon(receipt.categoryName),
+                      size: 36,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     receipt.storeName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
@@ -111,8 +117,8 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                 '${_currencyFormat.format(receipt.totalAmount)} TL',
-                    style: const TextStyle(
+                    '${_currencyFormat.format(receipt.totalAmount)} TL',
+                    style: TextStyle(
                       fontSize: 36,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
@@ -127,9 +133,9 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
             // Detay kartı
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surf(context),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFEEEEF5)),
+                border: Border.all(color: AppColors.border),
               ),
               child: Column(
                 children: [
@@ -190,12 +196,12 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                           return Container(
                             height: 200,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6C63FF).withOpacity(0.06),
+                              color: AppColors.primaryDim,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Center(
                               child: CircularProgressIndicator(
-                                  color: Color(0xFF6C63FF)),
+                                  color: AppColors.primary),
                             ),
                           );
                         },
@@ -203,7 +209,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                           return Container(
                             height: 120,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6C63FF).withOpacity(0.06),
+                              color: AppColors.primaryDim,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Center(
@@ -211,11 +217,11 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.broken_image_outlined,
-                                      color: Color(0xFF9E9EBF), size: 32),
+                                      color: AppColors.textSecondary, size: 32),
                                   SizedBox(height: 8),
                                   Text('Fotoğraf yüklenemedi',
                                       style: TextStyle(
-                                          color: Color(0xFF9E9EBF),
+                                          color: AppColors.textSecondary,
                                           fontSize: 13)),
                                 ],
                               ),
@@ -236,7 +242,8 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.fullscreen, color: Colors.white, size: 16),
+                              Icon(Icons.fullscreen,
+                                  color: Colors.white, size: 16),
                               SizedBox(width: 4),
                               Text('Büyüt',
                                   style: TextStyle(
@@ -253,23 +260,38 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
             ],
 
             // Sil butonu
-            OutlinedButton.icon(
-              onPressed: _isDeleting ? null : _confirmDelete,
-              icon: _isDeleting
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.red),
-                    )
-                  : const Icon(Icons.delete_outline, color: Colors.red),
-              label: const Text('Fişi Sil',
-                  style: TextStyle(color: Colors.red)),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+            GestureDetector(
+              onTap: _isDeleting ? null : _confirmDelete,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.errorDim,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _isDeleting
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: AppColors.error),
+                          )
+                        : const Icon(Icons.delete_outline,
+                            color: AppColors.error, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Fişi Sil',
+                      style: TextStyle(
+                        color: AppColors.error,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -290,30 +312,31 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
       decoration: BoxDecoration(
         border: isLast
             ? null
-            : const Border(bottom: BorderSide(color: Color(0xFFEEEEF5))),
+            : const Border(
+                bottom: BorderSide(color: AppColors.border)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF6C63FF).withOpacity(0.08),
+              color: AppColors.primaryDim,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: const Color(0xFF6C63FF), size: 18),
+            child: Icon(icon, color: AppColors.primary, size: 18),
           ),
           const SizedBox(width: 14),
           Text(label,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 14,
-                  color: Color(0xFF9E9EBF),
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500)),
           const Spacer(),
           Text(value,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1A1A2E))),
+                  color: AppColors.textPrimary)),
         ],
       ),
     );
@@ -333,7 +356,8 @@ class _FullScreenImage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: Text(storeName, style: const TextStyle(color: Colors.white)),
+        title: Text(storeName,
+            style: TextStyle(color: Colors.white)),
       ),
       body: InteractiveViewer(
         minScale: 0.5,
