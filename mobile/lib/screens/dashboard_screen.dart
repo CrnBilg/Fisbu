@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'ocr_screen.dart';
 import 'package:intl/intl.dart';
 import 'profile_screen.dart';
 import 'add_receipt_screen.dart';
@@ -229,6 +230,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 12),
+                    _QuickActionCard(
+                      icon: Icons.document_scanner_outlined,
+                      label: 'Fişi Tara (OCR)',
+                      color: const Color(0xFF9C27B0),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const OcrScreen(),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 20),
 
