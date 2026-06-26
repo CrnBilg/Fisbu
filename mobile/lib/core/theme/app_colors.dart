@@ -3,51 +3,74 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Primary
-  static const Color primary = Color(0xFF5B5BD6);
-  static const Color primaryDim = Color(0xFFEDEDFC);
-  static const Color primaryDark = Color(0xFF7C7CF8);
-  static const Color primaryDimDark = Color(0xFF1E1E3A);
+  // Primary — Derin Violet (2025 trend)
+  static const Color primary = Color(0xFF6366F1);        // Indigo-500
+  static const Color primaryLight = Color(0xFF818CF8);   // Indigo-400
+  static const Color primaryDark = Color(0xFF4F46E5);    // Indigo-600
+  static const Color primaryDim = Color(0xFFEEF2FF);     // Indigo-50
+  static const Color primaryDimDark = Color(0xFF1E1B4B); // Indigo-950
 
-  // Secondary
-  static const Color secondary = Color(0xFF00C9A7);
-  static const Color secondaryDark = Color(0xFF00D4B0);
+  // Secondary — Vibrant Cyan/Teal
+  static const Color secondary = Color(0xFF06B6D4);      // Cyan-500
+  static const Color secondaryDim = Color(0xFFECFEFF);   // Cyan-50
+  static const Color secondaryDark = Color(0xFF0891B2);  // Cyan-600
 
-  // Background
-  static const Color background = Color(0xFFF7F7FB);
-  static const Color backgroundDark = Color(0xFF0F0F17);
+  // Accent — Rose (trending 2025)
+  static const Color accent = Color(0xFFF43F5E);         // Rose-500
+  static const Color accentDim = Color(0xFFFFF1F2);      // Rose-50
 
-  // Surface
+  // Light Mode
+  static const Color background = Color(0xFFF8FAFC);     // Slate-50
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surface2 = Color(0xFFF0F0F8);
-  static const Color surfaceDark = Color(0xFF1A1A2E);
-  static const Color surface2Dark = Color(0xFF252540);
+  static const Color surface2 = Color(0xFFF1F5F9);       // Slate-100
+  static const Color border = Color(0xFFE2E8F0);         // Slate-200
+  static const Color borderLight = Color(0xFFF1F5F9);    // Slate-100
 
-  // Border
-  static const Color border = Color(0xFFE4E4F0);
-  static const Color borderDark = Color(0xFF2E2E50);
+  // Dark Mode
+  static const Color backgroundDark = Color(0xFF0F172A);  // Slate-900
+  static const Color surfaceDark = Color(0xFF1E293B);     // Slate-800
+  static const Color surface2Dark = Color(0xFF334155);    // Slate-700
+  static const Color borderDark = Color(0xFF334155);      // Slate-700
+  static const Color borderLightDark = Color(0xFF1E293B); // Slate-800
 
-  // Text
-  static const Color textPrimary = Color(0xFF1A1A2E);
-  static const Color textSecondary = Color(0xFF6E6E8A);
-  static const Color textTertiary = Color(0xFFA0A0B8);
-  static const Color textPrimaryDark = Color(0xFFF0F0FF);
-  static const Color textSecondaryDark = Color(0xFF9090B0);
-  static const Color textTertiaryDark = Color(0xFF5A5A7A);
+  // Text Light
+  static const Color textPrimary = Color(0xFF0F172A);     // Slate-900
+  static const Color textSecondary = Color(0xFF64748B);   // Slate-500
+  static const Color textTertiary = Color(0xFF94A3B8);    // Slate-400
+
+  // Text Dark
+  static const Color textPrimaryDark = Color(0xFFF8FAFC);  // Slate-50
+  static const Color textSecondaryDark = Color(0xFF94A3B8); // Slate-400
+  static const Color textTertiaryDark = Color(0xFF64748B);  // Slate-500
 
   // Semantic
-  static const Color error = Color(0xFFE5484D);
-  static const Color errorDim = Color(0xFFFFF5F5);
-  static const Color success = Color(0xFF30A46C);
-  static const Color successDim = Color(0xFFEEFBF3);
-  static const Color warning = Color(0xFFF76B15);
-  static const Color warningDim = Color(0xFFFFF4EC);
+  static const Color error = Color(0xFFEF4444);           // Red-500
+  static const Color errorDim = Color(0xFFFEF2F2);        // Red-50
+  static const Color errorDimDark = Color(0xFF450A0A);
+  static const Color success = Color(0xFF10B981);         // Emerald-500
+  static const Color successDim = Color(0xFFECFDF5);      // Emerald-50
+  static const Color warning = Color(0xFFF59E0B);         // Amber-500
+  static const Color warningDim = Color(0xFFFFFBEB);      // Amber-50
 
-  // Kategori renkleri
-  static const Color categoryMarket = Color(0xFF30A46C);
-  static const Color categoryGiyim = Color(0xFFE5484D);
-  static const Color categoryElektronik = Color(0xFF0091FF);
-  static const Color categoryRestoran = Color(0xFFF76B15);
-  static const Color categoryUlasim = Color(0xFF8E4EC6);
-  static const Color categoryDiger = Color(0xFF6E6E8A);
+  // Kategori renkleri (vibrant & modern)
+  static const Color categoryMarket = Color(0xFF10B981);   // Emerald
+  static const Color categoryGiyim = Color(0xFFF43F5E);    // Rose
+  static const Color categoryElektronik = Color(0xFF6366F1); // Indigo
+  static const Color categoryRestoran = Color(0xFFF59E0B);  // Amber
+  static const Color categoryUlasim = Color(0xFF8B5CF6);    // Violet
+  static const Color categoryDiger = Color(0xFF64748B); 
+  // Context'ten tema rengini al
+  static Color bg(BuildContext context) =>
+      Theme.of(context).scaffoldBackgroundColor;
+  
+  static Color surf(BuildContext context) =>
+      Theme.of(context).colorScheme.surface;
+      
+  static Color txt(BuildContext context) =>
+      Theme.of(context).colorScheme.onSurface;
+      
+  static Color brd(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? AppColors.borderDark
+          : AppColors.border;    
 }

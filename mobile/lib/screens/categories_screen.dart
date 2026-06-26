@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/category.dart';
 import '../services/receipt_service.dart';
-import '../core/utils/category_helper.dart';
+import '../core/theme/app_colors.dart';
 
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
@@ -43,7 +43,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   Future<void> _showAddCategoryDialog() async {
     final nameController = TextEditingController();
-    Color selectedColor = const Color(0xFF6C63FF);
+    Color selectedColor = AppColors.primary;
 
     final result = await showDialog<bool>(
       context: context,
@@ -52,7 +52,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text(
+          title: Text(
             'Yeni Kategori',
             style: TextStyle(fontWeight: FontWeight.w700),
           ),
@@ -69,12 +69,12 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Renk seç',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF9E9EBF),
+                  color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 10),
@@ -95,10 +95,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         color: color,
                         shape: BoxShape.circle,
                         border: isSelected
-                            ? Border.all(
-                                color: Colors.white,
-                                width: 3,
-                              )
+                            ? Border.all(color: Colors.white, width: 3)
                             : null,
                         boxShadow: isSelected
                             ? [
@@ -111,11 +108,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                             : null,
                       ),
                       child: isSelected
-                          ? const Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 16,
-                            )
+                          ? const Icon(Icons.check,
+                              color: Colors.white, size: 16)
                           : null,
                     ),
                   );
@@ -126,17 +120,17 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Vazgeç'),
+              child: Text('Vazgeç'),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
+                    horizontal: 20, vertical: 10),
               ),
-              child: const Text('Ekle'),
+              child: Text('Ekle'),
             ),
           ],
         ),
@@ -165,33 +159,33 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   static const _colorOptions = [
-    Color(0xFF6C63FF),
-    Color(0xFFFF6584),
-    Color(0xFF00BFA6),
-    Color(0xFFFF9800),
-    Color(0xFF2196F3),
-    Color(0xFF4CAF50),
+    AppColors.primary,
+    AppColors.error,
+    AppColors.secondary,
+    AppColors.warning,
+    AppColors.categoryElektronik,
+    AppColors.success,
     Color(0xFFE91E63),
-    Color(0xFF9C27B0),
+    AppColors.categoryUlasim,
     Color(0xFFFF5722),
-    Color(0xFF607D8B),
+    AppColors.textSecondary,
   ];
 
   Color _parseColor(String? hex) {
-    if (hex == null) return const Color(0xFF6C63FF);
+    if (hex == null) return AppColors.primary;
     try {
       return Color(int.parse(hex.replaceFirst('#', '0xFF')));
     } catch (e) {
-      return const Color(0xFF6C63FF);
+      return AppColors.primary;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7FF),
+
       appBar: AppBar(
-        title: const Text('Kategorilerim'),
+        title: Text('Kategorilerim'),
       ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
@@ -203,7 +197,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      );
     }
 
     if (_errorMessage != null) {
@@ -215,7 +211,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadCategories,
-              child: const Text('Tekrar Dene'),
+              child: Text('Tekrar Dene'),
             ),
           ],
         ),
@@ -229,31 +225,31 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: const Color(0xFF6C63FF).withOpacity(0.08),
+              decoration: const BoxDecoration(
+                color: AppColors.primaryDim,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.category_outlined,
                 size: 48,
-                color: Color(0xFF6C63FF),
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Henüz kategori yok',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1A1A2E),
+                color: AppColors.txt(context),
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               '+ butonuna basarak kategori ekle',
               style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF9E9EBF),
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -272,9 +268,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surf(context),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFEEEEF5)),
+            border: Border.all(color: AppColors.border),
             boxShadow: [
               BoxShadow(
                 color: color.withOpacity(0.06),
@@ -293,7 +289,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  CategoryHelper.getIcon(category.name),
+                  Icons.label_outline,
                   color: color,
                   size: 22,
                 ),
@@ -301,10 +297,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               const SizedBox(width: 14),
               Text(
                 category.name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A1A2E),
+                  color: AppColors.txt(context),
                 ),
               ),
               const Spacer(),

@@ -7,6 +7,7 @@ import '../services/receipt_service.dart';
 import '../models/receipt.dart';
 import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
+import '../core/theme/app_colors.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -77,7 +78,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7FF),
+
       body: RefreshIndicator(
         onRefresh: _loadReceipts,
         child: CustomScrollView(
@@ -86,10 +87,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               expandedHeight: 200,
               floating: false,
               pinned: true,
-              backgroundColor: const Color(0xFF6C63FF),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               centerTitle: false,
-              title: const Text(
+              title: Text(
                 'FişBu',
                 style: TextStyle(
                   color: Colors.white,
@@ -114,11 +115,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(
-                  decoration: const BoxDecoration(
+                 decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0xFF6C63FF), Color(0xFF9C8FFF)],
+                      colors: Theme.of(context).brightness == Brightness.dark
+                          ? [AppColors.primaryDimDark, AppColors.surfaceDark]
+                          : [AppColors.primary, AppColors.primaryDark],
                     ),
                   ),
                   child: SafeArea(
@@ -128,7 +131,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          const Text(
+                          Text(
                             'Bu Ay Harcamaların',
                             style: TextStyle(
                               color: Colors.white70,
@@ -148,7 +151,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 )
                               : Text(
                                   '${_currencyFormat.format(_thisMonthTotal)} TL',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 36,
                                     fontWeight: FontWeight.w800,
@@ -169,7 +172,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               _receipts.isEmpty
                                   ? 'Henüz fiş eklenmedi'
                                   : '${_receipts.length} fiş kaydedildi',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
                               ),
@@ -189,14 +192,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Hızlı erişim butonları
                     Row(
                       children: [
                         Expanded(
                           child: _QuickActionCard(
                             icon: Icons.add_circle_outline,
                             label: 'Fiş Ekle',
-                            color: const Color(0xFF6C63FF),
+                            color: AppColors.primary,
                             onTap: () async {
                               await Navigator.push(
                                 context,
@@ -213,7 +215,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           child: _QuickActionCard(
                             icon: Icons.receipt_long_outlined,
                             label: 'Tüm Fişler',
-                            color: const Color(0xFF00BFA6),
+                            color: AppColors.secondary,
                             onTap: () async {
                               await Navigator.push(
                                 context,
@@ -229,7 +231,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // En çok harcanan kategori kartı
                     if (_topCategory != null && !_isLoading)
                       Container(
                         margin: const EdgeInsets.only(bottom: 20),
@@ -259,11 +260,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Bu ay en çok harcama',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Color(0xFF9E9EBF),
+                                    color: AppColors.textSecondary,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -291,16 +292,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
 
-                    // Son fişler başlığı
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Son Fişlerin',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1A1A2E),
+                            color: AppColors.txt(context),
                           ),
                         ),
                         TextButton(
@@ -313,7 +313,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             );
                             _loadReceipts();
                           },
-                          child: const Text('Tümünü gör'),
+                          child: Text('Tümünü gör'),
                         ),
                       ],
                     ),
@@ -324,7 +324,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: Padding(
                               padding: EdgeInsets.all(40),
                               child: CircularProgressIndicator(
-                                color: Color(0xFF6C63FF),
+                                color: AppColors.primary,
                               ),
                             ),
                           )
@@ -337,31 +337,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       Container(
                                         padding: const EdgeInsets.all(24),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF6C63FF).withOpacity(0.08),
+                                          color: AppColors.primaryDim,
                                           shape: BoxShape.circle,
                                         ),
                                         child: const Icon(
                                           Icons.receipt_long_outlined,
                                           size: 48,
-                                          color: Color(0xFF6C63FF),
+                                          color: AppColors.primary,
                                         ),
                                       ),
                                       const SizedBox(height: 16),
-                                      const Text(
+                                      Text(
                                         'Henüz fiş eklemedin',
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
-                                          color: Color(0xFF1A1A2E),
+                                          color: AppColors.txt(context),
                                         ),
                                       ),
                                       const SizedBox(height: 6),
-                                      const Text(
+                                      Text(
                                         'İlk fişini eklemek için "Fiş Ekle"\nbutonuna dokun',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           fontSize: 13,
-                                          color: Color(0xFF9E9EBF),
+                                          color: AppColors.textSecondary,
                                           height: 1.5,
                                         ),
                                       ),
@@ -375,9 +375,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     margin: const EdgeInsets.only(bottom: 10),
                                     padding: const EdgeInsets.all(14),
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      color: AppColors.surf(context),
                                       borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(color: const Color(0xFFEEEEF5)),
+                                      border: Border.all(color: AppColors.border),
                                     ),
                                     child: Row(
                                       children: [
@@ -400,10 +400,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             children: [
                                               Text(
                                                 receipt.storeName,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontWeight: FontWeight.w600,
                                                   fontSize: 15,
-                                                  color: Color(0xFF1A1A2E),
+                                                  color: AppColors.txt(context),
                                                 ),
                                               ),
                                               const SizedBox(height: 4),
@@ -430,9 +430,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                   const SizedBox(width: 6),
                                                   Text(
                                                     DateFormatter.formatShort(receipt.receiptDate),
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       fontSize: 11,
-                                                      color: Color(0xFF9E9EBF),
+                                                      color: AppColors.textSecondary,
                                                     ),
                                                   ),
                                                 ],
@@ -442,10 +442,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         ),
                                         Text(
                                           '${_currencyFormat.format(receipt.totalAmount)} TL',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontWeight: FontWeight.w800,
                                             fontSize: 15,
-                                            color: Color(0xFF6C63FF),
+                                            color: AppColors.primary,
                                           ),
                                         ),
                                       ],
@@ -484,9 +484,9 @@ class _QuickActionCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surf(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFEEEEF5)),
+          border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
               color: color.withOpacity(0.08),
@@ -508,10 +508,10 @@ class _QuickActionCard extends StatelessWidget {
             const SizedBox(width: 10),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1A2E),
+                color: AppColors.txt(context),
               ),
             ),
           ],

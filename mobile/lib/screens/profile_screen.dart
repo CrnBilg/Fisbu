@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'auth_wrapper.dart';
 import 'categories_screen.dart';
+import '../core/theme/app_colors.dart';
+import '../main.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -27,27 +29,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7FF),
+
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 200,
             floating: false,
             pinned: true,
-            backgroundColor: const Color(0xFF6C63FF),
+            backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             centerTitle: false,
-            title: const Text(
+            title: Text(
               'Profil',
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
             ),
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF6C63FF), Color(0xFF9C8FFF)],
+                    colors: Theme.of(context).brightness == Brightness.dark
+                        ? [AppColors.primaryDimDark, AppColors.surfaceDark]
+                        : [AppColors.primary, AppColors.primaryDark],
                   ),
                 ),
                 child: SafeArea(
@@ -70,7 +74,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 12),
                       Text(
                         _email ?? 'Yükleniyor...',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -90,9 +94,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surf(context),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFEEEEF5)),
+                      border: Border.all(color: AppColors.border),
                     ),
                     child: Column(
                       children: [
@@ -114,7 +118,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           label: 'Bildirimler',
                           onTap: () {},
                         ),
-                        
+                       _buildMenuItemWithTrailing(
+                          icon: Icons.dark_mode_outlined,
+                          label: 'Karanlık Mod',
+                          trailing: Switch(
+                            value: MyApp.of(context)?.isDarkMode ?? false,
+                            onChanged: (_) async {
+                              await MyApp.of(context)?.toggleTheme();
+                              setState(() {});
+                            },
+                          ),
+                        ),
                         _buildMenuItem(
                           icon: Icons.info_outline,
                           label: 'Hakkında',
@@ -142,19 +156,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
+                        color: AppColors.errorDim,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.red.shade100),
+                        border: Border.all(
+                            color: AppColors.error.withOpacity(0.2)),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.logout_rounded, color: Colors.red.shade400, size: 20),
-                          const SizedBox(width: 10),
+                          Icon(Icons.logout_rounded,
+                              color: AppColors.error, size: 20),
+                          SizedBox(width: 10),
                           Text(
                             'Çıkış Yap',
                             style: TextStyle(
-                              color: Colors.red.shade400,
+                              color: AppColors.error,
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                             ),
@@ -167,6 +183,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuItemWithTrailing({
+    required IconData icon,
+    required String label,
+    required Widget trailing,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.border)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primaryDim,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 18),
+          ),
+          const SizedBox(width: 14),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.txt(context),
+            ),
+          ),
+          const Spacer(),
+          trailing,
         ],
       ),
     );
@@ -190,67 +242,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
         decoration: BoxDecoration(
           border: isLast
               ? null
-              : const Border(bottom: BorderSide(color: Color(0xFFEEEEF5))),
+              : const Border(bottom: BorderSide(color: AppColors.border)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF6C63FF).withOpacity(0.08),
+                color: AppColors.primaryDim,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: const Color(0xFF6C63FF), size: 18),
+              child: Icon(icon, color: AppColors.primary, size: 18),
             ),
             const SizedBox(width: 14),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1A2E),
+                color: AppColors.txt(context),
               ),
             ),
             const Spacer(),
-            const Icon(Icons.chevron_right, color: Color(0xFF9E9EBF), size: 20),
+            const Icon(Icons.chevron_right,
+                color: AppColors.textSecondary, size: 20),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildMenuItemWithTrailing({
-    required IconData icon,
-    required String label,
-    required Widget trailing,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFEEEEF5))),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF6C63FF).withOpacity(0.08),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: const Color(0xFF6C63FF), size: 18),
-          ),
-          const SizedBox(width: 14),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1A1A2E),
-            ),
-          ),
-          const Spacer(),
-          trailing,
-        ],
       ),
     );
   }
