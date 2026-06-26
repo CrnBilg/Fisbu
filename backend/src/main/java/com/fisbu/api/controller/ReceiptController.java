@@ -1,7 +1,7 @@
 package com.fisbu.api.controller;
 
 import java.util.List;
-
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -36,7 +36,7 @@ public class ReceiptController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ReceiptResponse createReceipt(@AuthenticationPrincipal UserDetails userDetails,
-                                          @RequestBody ReceiptRequest request) {
+                                          @RequestBody @Valid ReceiptRequest request) {
         return receiptService.createReceipt(userDetails.getUsername(), request);
     }
     @GetMapping("/{id}")
