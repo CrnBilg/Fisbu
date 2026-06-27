@@ -43,10 +43,28 @@
 					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
 					<key>UISceneStoryboardFile</key>
 					<string>Main</string>
-				</dict>
+				        <key>NSCameraUsageDescription</key>
+        <string>Fiş fotoğrafı çekmek için kamera erişimi gerekiyor</string>
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>Fiş fotoğrafı seçmek için galeri erişimi gerekiyor</string>
+        <key>NSMicrophoneUsageDescription</key>
+        <string>Kamera kullanımı için mikrofon erişimi gerekiyor</string>
+</dict>
 			</array>
-		</dict>
-	</dict>
+		        <key>NSCameraUsageDescription</key>
+        <string>Fiş fotoğrafı çekmek için kamera erişimi gerekiyor</string>
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>Fiş fotoğrafı seçmek için galeri erişimi gerekiyor</string>
+        <key>NSMicrophoneUsageDescription</key>
+        <string>Kamera kullanımı için mikrofon erişimi gerekiyor</string>
+</dict>
+	        <key>NSCameraUsageDescription</key>
+        <string>Fiş fotoğrafı çekmek için kamera erişimi gerekiyor</string>
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>Fiş fotoğrafı seçmek için galeri erişimi gerekiyor</string>
+        <key>NSMicrophoneUsageDescription</key>
+        <string>Kamera kullanımı için mikrofon erişimi gerekiyor</string>
+</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -66,5 +84,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+        <key>NSCameraUsageDescription</key>
+        <string>Fiş fotoğrafı çekmek için kamera erişimi gerekiyor</string>
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>Fiş fotoğrafı seçmek için galeri erişimi gerekiyor</string>
+        <key>NSMicrophoneUsageDescription</key>
+        <string>Kamera kullanımı için mikrofon erişimi gerekiyor</string>
 </dict>
 </plist>
