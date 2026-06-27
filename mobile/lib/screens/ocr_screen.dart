@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import '../services/ocr_parser.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
@@ -15,6 +15,9 @@ class OcrScreen extends StatefulWidget {
 class _OcrScreenState extends State<OcrScreen> {
   XFile? _selectedImage;
   String _recognizedText = '';
+  String? _extractedAmount;
+  String? _extractedDate;
+  String? _extractedStoreName;
   bool _isProcessing = false;
 
   final TextRecognizer _textRecognizer = TextRecognizer();
@@ -47,10 +50,14 @@ class _OcrScreenState extends State<OcrScreen> {
       final inputImage = InputImage.fromFilePath(image.path);
       final recognized = await _textRecognizer.processImage(inputImage);
 
+      final text = recognized.text;
       setState(() {
-        _recognizedText = recognized.text.isEmpty
+        _recognizedText = text.isEmpty
             ? 'Metin bulunamadı. Daha net bir fotoğraf deneyin.'
-            : recognized.text;
+            : text;
+        _extractedAmount = OcrParser.extractAmount(text)?.toStringAsFixed(2);
+        _extractedDate = OcrParser.extractDate(text);
+        _extractedStoreName = OcrParser.extractStoreName(text);
         _isProcessing = false;
       });
     } catch (e) {
@@ -59,6 +66,34 @@ class _OcrScreenState extends State<OcrScreen> {
         _isProcessing = false;
       });
     }
+  }
+
+  Widget _buildExtractedRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Text(
+            '$label: ',
+            style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xFF9E9EBF),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A1A2E),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -199,8 +234,52 @@ class _OcrScreenState extends State<OcrScreen> {
                     ),
                   ],
                 ),
-              )
-            else if (_recognizedText.isNotEmpty)
+              ),
+            if (_extractedStoreName != null ||
+                _extractedAmount != null ||
+                _extractedDate != null)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6C63FF).withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFF6C63FF).withOpacity(0.2),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          color: Color(0xFF6C63FF),
+                          size: 18,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Otomatik Çıkarılan Bilgiler',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF6C63FF),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (_extractedStoreName != null)
+                      _buildExtractedRow('Mağaza', _extractedStoreName!),
+                    if (_extractedAmount != null)
+                      _buildExtractedRow('Tutar', '$_extractedAmount TL'),
+                    if (_extractedDate != null)
+                      _buildExtractedRow('Tarih', _extractedDate!),
+                  ],
+                ),
+              ),
+            if (!_isProcessing && _recognizedText.isNotEmpty)
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
