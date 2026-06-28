@@ -89,7 +89,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
     final picker = ImagePicker();
     final image = await picker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 80,
+      imageQuality: 40,
     );
     if (image != null) {
       setState(() => _selectedImage = image);
@@ -100,7 +100,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
     final picker = ImagePicker();
     final image = await picker.pickImage(
       source: ImageSource.camera,
-      imageQuality: 80,
+      imageQuality: 40,
     );
     if (image != null) {
       setState(() => _selectedImage = image);
