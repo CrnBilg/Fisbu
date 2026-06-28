@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import '../models/receipt.dart';
 import '../models/category.dart';
 import 'auth_service.dart';
@@ -92,6 +93,30 @@ class ReceiptService {
       return Category.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Kategori eklenemedi: ${response.statusCode}');
+    }
+  }
+
+  static Future<String> uploadImage(XFile image) async {
+    final token = await AuthService.getToken();
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$_baseUrl/receipts/upload'),
+    );
+    request.headers['Authorization'] = 'Bearer $token';
+    final bytes = await image.readAsBytes();
+    final multipartFile = http.MultipartFile.fromBytes(
+      'file',
+      bytes,
+      filename: image.name,
+    );
+    request.files.add(multipartFile);
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return data['imageUrl'] as String;
+    } else {
+      throw Exception('Fotoğraf yüklenemedi: ${response.statusCode}');
     }
   }
 }
