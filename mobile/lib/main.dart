@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/auth_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  final isDark = prefs.getBool('isDarkMode') ?? false;
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
     ),
   );
-  runApp(const MyApp(initialDarkMode: false));
+  runApp(MyApp(initialDarkMode: isDark));
 }
 
 class MyApp extends StatefulWidget {
@@ -30,14 +33,15 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _themeMode =
-        widget.initialDarkMode ? ThemeMode.dark : ThemeMode.light;
+    _themeMode = widget.initialDarkMode ? ThemeMode.dark : ThemeMode.light;
   }
 
   Future<void> toggleTheme() async {
     final newMode =
         _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     setState(() => _themeMode = newMode);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkMode', newMode == ThemeMode.dark);
   }
 
   bool get isDarkMode => _themeMode == ThemeMode.dark;
