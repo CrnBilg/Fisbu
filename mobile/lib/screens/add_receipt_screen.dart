@@ -7,7 +7,16 @@ import '../models/category.dart';
 import '../core/theme/app_colors.dart';
 
 class AddReceiptScreen extends StatefulWidget {
-  const AddReceiptScreen({super.key});
+  final String? initialStoreName;
+  final String? initialAmount;
+  final String? initialDate;
+
+  const AddReceiptScreen({
+    super.key,
+    this.initialStoreName,
+    this.initialAmount,
+    this.initialDate,
+  });
 
   @override
   State<AddReceiptScreen> createState() => _AddReceiptScreenState();
@@ -28,6 +37,19 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
   void initState() {
     super.initState();
     _loadCategories();
+
+    // OCR'dan gelen verileri otomatik doldur
+    if (widget.initialStoreName != null) {
+      _storeController.text = widget.initialStoreName!;
+    }
+    if (widget.initialAmount != null) {
+      _amountController.text = widget.initialAmount!;
+    }
+    if (widget.initialDate != null) {
+      try {
+        _selectedDate = DateTime.parse(widget.initialDate!);
+      } catch (_) {}
+    }
   }
 
   Future<void> _loadCategories() async {
@@ -98,10 +120,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
           children: [
             Text(
               'Fiş Fotoğrafı',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 16),
             ListTile(
@@ -111,8 +130,10 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                   color: AppColors.primaryDim,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.photo_library_outlined,
-                    color: AppColors.primary),
+                child: const Icon(
+                  Icons.photo_library_outlined,
+                  color: AppColors.primary,
+                ),
               ),
               title: Text('Galeriden Seç'),
               onTap: () {
@@ -127,8 +148,10 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                   color: AppColors.successDim,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.camera_alt_outlined,
-                    color: AppColors.success),
+                child: const Icon(
+                  Icons.camera_alt_outlined,
+                  color: AppColors.success,
+                ),
               ),
               title: Text('Kamerayla Çek'),
               onTap: () {
@@ -144,11 +167,15 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                     color: AppColors.errorDim,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.delete_outline,
-                      color: AppColors.error),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: AppColors.error,
+                  ),
                 ),
-                title: Text('Fotoğrafı Kaldır',
-                    style: TextStyle(color: AppColors.error)),
+                title: Text(
+                  'Fotoğrafı Kaldır',
+                  style: TextStyle(color: AppColors.error),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   setState(() => _selectedImage = null);
@@ -174,9 +201,9 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
 
     final amount = double.tryParse(amountText.replaceAll(',', '.'));
     if (amount == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Geçerli bir tutar gir')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Geçerli bir tutar gir')));
       return;
     }
 
@@ -197,16 +224,16 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Fiş başarıyla eklendi!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Fiş başarıyla eklendi!')));
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Hata: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -223,10 +250,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
-      appBar: AppBar(
-        title: Text('Fiş Ekle'),
-      ),
+      appBar: AppBar(title: Text('Fiş Ekle')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -318,8 +342,9 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
             // Tutar
             TextField(
               controller: _amountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: InputDecoration(
                 labelText: 'Tutar (TL)',
                 prefixIcon: const Icon(Icons.payments_outlined),
@@ -364,8 +389,8 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
             // Kategori seçici
             _isCategoriesLoading
                 ? const Center(
-                    child: CircularProgressIndicator(
-                        color: AppColors.primary))
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  )
                 : DropdownButtonFormField<Category>(
                     value: _selectedCategory,
                     decoration: InputDecoration(
@@ -406,10 +431,11 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
-                  : Text('Kaydet',
-                      style: TextStyle(fontSize: 16)),
+                  : Text('Kaydet', style: TextStyle(fontSize: 16)),
             ),
           ],
         ),

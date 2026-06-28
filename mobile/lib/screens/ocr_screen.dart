@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
+import 'add_receipt_screen.dart';
 
 class OcrScreen extends StatefulWidget {
   const OcrScreen({super.key});
@@ -24,10 +25,7 @@ class _OcrScreenState extends State<OcrScreen> {
 
   Future<void> _pickAndRecognize(ImageSource source) async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(
-      source: source,
-      imageQuality: 90,
-    );
+    final image = await picker.pickImage(source: source, imageQuality: 90);
 
     if (image == null) return;
 
@@ -227,10 +225,7 @@ class _OcrScreenState extends State<OcrScreen> {
                     SizedBox(height: 12),
                     Text(
                       'Metin okunuyor...',
-                      style: TextStyle(
-                        color: Color(0xFF9E9EBF),
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Color(0xFF9E9EBF), fontSize: 14),
                     ),
                   ],
                 ),
@@ -307,11 +302,41 @@ class _OcrScreenState extends State<OcrScreen> {
                           ),
                         ),
                         const Spacer(),
-                        TextButton(
-                          onPressed: () {
-                            setState(() => _recognizedText = '');
-                          },
-                          child: const Text('Temizle'),
+                        Row(
+                          children: [
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _recognizedText = '';
+                                  _extractedAmount = null;
+                                  _extractedDate = null;
+                                  _extractedStoreName = null;
+                                });
+                              },
+                              child: const Text('Temizle'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => AddReceiptScreen(
+                                      initialStoreName: _extractedStoreName,
+                                      initialAmount: _extractedAmount,
+                                      initialDate: _extractedDate,
+                                    ),
+                                  ),
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFF6C63FF),
+                              ),
+                              child: const Text(
+                                'Forma Aktar →',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
