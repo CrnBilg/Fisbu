@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'ocr_screen.dart';
 import 'package:intl/intl.dart';
 import 'profile_screen.dart';
 import 'add_receipt_screen.dart';
@@ -9,7 +8,6 @@ import '../models/receipt.dart';
 import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
 import '../core/theme/app_colors.dart';
-import 'package:lottie/lottie.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -231,20 +229,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    _QuickActionCard(
-                      icon: Icons.document_scanner_outlined,
-                      label: 'Fişi Tara (OCR)',
-                      color: const Color(0xFF9C27B0),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const OcrScreen(),
-                          ),
-                        );
-                      },
-                    ),
                     const SizedBox(height: 20),
 
                     if (_topCategory != null && !_isLoading)
@@ -350,12 +334,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   padding: const EdgeInsets.symmetric(vertical: 40),
                                   child: Column(
                                     children: [
-                                      Lottie.asset(
-                                        'assets/animations/empty_receipt.json',
-                                        width: 180,
-                                        height: 180,
-                                        repeat: true,
-                                      ),
+                                      Icon(Icons.receipt_long_outlined, size: 80, color: AppColors.primary),
                                       const SizedBox(height: 8),
                                       Text(
                                         'Henüz fiş eklemedin',

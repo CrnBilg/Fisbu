@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Mobile</string>
+	<string>FişBu</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -26,6 +26,12 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Fiş fotoğrafı çekmek için kamera erişimi gerekiyor</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Kamera kullanımı için mikrofon erişimi gerekiyor</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Fiş fotoğrafı seçmek için galeri erişimi gerekiyor</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -43,28 +49,10 @@
 					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
 					<key>UISceneStoryboardFile</key>
 					<string>Main</string>
-				        <key>NSCameraUsageDescription</key>
-        <string>Fiş fotoğrafı çekmek için kamera erişimi gerekiyor</string>
-        <key>NSPhotoLibraryUsageDescription</key>
-        <string>Fiş fotoğrafı seçmek için galeri erişimi gerekiyor</string>
-        <key>NSMicrophoneUsageDescription</key>
-        <string>Kamera kullanımı için mikrofon erişimi gerekiyor</string>
-</dict>
+				</dict>
 			</array>
-		        <key>NSCameraUsageDescription</key>
-        <string>Fiş fotoğrafı çekmek için kamera erişimi gerekiyor</string>
-        <key>NSPhotoLibraryUsageDescription</key>
-        <string>Fiş fotoğrafı seçmek için galeri erişimi gerekiyor</string>
-        <key>NSMicrophoneUsageDescription</key>
-        <string>Kamera kullanımı için mikrofon erişimi gerekiyor</string>
-</dict>
-	        <key>NSCameraUsageDescription</key>
-        <string>Fiş fotoğrafı çekmek için kamera erişimi gerekiyor</string>
-        <key>NSPhotoLibraryUsageDescription</key>
-        <string>Fiş fotoğrafı seçmek için galeri erişimi gerekiyor</string>
-        <key>NSMicrophoneUsageDescription</key>
-        <string>Kamera kullanımı için mikrofon erişimi gerekiyor</string>
-</dict>
+		</dict>
+	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -84,11 +72,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-        <key>NSCameraUsageDescription</key>
-        <string>Fiş fotoğrafı çekmek için kamera erişimi gerekiyor</string>
-        <key>NSPhotoLibraryUsageDescription</key>
-        <string>Fiş fotoğrafı seçmek için galeri erişimi gerekiyor</string>
-        <key>NSMicrophoneUsageDescription</key>
-        <string>Kamera kullanımı için mikrofon erişimi gerekiyor</string>
 </dict>
 </plist>

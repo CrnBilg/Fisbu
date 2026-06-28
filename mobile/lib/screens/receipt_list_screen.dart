@@ -6,7 +6,6 @@ import '../services/receipt_service.dart';
 import 'package:intl/intl.dart';
 import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
-import 'package:lottie/lottie.dart';
 import '../core/theme/app_colors.dart';
 
 class ReceiptListScreen extends StatefulWidget {
@@ -215,12 +214,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Lottie.asset(
-              'assets/animations/empty_receipt.json',
-              width: 220,
-              height: 220,
-              repeat: true,
-            ),
+            Icon(Icons.receipt_long_outlined, size: 80, color: AppColors.primary),
             const SizedBox(height: 8),
             Text(
               'Henüz fiş yok',

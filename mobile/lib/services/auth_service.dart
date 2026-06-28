@@ -1,11 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthService {
   static const String _baseUrl = 'https://fisbu-production-613c.up.railway.app';
-  static const _storage = FlutterSecureStorage();
-  static const String _tokenKey = 'jwt_token';
+  static String? _token;
 
   static Future<AuthResult> login(String email, String password) async {
     try {
@@ -14,12 +12,9 @@ class AuthService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
-
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-
       if (response.statusCode == 200) {
-        final token = body['token'] as String;
-        await _storage.write(key: _tokenKey, value: token);
+        _token = body['token'] as String;
         return AuthResult(success: true);
       } else {
         final error = body['error'] as String? ?? 'Bilinmeyen hata';
@@ -30,7 +25,6 @@ class AuthService {
     }
   }
 
-
   static Future<AuthResult> register(String email, String password) async {
     try {
       final response = await http.post(
@@ -38,7 +32,6 @@ class AuthService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
-
       if (response.statusCode == 200) {
         return AuthResult(success: true);
       } else {
@@ -51,24 +44,16 @@ class AuthService {
     }
   }
 
-  static Future<String?> getToken() async {
-    return await _storage.read(key: _tokenKey);
-  }
+  static Future<String?> getToken() async => _token;
 
-  static Future<void> logout() async {
-    await _storage.delete(key: _tokenKey);
-  }
+  static Future<void> logout() async => _token = null;
 
-static Future<bool> isLoggedIn() async {
-    final token = await getToken();
-  
-    return token != null;
-  }
+  static Future<bool> isLoggedIn() async => _token != null;
+
   static Future<String?> getEmail() async {
-    final token = await getToken();
-    if (token == null) return null;
+    if (_token == null) return null;
     try {
-      final parts = token.split('.');
+      final parts = _token!.split('.');
       if (parts.length != 3) return null;
       final payload = parts[1];
       final normalized = base64Url.normalize(payload);
@@ -84,6 +69,5 @@ static Future<bool> isLoggedIn() async {
 class AuthResult {
   final bool success;
   final String? errorMessage;
-
   AuthResult({required this.success, this.errorMessage});
 }
