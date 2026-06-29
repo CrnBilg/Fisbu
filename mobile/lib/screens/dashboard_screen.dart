@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'profile_screen.dart';
 import 'add_receipt_screen.dart';
 import 'receipt_list_screen.dart';
+import 'statistics_screen.dart';
 import '../services/receipt_service.dart';
 import '../models/receipt.dart';
 import '../core/utils/date_formatter.dart';
@@ -228,6 +229,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 12),
+                    _QuickActionCard(
+                      icon: Icons.bar_chart_outlined,
+                      label: 'İstatistikler',
+                      color: const Color(0xFFFF6B6B),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const StatisticsScreen(),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 20),
 
