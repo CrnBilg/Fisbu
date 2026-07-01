@@ -2,7 +2,7 @@ import 'dart:io';
 import '../services/ocr_parser.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'add_receipt_screen.dart';
 
@@ -21,12 +21,11 @@ class _OcrScreenState extends State<OcrScreen> {
   String? _extractedStoreName;
   bool _isProcessing = false;
 
-  final TextRecognizer _textRecognizer = TextRecognizer();
+  static const _channel = MethodChannel('com.fisbu/ocr');
 
   Future<void> _pickAndRecognize(ImageSource source) async {
     final picker = ImagePicker();
     final image = await picker.pickImage(source: source, imageQuality: 90);
-
     if (image == null) return;
 
     setState(() {
@@ -38,17 +37,16 @@ class _OcrScreenState extends State<OcrScreen> {
     try {
       if (kIsWeb) {
         setState(() {
-          _recognizedText =
-              'OCR web tarayıcısında çalışmaz. Lütfen telefonda deneyin.';
+          _recognizedText = 'OCR web tarayıcısında çalışmaz. Lütfen telefonda deneyin.';
           _isProcessing = false;
         });
         return;
       }
 
-      final inputImage = InputImage.fromFilePath(image.path);
-      final recognized = await _textRecognizer.processImage(inputImage);
+      final String text = await _channel.invokeMethod('recognizeText', {
+        'imagePath': image.path,
+      });
 
-      final text = recognized.text;
       setState(() {
         _recognizedText = text.isEmpty
             ? 'Metin bulunamadı. Daha net bir fotoğraf deneyin.'
@@ -71,33 +69,11 @@ class _OcrScreenState extends State<OcrScreen> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Text(
-            '$label: ',
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF9E9EBF),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1A1A2E),
-              ),
-            ),
-          ),
+          Text('$label: ', style: const TextStyle(fontSize: 13, color: Color(0xFF9E9EBF), fontWeight: FontWeight.w600)),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)))),
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _textRecognizer.close();
-    super.dispose();
   }
 
   @override
@@ -114,7 +90,6 @@ class _OcrScreenState extends State<OcrScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Fotoğraf önizleme alanı
             Container(
               height: 220,
               decoration: BoxDecoration(
@@ -132,145 +107,85 @@ class _OcrScreenState extends State<OcrScreen> {
                             color: const Color(0xFF6C63FF).withOpacity(0.08),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.document_scanner_outlined,
-                            size: 40,
-                            color: Color(0xFF6C63FF),
-                          ),
+                          child: const Icon(Icons.document_scanner_outlined, size: 40, color: Color(0xFF6C63FF)),
                         ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'Fiş fotoğrafı seç veya çek',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF6C63FF),
-                          ),
-                        ),
+                        const Text('Fiş fotoğrafı seç veya çek', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF6C63FF))),
                         const SizedBox(height: 4),
-                        const Text(
-                          'OCR ile metni otomatik okuyacağız',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF9E9EBF),
-                          ),
-                        ),
+                        const Text('OCR ile metni otomatik okuyacağız', style: TextStyle(fontSize: 12, color: Color(0xFF9E9EBF))),
                       ],
                     )
                   : ClipRRect(
                       borderRadius: BorderRadius.circular(15),
-                      child: kIsWeb
-                          ? Image.network(
-                              _selectedImage!.path,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                            )
-                          : Image.file(
-                              File(_selectedImage!.path),
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                            ),
+                      child: Image.file(File(_selectedImage!.path), fit: BoxFit.cover, width: double.infinity),
                     ),
             ),
             const SizedBox(height: 16),
-
-            // Butonlar
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _isProcessing
-                        ? null
-                        : () => _pickAndRecognize(ImageSource.gallery),
+                    onPressed: _isProcessing ? null : () => _pickAndRecognize(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library_outlined),
                     label: const Text('Galeriden Seç'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6C63FF),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _isProcessing
-                        ? null
-                        : () => _pickAndRecognize(ImageSource.camera),
+                    onPressed: _isProcessing ? null : () => _pickAndRecognize(ImageSource.camera),
                     icon: const Icon(Icons.camera_alt_outlined),
                     label: const Text('Kamera'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF00BFA6),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 24),
-
-            // OCR sonucu
             if (_isProcessing)
               const Center(
                 child: Column(
                   children: [
                     CircularProgressIndicator(color: Color(0xFF6C63FF)),
                     SizedBox(height: 12),
-                    Text(
-                      'Metin okunuyor...',
-                      style: TextStyle(color: Color(0xFF9E9EBF), fontSize: 14),
-                    ),
+                    Text('Metin okunuyor...', style: TextStyle(color: Color(0xFF9E9EBF), fontSize: 14)),
                   ],
                 ),
               ),
-            if (_extractedStoreName != null ||
-                _extractedAmount != null ||
-                _extractedDate != null)
+            if (_extractedStoreName != null || _extractedAmount != null || _extractedDate != null)
               Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: const Color(0xFF6C63FF).withOpacity(0.06),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: const Color(0xFF6C63FF).withOpacity(0.2),
-                  ),
+                  border: Border.all(color: const Color(0xFF6C63FF).withOpacity(0.2)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Row(
                       children: [
-                        Icon(
-                          Icons.auto_awesome,
-                          color: Color(0xFF6C63FF),
-                          size: 18,
-                        ),
+                        Icon(Icons.auto_awesome, color: Color(0xFF6C63FF), size: 18),
                         SizedBox(width: 8),
-                        Text(
-                          'Otomatik Çıkarılan Bilgiler',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF6C63FF),
-                          ),
-                        ),
+                        Text('Otomatik Çıkarılan Bilgiler', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF6C63FF))),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    if (_extractedStoreName != null)
-                      _buildExtractedRow('Mağaza', _extractedStoreName!),
-                    if (_extractedAmount != null)
-                      _buildExtractedRow('Tutar', '$_extractedAmount TL'),
-                    if (_extractedDate != null)
-                      _buildExtractedRow('Tarih', _extractedDate!),
+                    if (_extractedStoreName != null) _buildExtractedRow('Mağaza', _extractedStoreName!),
+                    if (_extractedAmount != null) _buildExtractedRow('Tutar', '$_extractedAmount TL'),
+                    if (_extractedDate != null) _buildExtractedRow('Tarih', _extractedDate!),
                   ],
                 ),
               ),
@@ -287,69 +202,38 @@ class _OcrScreenState extends State<OcrScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(
-                          Icons.text_snippet_outlined,
-                          color: Color(0xFF6C63FF),
-                          size: 20,
-                        ),
+                        const Icon(Icons.text_snippet_outlined, color: Color(0xFF6C63FF), size: 20),
                         const SizedBox(width: 8),
-                        const Text(
-                          'Okunan Metin',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1A1A2E),
-                          ),
-                        ),
+                        const Text('Okunan Metin', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
                         const Spacer(),
-                        Row(
-                          children: [
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _recognizedText = '';
-                                  _extractedAmount = null;
-                                  _extractedDate = null;
-                                  _extractedStoreName = null;
-                                });
-                              },
-                              child: const Text('Temizle'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AddReceiptScreen(
-                                      initialStoreName: _extractedStoreName,
-                                      initialAmount: _extractedAmount,
-                                      initialDate: _extractedDate,
-                                    ),
-                                  ),
-                                );
-                              },
-                              style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFF6C63FF),
-                              ),
-                              child: const Text(
-                                'Forma Aktar →',
-                                style: TextStyle(fontWeight: FontWeight.w700),
+                        TextButton(
+                          onPressed: () => setState(() {
+                            _recognizedText = '';
+                            _extractedAmount = null;
+                            _extractedDate = null;
+                            _extractedStoreName = null;
+                          }),
+                          child: const Text('Temizle'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddReceiptScreen(
+                                initialStoreName: _extractedStoreName,
+                                initialAmount: _extractedAmount,
+                                initialDate: _extractedDate,
                               ),
                             ),
-                          ],
+                          ),
+                          style: TextButton.styleFrom(foregroundColor: const Color(0xFF6C63FF)),
+                          child: const Text('Forma Aktar →', style: TextStyle(fontWeight: FontWeight.w700)),
                         ),
                       ],
                     ),
                     const Divider(),
                     const SizedBox(height: 8),
-                    SelectableText(
-                      _recognizedText,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF1A1A2E),
-                        height: 1.6,
-                      ),
-                    ),
+                    SelectableText(_recognizedText, style: const TextStyle(fontSize: 13, color: Color(0xFF1A1A2E), height: 1.6)),
                   ],
                 ),
               ),
