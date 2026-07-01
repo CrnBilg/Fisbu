@@ -50,6 +50,9 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
         _selectedDate = DateTime.parse(widget.initialDate!);
       } catch (_) {}
     }
+    if (widget.initialImagePath != null) {
+      _selectedImage = XFile(widget.initialImagePath!);
+    }
   }
 
   Future<void> _loadCategories() async {

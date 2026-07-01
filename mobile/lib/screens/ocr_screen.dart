@@ -223,6 +223,7 @@ class _OcrScreenState extends State<OcrScreen> {
                                 initialStoreName: _extractedStoreName,
                                 initialAmount: _extractedAmount,
                                 initialDate: _extractedDate,
+                                      initialImagePath: _selectedImage?.path,
                               ),
                             ),
                           ),
