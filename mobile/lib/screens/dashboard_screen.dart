@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'profile_screen.dart';
 import 'add_receipt_screen.dart';
 import 'receipt_list_screen.dart';
+import 'ocr_screen.dart';
 import 'statistics_screen.dart';
 import '../services/receipt_service.dart';
 import '../models/receipt.dart';
@@ -244,7 +245,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         );
                       },
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
+                    _QuickActionCard(
+                      icon: Icons.document_scanner_outlined,
+                      label: 'Fişi Tara',
+                      color: Color(0xFF8B5CF6),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const OcrScreen(),
+                          ),
+                        );
+                      },
+                    ),
 
                     if (_topCategory != null && !_isLoading)
                       Container(
