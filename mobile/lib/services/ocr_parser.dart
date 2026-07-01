@@ -1,26 +1,23 @@
 class OcrParser {
-  // Tutarı çıkar
   static double? extractAmount(String text) {
     final lines = text.split('\n');
 
-    // Önce TOPLAM/TUTAR içeren satırlarda ara
-    final keywordPatterns = [
-      RegExp(r'(?:GENEL TOPLAM|ÖDENECEK TUTAR|ÖDENECEK|TOPLAM TUTAR|TOPLAM|TUTAR|TOTAL)[^\d]*\*?(\d{1,6}[.,]\d{2})', caseSensitive: false),
-    ];
+    // TOPLAM/TUTAR içeren satırlarda ara
+    final keywordPattern = RegExp(
+      r'(?:GENEL TOPLAM|ÖDENECEK TUTAR|ÖDENECEK|TOPLAM TUTAR|TOPLAM|TUTAR|TOTAL)[^\d]*\*?(\d{1,3}(?:[.,]\d{3})*[.,]\d{2}|\d{1,6}[.,]\d{2})',
+      caseSensitive: false,
+    );
 
     for (final line in lines) {
-      for (final pattern in keywordPatterns) {
-        final match = pattern.firstMatch(line);
-        if (match != null) {
-          final raw = match.group(1)!.replaceAll('.', '').replaceAll(',', '.');
-          final amount = double.tryParse(raw);
-          if (amount != null && amount > 0 && amount < 100000) return amount;
-        }
+      final match = keywordPattern.firstMatch(line);
+      if (match != null) {
+        final amount = _parseAmount(match.group(1)!);
+        if (amount != null && amount > 0 && amount < 1000000) return amount;
       }
     }
 
-    // KDV, TOPKDV gibi satırları atla, TL ile biten sayıları ara
-    final tlPattern = RegExp(r'\*?(\d{1,6}[.,]\d{2})\s*TL', caseSensitive: false);
+    // TL ile biten satırlarda ara (KDV satırlarını atla)
+    final tlPattern = RegExp(r'\*?(\d{1,3}(?:[.,]\d{3})*[.,]\d{2}|\d{1,6}[.,]\d{2})\s*TL', caseSensitive: false);
     double? largest;
     for (final line in lines) {
       final lower = line.toLowerCase();
@@ -28,9 +25,8 @@ class OcrParser {
       if (lower.contains('indirim')) continue;
       final match = tlPattern.firstMatch(line);
       if (match != null) {
-        final raw = match.group(1)!.replaceAll('.', '').replaceAll(',', '.');
-        final amount = double.tryParse(raw);
-        if (amount != null && amount > 0 && amount < 100000) {
+        final amount = _parseAmount(match.group(1)!);
+        if (amount != null && amount > 0 && amount < 1000000) {
           if (largest == null || amount > largest) largest = amount;
         }
       }
@@ -38,14 +34,13 @@ class OcrParser {
     if (largest != null) return largest;
 
     // Son çare: en büyük sayıyı al
-    final anyPattern = RegExp(r'\*?(\d{1,6}[.,]\d{2})');
+    final anyPattern = RegExp(r'\*?(\d{1,3}(?:[.,]\d{3})*[.,]\d{2}|\d{1,6}[.,]\d{2})');
     double? fallback;
     for (final line in lines) {
       final match = anyPattern.firstMatch(line);
       if (match != null) {
-        final raw = match.group(1)!.replaceAll('.', '').replaceAll(',', '.');
-        final amount = double.tryParse(raw);
-        if (amount != null && amount > 0 && amount < 100000) {
+        final amount = _parseAmount(match.group(1)!);
+        if (amount != null && amount > 0 && amount < 1000000) {
           if (fallback == null || amount > fallback) fallback = amount;
         }
       }
@@ -53,12 +48,33 @@ class OcrParser {
     return fallback;
   }
 
-  // Tarihi çıkar
+  // Türk formatı: 2.400,00 → 2400.0 veya 2400,00 → 2400.0
+  static double? _parseAmount(String raw) {
+    // 1.234,56 formatı (Türk): nokta binlik, virgül ondalık
+    if (raw.contains(',') && raw.contains('.')) {
+      final lastComma = raw.lastIndexOf(',');
+      final lastDot = raw.lastIndexOf('.');
+      if (lastComma > lastDot) {
+        // 1.234,56 → Türk formatı
+        final cleaned = raw.replaceAll('.', '').replaceAll(',', '.');
+        return double.tryParse(cleaned);
+      } else {
+        // 1,234.56 → İngiliz formatı
+        final cleaned = raw.replaceAll(',', '');
+        return double.tryParse(cleaned);
+      }
+    } else if (raw.contains(',')) {
+      // 2400,00 → virgül ondalık
+      return double.tryParse(raw.replaceAll(',', '.'));
+    } else {
+      return double.tryParse(raw);
+    }
+  }
+
   static String? extractDate(String text) {
     final patterns = [
-      RegExp(r'(\d{2})[./](\d{2})[./](\d{4})'),
-      RegExp(r'(\d{4})[./](\d{2})[./](\d{2})'),
-      RegExp(r'(\d{2})-(\d{2})-(\d{4})'),
+      RegExp(r'(\d{2})[./\-](\d{2})[./\-](\d{4})'),
+      RegExp(r'(\d{4})[./\-](\d{2})[./\-](\d{2})'),
     ];
     for (final pattern in patterns) {
       final match = pattern.firstMatch(text);
@@ -73,10 +89,9 @@ class OcrParser {
     return null;
   }
 
-  // Mağaza adını çıkar
   static String? extractStoreName(String text) {
     final skipKeywords = RegExp(
-      r'^\d|fiş|fatura|tarih|saat|kasa|kasiyer|tel|vergi|tc|no:|:|\*|www|http|kdv|toplam|tutar|ödeme|kredi|nakit|puan',
+      r'^\d|fiş|fatura|tarih|saat|kasa|kasiyer|tel|vergi|tc|no:|:\s|\*|www|http|kdv|toplam|tutar|ödeme|kredi|nakit|puan|pos|işlem|işyeri|afiyet|nüsha|ziraat|isbank|visa|kart|aid|onay',
       caseSensitive: false,
     );
 
