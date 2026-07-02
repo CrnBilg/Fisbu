@@ -16,45 +16,74 @@ void main() async {
   runApp(MyApp(initialDarkMode: isDark));
 }
 
+class ThemeController extends ValueNotifier<ThemeMode> {
+  ThemeController(bool initialDarkMode)
+      : super(initialDarkMode ? ThemeMode.dark : ThemeMode.light);
+
+  bool get isDarkMode => value == ThemeMode.dark;
+
+  Future<void> toggleTheme() async {
+    value = isDarkMode ? ThemeMode.light : ThemeMode.dark;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkMode', isDarkMode);
+  }
+}
+
+class _ThemeControllerScope extends InheritedNotifier<ThemeController> {
+  const _ThemeControllerScope({
+    required ThemeController controller,
+    required super.child,
+  }) : super(notifier: controller);
+}
+
 class MyApp extends StatefulWidget {
   final bool initialDarkMode;
   const MyApp({super.key, required this.initialDarkMode});
 
-  static _MyAppState? of(BuildContext context) =>
-      context.findAncestorStateOfType<_MyAppState>();
+  static ThemeController? of(BuildContext context) =>
+      context
+          .dependOnInheritedWidgetOfExactType<_ThemeControllerScope>()
+          ?.notifier;
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  late ThemeMode _themeMode;
+  late final ThemeController _themeController;
 
   @override
   void initState() {
     super.initState();
-    _themeMode = widget.initialDarkMode ? ThemeMode.dark : ThemeMode.light;
+    _themeController = ThemeController(widget.initialDarkMode);
   }
 
-  Future<void> toggleTheme() async {
-    final newMode =
-        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    setState(() => _themeMode = newMode);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isDarkMode', newMode == ThemeMode.dark);
+  @override
+  void dispose() {
+    _themeController.dispose();
+    super.dispose();
   }
-
-  bool get isDarkMode => _themeMode == ThemeMode.dark;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'FişBu',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: _themeMode,
-      home: const AuthWrapper(),
+    return _ThemeControllerScope(
+      controller: _themeController,
+      child: ValueListenableBuilder<ThemeMode>(
+        valueListenable: _themeController,
+        builder: (context, themeMode, child) {
+          return MaterialApp(
+            title: 'FişBu',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark.copyWith(
+              brightness: Brightness.dark,
+              scaffoldBackgroundColor: const Color(0xFF1A1A2E),
+            ),
+            themeMode: themeMode,
+            home: const AuthWrapper(),
+          );
+        },
+      ),
     );
   }
 }
