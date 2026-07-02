@@ -10,12 +10,14 @@ class AddReceiptScreen extends StatefulWidget {
   final String? initialStoreName;
   final String? initialAmount;
   final String? initialDate;
+  final String? initialImagePath;
 
   const AddReceiptScreen({
     super.key,
     this.initialStoreName,
     this.initialAmount,
     this.initialDate,
+    this.initialImagePath,
   });
 
   @override
