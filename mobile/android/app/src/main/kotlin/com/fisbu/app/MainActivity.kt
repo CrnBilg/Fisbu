@@ -1,4 +1,4 @@
-package com.example.mobile
+package com.fisbu.app
 
 import android.net.Uri
 import com.google.mlkit.vision.common.InputImage

@@ -11,7 +11,18 @@
 
 ## 📱 Ekran Görüntüleri
 
-> *(Ekran görüntüleri eklenecek)*
+> Görseller henüz eklenmedi. Uygulamayı kendi cihazınızda/emülatörünüzde çalıştırıp aşağıdaki dosya adlarıyla `docs/screenshots/` klasörüne ekleyin, ardından bu tabloyu `![Açıklama](docs/screenshots/dosya.png)` satırlarıyla değiştirin.
+
+| Ekran | Beklenen dosya |
+|---|---|
+| Giriş / Kayıt | `docs/screenshots/login.png` |
+| Dashboard | `docs/screenshots/dashboard.png` |
+| Fiş Tarama (OCR akışı) | `docs/screenshots/ocr.gif` |
+| Fiş Listesi | `docs/screenshots/receipt-list.png` |
+| Fiş Detayı | `docs/screenshots/receipt-detail.png` |
+| İstatistikler | `docs/screenshots/statistics.png` |
+
+> En değerli görsel: OCR'ın çalıştığını gösteren kısa bir GIF (foto çek → alanlar otomatik dolsun). Bu, projeyi diğer öğrenci projelerinden ayırır.
 
 ---
 
@@ -41,7 +52,7 @@ Cüzdanınızdaki onlarca kağıt fiş kaybolur, yıpranır ya da okunaksız hal
 | Backend | Spring Boot (Java) |
 | Veritabanı | PostgreSQL |
 | Kimlik Doğrulama | JWT (JSON Web Token) |
-| OCR | Apple Vision Framework (iOS) |
+| OCR | Apple Vision Framework (iOS) / Google ML Kit (Android) |
 | Fotoğraf Depolama | Cloudinary |
 | Sunucu | Railway |
 
@@ -68,10 +79,11 @@ Cüzdanınızdaki onlarca kağıt fiş kaybolur, yıpranır ya da okunaksız hal
 └─────────────────────┘
 
 Telefonda (Offline):
-┌─────────────────────┐
-│  Apple Vision OCR   │
-│  (Metin Tanıma)     │
-└─────────────────────┘
+┌─────────────────────────┐
+│ Apple Vision (iOS) /    │
+│ Google ML Kit (Android) │
+│ (Metin Tanıma)          │
+└─────────────────────────┘
 ```
 
 ---
