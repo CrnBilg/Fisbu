@@ -96,6 +96,38 @@ class ReceiptService {
     }
   }
 
+  static Future<void> deleteCategory(int id) async {
+    final token = await AuthService.getToken();
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/categories/$id'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 204) {
+      throw Exception('Kategori silinemedi: ${response.statusCode}');
+    }
+  }
+
+  static Future<Category> updateCategory({
+    required int id,
+    required String name,
+    required String color,
+  }) async {
+    final token = await AuthService.getToken();
+    final response = await http.put(
+      Uri.parse('$_baseUrl/categories/$id'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'name': name, 'color': color}),
+    );
+    if (response.statusCode == 200) {
+      return Category.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Kategori güncellenemedi: ${response.statusCode}');
+    }
+  }
+
   static Future<String> uploadImage(XFile image) async {
     final token = await AuthService.getToken();
     final request = http.MultipartRequest(
