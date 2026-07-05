@@ -14,6 +14,13 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String? _email;
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _currentPasswordVisible = false;
+  bool _newPasswordVisible = false;
+  bool _confirmPasswordVisible = false;
+  bool _isChangingPassword = false;
 
   @override
   void initState() {
@@ -21,9 +28,202 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadEmail();
   }
 
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadEmail() async {
     final email = await AuthService.getEmail();
     setState(() => _email = email);
+  }
+
+  void _showChangePasswordSheet() {
+    _currentPasswordController.clear();
+    _newPasswordController.clear();
+    _confirmPasswordController.clear();
+    _currentPasswordVisible = false;
+    _newPasswordVisible = false;
+    _confirmPasswordVisible = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) {
+          final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+              20, 20, 20,
+              MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.brd(sheetContext),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Şifre Değiştir',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.txt(sheetContext),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: _currentPasswordController,
+                  obscureText: !_currentPasswordVisible,
+                  decoration: InputDecoration(
+                    labelText: 'Mevcut Şifre',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _currentPasswordVisible
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                      onPressed: () => setSheetState(
+                          () => _currentPasswordVisible = !_currentPasswordVisible),
+                    ),
+                    filled: true,
+                    fillColor: isDark ? AppColors.surfaceDark : AppColors.surface,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _newPasswordController,
+                  obscureText: !_newPasswordVisible,
+                  decoration: InputDecoration(
+                    labelText: 'Yeni Şifre',
+                    prefixIcon: const Icon(Icons.lock_open_outlined),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _newPasswordVisible
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                      onPressed: () => setSheetState(
+                          () => _newPasswordVisible = !_newPasswordVisible),
+                    ),
+                    filled: true,
+                    fillColor: isDark ? AppColors.surfaceDark : AppColors.surface,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _confirmPasswordController,
+                  obscureText: !_confirmPasswordVisible,
+                  decoration: InputDecoration(
+                    labelText: 'Yeni Şifre Tekrar',
+                    prefixIcon: const Icon(Icons.lock_open_outlined),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _confirmPasswordVisible
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                      onPressed: () => setSheetState(
+                          () => _confirmPasswordVisible = !_confirmPasswordVisible),
+                    ),
+                    filled: true,
+                    fillColor: isDark ? AppColors.surfaceDark : AppColors.surface,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: _isChangingPassword
+                      ? null
+                      : () => _handleChangePassword(sheetContext, setSheetState),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: _isChangingPassword
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Kaydet',
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _handleChangePassword(
+      BuildContext sheetContext, StateSetter setSheetState) async {
+    final current = _currentPasswordController.text.trim();
+    final newPass = _newPasswordController.text.trim();
+    final confirm = _confirmPasswordController.text.trim();
+
+    if (current.isEmpty || newPass.isEmpty || confirm.isEmpty) {
+      ScaffoldMessenger.of(sheetContext).showSnackBar(
+        const SnackBar(content: Text('Tüm alanları doldur')),
+      );
+      return;
+    }
+    if (newPass != confirm) {
+      ScaffoldMessenger.of(sheetContext).showSnackBar(
+        const SnackBar(content: Text('Yeni şifreler eşleşmiyor')),
+      );
+      return;
+    }
+    if (newPass.length < 6) {
+      ScaffoldMessenger.of(sheetContext).showSnackBar(
+        const SnackBar(content: Text('Yeni şifre en az 6 karakter olmalı')),
+      );
+      return;
+    }
+
+    setSheetState(() => _isChangingPassword = true);
+    final result = await AuthService.changePassword(current, newPass);
+    setSheetState(() => _isChangingPassword = false);
+
+    if (!sheetContext.mounted) return;
+
+    if (result.success) {
+      Navigator.pop(sheetContext);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Şifre başarıyla değiştirildi')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(sheetContext).showSnackBar(
+        SnackBar(content: Text(result.errorMessage ?? 'Bir hata oluştu')),
+      );
+    }
   }
 
   @override
@@ -117,6 +317,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           icon: Icons.notifications_outlined,
                           label: 'Bildirimler',
                           onTap: () {},
+                        ),
+                        _buildMenuItem(
+                          icon: Icons.lock_outline,
+                          label: 'Şifremi Değiştir',
+                          onTap: _showChangePasswordSheet,
                         ),
                        _buildMenuItemWithTrailing(
                           icon: Icons.dark_mode_outlined,

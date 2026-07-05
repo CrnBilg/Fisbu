@@ -50,6 +50,35 @@ class AuthService {
 
   static Future<bool> isLoggedIn() async => _token != null;
 
+  static Future<AuthResult> changePassword(
+      String currentPassword, String newPassword) async {
+    if (_token == null) {
+      return AuthResult(success: false, errorMessage: 'Giriş yapılmamış');
+    }
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/auth/change-password'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+        },
+        body: jsonEncode({
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        }),
+      );
+      if (response.statusCode == 200) {
+        return AuthResult(success: true);
+      } else {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final error = body['error'] as String? ?? 'Bilinmeyen hata';
+        return AuthResult(success: false, errorMessage: error);
+      }
+    } catch (e) {
+      return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
+    }
+  }
+
   static Future<String?> getEmail() async {
     if (_token == null) return null;
     try {
