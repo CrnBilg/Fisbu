@@ -174,7 +174,7 @@ https://fisbu-production-613c.up.railway.app
 
 | Rol | Kişi |
 |---|---|
-| Backend (Spring Boot, PostgreSQL, Railway) | Barış Hansu |
+| Backend (Spring Boot, PostgreSQL, Railway) | [barishansu45](https://github.com/barishansu45) |
 | Frontend (Flutter, OCR, UI/UX) | [CrnBilg](https://github.com/CrnBilg) |
 
 ---
