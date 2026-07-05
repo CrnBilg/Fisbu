@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'add_receipt_screen.dart';
+import '../core/theme/app_colors.dart';
 
 class OcrScreen extends StatefulWidget {
   const OcrScreen({super.key});
@@ -69,8 +70,24 @@ class _OcrScreenState extends State<OcrScreen> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Text('$label: ', style: const TextStyle(fontSize: 13, color: Color(0xFF9E9EBF), fontWeight: FontWeight.w600)),
-          Expanded(child: Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)))),
+          Text(
+            '$label: ',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.txtSecondary(context),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.txt(context),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -79,11 +96,8 @@ class _OcrScreenState extends State<OcrScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7FF),
       appBar: AppBar(
         title: const Text('Fişi Tara'),
-        backgroundColor: const Color(0xFF6C63FF),
-        foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -93,9 +107,9 @@ class _OcrScreenState extends State<OcrScreen> {
             Container(
               height: 220,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surf(context),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFEEEEF5)),
+                border: Border.all(color: AppColors.brd(context)),
               ),
               child: _selectedImage == null
                   ? Column(
@@ -104,20 +118,41 @@ class _OcrScreenState extends State<OcrScreen> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6C63FF).withOpacity(0.08),
+                            color: AppColors.primary.withOpacity(0.08),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.document_scanner_outlined, size: 40, color: Color(0xFF6C63FF)),
+                          child: const Icon(
+                            Icons.document_scanner_outlined,
+                            size: 40,
+                            color: AppColors.primary,
+                          ),
                         ),
                         const SizedBox(height: 12),
-                        const Text('Fiş fotoğrafı seç veya çek', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF6C63FF))),
+                        const Text(
+                          'Fiş fotoğrafı seç veya çek',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
                         const SizedBox(height: 4),
-                        const Text('OCR ile metni otomatik okuyacağız', style: TextStyle(fontSize: 12, color: Color(0xFF9E9EBF))),
+                        Text(
+                          'OCR ile metni otomatik okuyacağız',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                       ],
                     )
                   : ClipRRect(
                       borderRadius: BorderRadius.circular(15),
-                      child: Image.file(File(_selectedImage!.path), fit: BoxFit.cover, width: double.infinity),
+                      child: Image.file(
+                        File(_selectedImage!.path),
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      ),
                     ),
             ),
             const SizedBox(height: 16),
@@ -125,28 +160,34 @@ class _OcrScreenState extends State<OcrScreen> {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _isProcessing ? null : () => _pickAndRecognize(ImageSource.gallery),
+                    onPressed: _isProcessing
+                        ? null
+                        : () => _pickAndRecognize(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library_outlined),
                     label: const Text('Galeriden Seç'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6C63FF),
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _isProcessing ? null : () => _pickAndRecognize(ImageSource.camera),
+                    onPressed: _isProcessing
+                        ? null
+                        : () => _pickAndRecognize(ImageSource.camera),
                     icon: const Icon(Icons.camera_alt_outlined),
                     label: const Text('Kamera'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00BFA6),
+                      backgroundColor: AppColors.success,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
@@ -154,38 +195,60 @@ class _OcrScreenState extends State<OcrScreen> {
             ),
             const SizedBox(height: 24),
             if (_isProcessing)
-              const Center(
+              Center(
                 child: Column(
                   children: [
-                    CircularProgressIndicator(color: Color(0xFF6C63FF)),
-                    SizedBox(height: 12),
-                    Text('Metin okunuyor...', style: TextStyle(color: Color(0xFF9E9EBF), fontSize: 14)),
+                    const CircularProgressIndicator(color: AppColors.primary),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Metin okunuyor...',
+                      style: TextStyle(
+                        color: AppColors.txtSecondary(context),
+                        fontSize: 14,
+                      ),
+                    ),
                   ],
                 ),
               ),
-            if (_extractedStoreName != null || _extractedAmount != null || _extractedDate != null)
+            if (_extractedStoreName != null ||
+                _extractedAmount != null ||
+                _extractedDate != null)
               Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6C63FF).withOpacity(0.06),
+                  color: AppColors.primDim(context).withOpacity(
+                    Theme.of(context).brightness == Brightness.dark ? 1 : 0.6,
+                  ),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF6C63FF).withOpacity(0.2)),
+                  border: Border.all(
+                      color: AppColors.primary.withOpacity(0.2)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.auto_awesome, color: Color(0xFF6C63FF), size: 18),
+                        Icon(Icons.auto_awesome,
+                            color: AppColors.primary, size: 18),
                         SizedBox(width: 8),
-                        Text('Otomatik Çıkarılan Bilgiler', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF6C63FF))),
+                        Text(
+                          'Otomatik Çıkarılan Bilgiler',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    if (_extractedStoreName != null) _buildExtractedRow('Mağaza', _extractedStoreName!),
-                    if (_extractedAmount != null) _buildExtractedRow('Tutar', '$_extractedAmount TL'),
-                    if (_extractedDate != null) _buildExtractedRow('Tarih', _extractedDate!),
+                    if (_extractedStoreName != null)
+                      _buildExtractedRow('Mağaza', _extractedStoreName!),
+                    if (_extractedAmount != null)
+                      _buildExtractedRow('Tutar', '$_extractedAmount TL'),
+                    if (_extractedDate != null)
+                      _buildExtractedRow('Tarih', _extractedDate!),
                   ],
                 ),
               ),
@@ -193,18 +256,26 @@ class _OcrScreenState extends State<OcrScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surf(context),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFEEEEF5)),
+                  border: Border.all(color: AppColors.brd(context)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.text_snippet_outlined, color: Color(0xFF6C63FF), size: 20),
+                        const Icon(Icons.text_snippet_outlined,
+                            color: AppColors.primary, size: 20),
                         const SizedBox(width: 8),
-                        const Text('Okunan Metin', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+                        Text(
+                          'Okunan Metin',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.txt(context),
+                          ),
+                        ),
                         const Spacer(),
                         TextButton(
                           onPressed: () => setState(() {
@@ -223,18 +294,29 @@ class _OcrScreenState extends State<OcrScreen> {
                                 initialStoreName: _extractedStoreName,
                                 initialAmount: _extractedAmount,
                                 initialDate: _extractedDate,
-                                      initialImagePath: _selectedImage?.path,
+                                initialImagePath: _selectedImage?.path,
                               ),
                             ),
                           ),
-                          style: TextButton.styleFrom(foregroundColor: const Color(0xFF6C63FF)),
-                          child: const Text('Forma Aktar →', style: TextStyle(fontWeight: FontWeight.w700)),
+                          style: TextButton.styleFrom(
+                              foregroundColor: AppColors.primary),
+                          child: const Text(
+                            'Forma Aktar →',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
                         ),
                       ],
                     ),
                     const Divider(),
                     const SizedBox(height: 8),
-                    SelectableText(_recognizedText, style: const TextStyle(fontSize: 13, color: Color(0xFF1A1A2E), height: 1.6)),
+                    SelectableText(
+                      _recognizedText,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.txt(context),
+                        height: 1.6,
+                      ),
+                    ),
                   ],
                 ),
               ),

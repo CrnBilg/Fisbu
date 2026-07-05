@@ -187,7 +187,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.errorDim,
+                color: AppColors.errDim(context),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.error_outline,
@@ -345,7 +345,7 @@ class _ReceiptCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surf(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.brd(context)),
           boxShadow: [
             BoxShadow(
               color: AppColors.primary.withOpacity(0.04),
@@ -391,7 +391,7 @@ class _ReceiptCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryDim,
+                          color: AppColors.primDim(context),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(

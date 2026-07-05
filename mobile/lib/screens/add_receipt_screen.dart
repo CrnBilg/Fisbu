@@ -132,7 +132,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryDim,
+                  color: AppColors.primDim(context),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -169,7 +169,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.errorDim,
+                    color: AppColors.errDim(context),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -296,8 +296,8 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(16),
-                            decoration: const BoxDecoration(
-                              color: AppColors.primaryDim,
+                            decoration: BoxDecoration(
+                              color: AppColors.primDim(context),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(

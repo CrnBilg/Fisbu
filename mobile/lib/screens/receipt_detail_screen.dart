@@ -135,7 +135,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
               decoration: BoxDecoration(
                 color: AppColors.surf(context),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.brd(context)),
               ),
               child: Column(
                 children: [
@@ -196,7 +196,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                           return Container(
                             height: 200,
                             decoration: BoxDecoration(
-                              color: AppColors.primaryDim,
+                              color: AppColors.primDim(context),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Center(
@@ -209,7 +209,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                           return Container(
                             height: 120,
                             decoration: BoxDecoration(
-                              color: AppColors.primaryDim,
+                              color: AppColors.primDim(context),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Center(
@@ -265,7 +265,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  color: AppColors.errorDim,
+                  color: AppColors.errDim(context),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: AppColors.error.withOpacity(0.3)),
                 ),
@@ -312,15 +312,14 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
       decoration: BoxDecoration(
         border: isLast
             ? null
-            : const Border(
-                bottom: BorderSide(color: AppColors.border)),
+            : Border(bottom: BorderSide(color: AppColors.brd(context))),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primaryDim,
+              color: AppColors.primDim(context),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: AppColors.primary, size: 18),
@@ -329,14 +328,14 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
           Text(label,
               style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.textSecondary,
+                  color: AppColors.txtSecondary(context),
                   fontWeight: FontWeight.w500)),
           const Spacer(),
           Text(value,
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
+                  color: AppColors.txt(context))),
         ],
       ),
     );

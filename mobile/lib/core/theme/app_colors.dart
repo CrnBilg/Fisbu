@@ -62,15 +62,30 @@ class AppColors {
   // Context'ten tema rengini al
   static Color bg(BuildContext context) =>
       Theme.of(context).scaffoldBackgroundColor;
-  
+
   static Color surf(BuildContext context) =>
       Theme.of(context).colorScheme.surface;
-      
+
   static Color txt(BuildContext context) =>
       Theme.of(context).colorScheme.onSurface;
-      
+
   static Color brd(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
           ? AppColors.borderDark
-          : AppColors.border;    
+          : AppColors.border;
+
+  static Color primDim(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? AppColors.primaryDimDark
+          : AppColors.primaryDim;
+
+  static Color errDim(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? AppColors.errorDimDark
+          : AppColors.errorDim;
+
+  static Color txtSecondary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? AppColors.textSecondaryDark
+          : AppColors.textSecondary;
 }
