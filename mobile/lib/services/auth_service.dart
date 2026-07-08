@@ -1,8 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthService {
   static const String _baseUrl = 'https://fisbu-production-613c.up.railway.app';
+  static const String _tokenKey = 'jwt_token';
+  static const _storage = FlutterSecureStorage();
+
+  // Bellekte önbelleklenir, ilk okumada secure storage'dan yüklenir
   static String? _token;
 
   static Future<AuthResult> login(String email, String password) async {
@@ -15,6 +20,7 @@ class AuthService {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
       if (response.statusCode == 200) {
         _token = body['token'] as String;
+        await _storage.write(key: _tokenKey, value: _token);
         return AuthResult(success: true);
       } else {
         final error = body['error'] as String? ?? 'Bilinmeyen hata';
@@ -44,15 +50,22 @@ class AuthService {
     }
   }
 
-  static Future<String?> getToken() async => _token;
+  static Future<String?> getToken() async {
+    _token ??= await _storage.read(key: _tokenKey);
+    return _token;
+  }
 
-  static Future<void> logout() async => _token = null;
+  static Future<void> logout() async {
+    _token = null;
+    await _storage.delete(key: _tokenKey);
+  }
 
-  static Future<bool> isLoggedIn() async => _token != null;
+  static Future<bool> isLoggedIn() async => await getToken() != null;
 
   static Future<AuthResult> changePassword(
       String currentPassword, String newPassword) async {
-    if (_token == null) {
+    final token = await getToken();
+    if (token == null) {
       return AuthResult(success: false, errorMessage: 'Giriş yapılmamış');
     }
     try {
@@ -60,7 +73,7 @@ class AuthService {
         Uri.parse('$_baseUrl/auth/change-password'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_token',
+          'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
           'currentPassword': currentPassword,
@@ -80,9 +93,10 @@ class AuthService {
   }
 
   static Future<String?> getEmail() async {
-    if (_token == null) return null;
+    final token = await getToken();
+    if (token == null) return null;
     try {
-      final parts = _token!.split('.');
+      final parts = token.split('.');
       if (parts.length != 3) return null;
       final payload = parts[1];
       final normalized = base64Url.normalize(payload);
