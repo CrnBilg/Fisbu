@@ -57,9 +57,13 @@ public class ReceiptService {
             Category category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.NOT_FOUND, "Kategori bulunamadı"));
+
+            if (!category.getUser().getId().equals(user.getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bu kategoriye erişim yetkiniz yok");
+            }
+
             receipt.setCategory(category);
         }
-        
 
         return toResponse(receiptRepository.save(receipt));
     }

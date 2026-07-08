@@ -19,6 +19,8 @@ import com.fisbu.api.dto.CategoryRequest;
 import com.fisbu.api.dto.CategoryResponse;
 import com.fisbu.api.service.CategoryService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/categories")
 public class CategoryController {
@@ -37,14 +39,14 @@ public class CategoryController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CategoryResponse createCategory(@AuthenticationPrincipal UserDetails userDetails,
-                                            @RequestBody CategoryRequest request) {
+                                            @RequestBody @Valid CategoryRequest request) {
         return categoryService.createCategory(userDetails.getUsername(), request);
     }
 
     @PutMapping("/{id}")
     public CategoryResponse updateCategory(@AuthenticationPrincipal UserDetails userDetails,
                                             @PathVariable Long id,
-                                            @RequestBody CategoryRequest request) {
+                                            @RequestBody @Valid CategoryRequest request) {
         return categoryService.updateCategory(userDetails.getUsername(), id, request);
     }
 
