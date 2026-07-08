@@ -152,7 +152,7 @@ cd Fisbu/backend
 # DB bağlantısı ve JWT secret'ını gir
 
 # Çalıştır
-./mvnw spring-boot:run
+./gradlew bootRun
 ```
 
 ### Mobil (Flutter)
