@@ -12,6 +12,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   static final RegExp _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _passwordAgainController = TextEditingController();
@@ -20,11 +21,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePasswordAgain = true;
 
   Future<void> _handleRegister() async {
+    final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final passwordAgain = _passwordAgainController.text.trim();
 
-    if (email.isEmpty || password.isEmpty || passwordAgain.isEmpty) {
+    if (name.isEmpty || email.isEmpty || password.isEmpty || passwordAgain.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lütfen tüm alanları doldur')),
       );
@@ -53,7 +55,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     setState(() => _isLoading = true);
-    final result = await AuthService.register(email, password);
+    final result = await AuthService.register(email, password, name: name);
     setState(() => _isLoading = false);
 
     if (!mounted) return;
@@ -72,6 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _passwordAgainController.dispose();
@@ -148,6 +151,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
 
                     const SizedBox(height: 40),
+
+                    // Ad Soyad
+                    _buildInput(
+                      controller: _nameController,
+                      label: 'Ad Soyad',
+                      icon: Icons.person_outline,
+                    ),
+                    const SizedBox(height: 14),
 
                     // Email
                     _buildInput(

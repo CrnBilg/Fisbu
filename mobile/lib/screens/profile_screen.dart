@@ -59,8 +59,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _updateProfilePhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Kamera'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Galeriden Seç'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 60);
+    final image = await picker.pickImage(source: source, imageQuality: 60);
     if (image == null) return;
     setState(() => _isUpdatingPhoto = true);
     try {

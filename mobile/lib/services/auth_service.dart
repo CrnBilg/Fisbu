@@ -15,7 +15,7 @@ class AuthService {
       final response = await http.post(
         Uri.parse('$_baseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
+        body: jsonEncode({'email': email, 'password': password, if (name != null) 'name': name}),
       );
       final body = jsonDecode(response.body) as Map<String, dynamic>;
       if (response.statusCode == 200) {
@@ -31,12 +31,12 @@ class AuthService {
     }
   }
 
-  static Future<AuthResult> register(String email, String password) async {
+  static Future<AuthResult> register(String email, String password, {String? name}) async {
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/auth/register'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
+        body: jsonEncode({'email': email, 'password': password, if (name != null) 'name': name}),
       );
       if (response.statusCode == 200) {
         return AuthResult(success: true);
