@@ -29,4 +29,10 @@ public class User {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "name")
+    private String name;
+
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
 }

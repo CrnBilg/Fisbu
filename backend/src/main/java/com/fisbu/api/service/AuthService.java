@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.fisbu.api.dto.ChangePasswordRequest;
+import com.fisbu.api.dto.ProfileResponse;
+import com.fisbu.api.dto.UpdateProfileRequest;
 import com.fisbu.api.dto.LoginRequest;
 import com.fisbu.api.dto.RegisterRequest;
 import com.fisbu.api.entity.Category;
@@ -39,11 +41,37 @@ public class AuthService {
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setName(request.getName());
         User savedUser = userRepository.save(user);
 
         createDefaultCategories(savedUser);
 
         return savedUser;
+    }
+
+    public ProfileResponse getProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kullanıcı bulunamadı"));
+        return new ProfileResponse(
+                user.getEmail(),
+                user.getName(),
+                user.getProfileImageUrl(),
+                user.getCreatedAt().toString()
+        );
+    }
+
+    public ProfileResponse updateProfile(String email, UpdateProfileRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kullanıcı bulunamadı"));
+        if (request.getName() != null) user.setName(request.getName());
+        if (request.getProfileImageUrl() != null) user.setProfileImageUrl(request.getProfileImageUrl());
+        userRepository.save(user);
+        return new ProfileResponse(
+                user.getEmail(),
+                user.getName(),
+                user.getProfileImageUrl(),
+                user.getCreatedAt().toString()
+        );
     }
 
     // Yeni kullanıcı için varsayılan kategorileri oluşturur

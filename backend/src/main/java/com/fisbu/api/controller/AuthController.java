@@ -8,6 +8,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fisbu.api.dto.AuthResponse;
+import com.fisbu.api.dto.ProfileResponse;
+import com.fisbu.api.dto.UpdateProfileRequest;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import com.fisbu.api.dto.ChangePasswordRequest;
 import com.fisbu.api.dto.LoginRequest;
 import com.fisbu.api.dto.RegisterRequest;
@@ -37,9 +41,20 @@ public User register(@RequestBody @Valid RegisterRequest request) {        retur
         return new AuthResponse(token);
     }
 
-    @PostMapping("/change-password") // Giriş yapmış kullanıcının şifresini değiştirir.
+    @PostMapping("/change-password")
     public void changePassword(@AuthenticationPrincipal UserDetails userDetails,
                                 @RequestBody @Valid ChangePasswordRequest request) {
         authService.changePassword(userDetails.getUsername(), request);
+    }
+
+    @GetMapping("/profile")
+    public ProfileResponse getProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        return authService.getProfile(userDetails.getUsername());
+    }
+
+    @PutMapping("/profile")
+    public ProfileResponse updateProfile(@AuthenticationPrincipal UserDetails userDetails,
+                                          @RequestBody UpdateProfileRequest request) {
+        return authService.updateProfile(userDetails.getUsername(), request);
     }
 }
