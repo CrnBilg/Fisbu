@@ -54,6 +54,20 @@ public class AuthService {
                 buildCategory(user, "Elektronik", "#2196F3"),
                 buildCategory(user, "Restoran", "#FF9800"),
                 buildCategory(user, "Ulaşım", "#9C27B0"),
+                buildCategory(user, "Sağlık", "#F44336"),
+                buildCategory(user, "Kafe", "#795548"),
+                buildCategory(user, "Eğlence", "#FF4081"),
+                buildCategory(user, "Spor", "#00BCD4"),
+                buildCategory(user, "Faturalar", "#FFC107"),
+                buildCategory(user, "Eğitim", "#3F51B5"),
+                buildCategory(user, "Kozmetik", "#E91E63"),
+                buildCategory(user, "Kişisel Bakım", "#9C27B0"),
+                buildCategory(user, "Ev & Dekorasyon", "#FF5722"),
+                buildCategory(user, "Çocuk", "#8BC34A"),
+                buildCategory(user, "Hediye", "#F06292"),
+                buildCategory(user, "Seyahat", "#03A9F4"),
+                buildCategory(user, "Akaryakıt", "#FF6F00"),
+                buildCategory(user, "Sigorta", "#546E7A"),
                 buildCategory(user, "Diğer", "#607D8B")
         );
         categoryRepository.saveAll(defaults);
