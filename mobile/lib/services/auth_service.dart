@@ -51,13 +51,20 @@ class AuthService {
   }
 
   static Future<String?> getToken() async {
-    _token ??= await _storage.read(key: _tokenKey);
+    if (_token != null) return _token;
+    try {
+      _token = await _storage.read(key: _tokenKey);
+    } catch (e) {
+      _token = null;
+    }
     return _token;
   }
 
   static Future<void> logout() async {
     _token = null;
-    await _storage.delete(key: _tokenKey);
+    try {
+      await _storage.delete(key: _tokenKey);
+    } catch (e) {}
   }
 
   static Future<bool> isLoggedIn() async => await getToken() != null;
