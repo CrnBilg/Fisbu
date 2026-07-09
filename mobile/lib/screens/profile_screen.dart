@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import '../services/receipt_service.dart';
 import '../services/auth_service.dart';
 import 'auth_wrapper.dart';
 import 'categories_screen.dart';
@@ -14,6 +17,10 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String? _email;
+  String? _name;
+  String? _profileImageUrl;
+  String? _createdAt;
+  bool _isUpdatingPhoto = false;
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -37,8 +44,83 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadEmail() async {
-    final email = await AuthService.getEmail();
-    setState(() => _email = email);
+    final profile = await AuthService.getProfile();
+    if (profile != null) {
+      setState(() {
+        _email = profile['email'];
+        _name = profile['name'];
+        _profileImageUrl = profile['profileImageUrl'];
+        _createdAt = profile['createdAt'];
+      });
+    } else {
+      final email = await AuthService.getEmail();
+      setState(() => _email = email);
+    }
+  }
+
+  Future<void> _updateProfilePhoto() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 60);
+    if (image == null) return;
+    setState(() => _isUpdatingPhoto = true);
+    try {
+      final imageUrl = await ReceiptService.uploadImage(image);
+      await AuthService.updateProfile(profileImageUrl: imageUrl);
+      setState(() {
+        _profileImageUrl = imageUrl;
+        _isUpdatingPhoto = false;
+      });
+    } catch (e) {
+      setState(() => _isUpdatingPhoto = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fotoğraf yüklenemedi: \$e')),
+        );
+      }
+    }
+  }
+
+  void _showEditNameSheet() {
+    final controller = TextEditingController(text: _name ?? '');
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.brd(ctx), borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 20),
+            Text('Adı Düzenle', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.txt(ctx))),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: 'Ad Soyad',
+                prefixIcon: const Icon(Icons.person_outline),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                final name = controller.text.trim();
+                if (name.isEmpty) return;
+                await AuthService.updateProfile(name: name);
+                setState(() => _name = name);
+                if (ctx.mounted) Navigator.pop(ctx);
+              },
+              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              child: const Text('Kaydet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showChangePasswordSheet() {
@@ -259,26 +341,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const SizedBox(height: 40),
-                      Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 3),
-                        ),
-                        child: const CircleAvatar(
-                          radius: 40,
-                          backgroundColor: Colors.white24,
-                          child: Icon(Icons.person, size: 40, color: Colors.white),
+                      GestureDetector(
+                        onTap: _updateProfilePhoto,
+                        child: Stack(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 3),
+                              ),
+                              child: _isUpdatingPhoto
+                                  ? const CircleAvatar(radius: 40, backgroundColor: Colors.white24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                  : CircleAvatar(
+                                      radius: 40,
+                                      backgroundColor: Colors.white24,
+                                      backgroundImage: _profileImageUrl != null ? NetworkImage(_profileImageUrl!) : null,
+                                      child: _profileImageUrl == null ? const Icon(Icons.person, size: 40, color: Colors.white) : null,
+                                    ),
+                            ),
+                            Positioned(
+                              bottom: 0, right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                                child: const Icon(Icons.camera_alt, size: 16, color: AppColors.primary),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 12),
+                      GestureDetector(
+                        onTap: _showEditNameSheet,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _name ?? 'Ad Soyad Ekle',
+                              style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(width: 6),
+                            const Icon(Icons.edit, size: 14, color: Colors.white70),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
                       Text(
                         _email ?? 'Yükleniyor...',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),

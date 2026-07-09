@@ -99,6 +99,42 @@ class AuthService {
     }
   }
 
+  static Future<Map<String, dynamic>?> getProfile() async {
+    final token = await getToken();
+    if (token == null) return null;
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/auth/profile'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  static Future<bool> updateProfile({String? name, String? profileImageUrl}) async {
+    final token = await getToken();
+    if (token == null) return false;
+    try {
+      final response = await http.put(
+        Uri.parse('$_baseUrl/auth/profile'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          if (name != null) 'name': name,
+          if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
   static Future<String?> getEmail() async {
     final token = await getToken();
     if (token == null) return null;
