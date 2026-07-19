@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.fisbu.api.dto.ChangePasswordRequest;
+import com.fisbu.api.dto.ProfileResponse;
+import com.fisbu.api.dto.UpdateProfileRequest;
 import com.fisbu.api.dto.LoginRequest;
 import com.fisbu.api.dto.RegisterRequest;
 import com.fisbu.api.dto.ResetPasswordRequest;
@@ -53,6 +55,7 @@ public class AuthService {
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setName(request.getName());
         user.setEmailVerified(false);
         user.setVerificationCode(generateCode());
         user.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(CODE_VALIDITY_MINUTES));
@@ -64,6 +67,31 @@ public class AuthService {
         return savedUser;
     }
 
+    public ProfileResponse getProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kullanıcı bulunamadı"));
+        return new ProfileResponse(
+                user.getEmail(),
+                user.getName(),
+                user.getProfileImageUrl(),
+                user.getCreatedAt().toString()
+        );
+    }
+
+    public ProfileResponse updateProfile(String email, UpdateProfileRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kullanıcı bulunamadı"));
+        if (request.getName() != null) user.setName(request.getName());
+        if (request.getProfileImageUrl() != null) user.setProfileImageUrl(request.getProfileImageUrl());
+        userRepository.save(user);
+        return new ProfileResponse(
+                user.getEmail(),
+                user.getName(),
+                user.getProfileImageUrl(),
+                user.getCreatedAt().toString()
+        );
+    }
+
     // Yeni kullanıcı için varsayılan kategorileri oluşturur
     private void createDefaultCategories(User user) {
         List<Category> defaults = List.of(
@@ -72,6 +100,20 @@ public class AuthService {
                 buildCategory(user, "Elektronik", "#2196F3"),
                 buildCategory(user, "Restoran", "#FF9800"),
                 buildCategory(user, "Ulaşım", "#9C27B0"),
+                buildCategory(user, "Sağlık", "#F44336"),
+                buildCategory(user, "Kafe", "#795548"),
+                buildCategory(user, "Eğlence", "#FF4081"),
+                buildCategory(user, "Spor", "#00BCD4"),
+                buildCategory(user, "Faturalar", "#FFC107"),
+                buildCategory(user, "Eğitim", "#3F51B5"),
+                buildCategory(user, "Kozmetik", "#E91E63"),
+                buildCategory(user, "Kişisel Bakım", "#9C27B0"),
+                buildCategory(user, "Ev & Dekorasyon", "#FF5722"),
+                buildCategory(user, "Çocuk", "#8BC34A"),
+                buildCategory(user, "Hediye", "#F06292"),
+                buildCategory(user, "Seyahat", "#03A9F4"),
+                buildCategory(user, "Akaryakıt", "#FF6F00"),
+                buildCategory(user, "Sigorta", "#546E7A"),
                 buildCategory(user, "Diğer", "#607D8B")
         );
         categoryRepository.saveAll(defaults);

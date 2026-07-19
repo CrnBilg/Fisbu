@@ -30,6 +30,12 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "name")
+    private String name;
+
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
+
     // Var olan kullanıcılar mevcut mekanizmayla giriş yapmaya devam edebilsin diye
     // varsayılan true; sadece yeni kayıtlarda register() ile false'a çekilir.
     @Column(name = "email_verified", nullable = false, columnDefinition = "boolean default true")

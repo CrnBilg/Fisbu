@@ -17,4 +17,7 @@ public class RegisterRequest {
     @NotBlank(message = "Şifre boş olamaz")
     @Size(min = 6, message = "Şifre en az 6 karakter olmalıdır")
     private String password;
+
+    @NotBlank(message = "Ad Soyad boş olamaz")
+    private String name;
 }

@@ -31,12 +31,12 @@ class AuthService {
     }
   }
 
-  static Future<AuthResult> register(String email, String password) async {
+  static Future<AuthResult> register(String email, String password, {String? name}) async {
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/auth/register'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
+        body: jsonEncode({'email': email, 'password': password, if (name != null) 'name': name}),
       );
       if (response.statusCode == 200) {
         return AuthResult(success: true);
@@ -51,13 +51,20 @@ class AuthService {
   }
 
   static Future<String?> getToken() async {
-    _token ??= await _storage.read(key: _tokenKey);
+    if (_token != null) return _token;
+    try {
+      _token = await _storage.read(key: _tokenKey);
+    } catch (e) {
+      _token = null;
+    }
     return _token;
   }
 
   static Future<void> logout() async {
     _token = null;
-    await _storage.delete(key: _tokenKey);
+    try {
+      await _storage.delete(key: _tokenKey);
+    } catch (e) {}
   }
 
   static Future<bool> isLoggedIn() async => await getToken() != null;
@@ -89,6 +96,42 @@ class AuthService {
       }
     } catch (e) {
       return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>?> getProfile() async {
+    final token = await getToken();
+    if (token == null) return null;
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/auth/profile'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  static Future<bool> updateProfile({String? name, String? profileImageUrl}) async {
+    final token = await getToken();
+    if (token == null) return false;
+    try {
+      final response = await http.put(
+        Uri.parse('$_baseUrl/auth/profile'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          if (name != null) 'name': name,
+          if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
     }
   }
 
