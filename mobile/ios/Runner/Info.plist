@@ -30,6 +30,8 @@
 	<string>Fiş fotoğrafı çekmek için kamera erişimi gerekiyor</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Kamera kullanımı için mikrofon erişimi gerekiyor</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Hesabına hızlı ve güvenli giriş yapman için Face ID kullanılır</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Fiş fotoğrafı seçmek için galeri erişimi gerekiyor</string>
 	<key>UIApplicationSceneManifest</key>

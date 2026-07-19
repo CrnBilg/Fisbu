@@ -70,7 +70,9 @@ class AuthService {
   static Future<bool> isLoggedIn() async => await getToken() != null;
 
   static Future<AuthResult> changePassword(
-      String currentPassword, String newPassword) async {
+    String currentPassword,
+    String newPassword,
+  ) async {
     final token = await getToken();
     if (token == null) {
       return AuthResult(success: false, errorMessage: 'Giriş yapılmamış');
@@ -132,6 +134,116 @@ class AuthService {
       return response.statusCode == 200;
     } catch (e) {
       return false;
+    }
+  }
+
+  static Future<AuthResult> forgotPassword(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/auth/forgot-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
+      if (response.statusCode == 200) {
+        return AuthResult(success: true);
+      } else {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final error = body['error'] as String? ?? 'Bilinmeyen hata';
+        return AuthResult(success: false, errorMessage: error);
+      }
+    } catch (e) {
+      return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
+    }
+  }
+
+  static Future<AuthResult> resetPassword(
+    String email,
+    String code,
+    String newPassword,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/auth/reset-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'code': code,
+          'newPassword': newPassword,
+        }),
+      );
+      if (response.statusCode == 200) {
+        return AuthResult(success: true);
+      } else {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final error = body['error'] as String? ?? 'Bilinmeyen hata';
+        return AuthResult(success: false, errorMessage: error);
+      }
+    } catch (e) {
+      return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
+    }
+  }
+
+  static Future<AuthResult> resendVerificationCode(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/auth/resend-verification'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
+      if (response.statusCode == 200) {
+        return AuthResult(success: true);
+      } else {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final error = body['error'] as String? ?? 'Bilinmeyen hata';
+        return AuthResult(success: false, errorMessage: error);
+      }
+    } catch (e) {
+      return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
+    }
+  }
+
+  static Future<AuthResult> verifyEmail(String email, String code) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/auth/verify-email'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'code': code}),
+      );
+      if (response.statusCode == 200) {
+        return AuthResult(success: true);
+      } else {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final error = body['error'] as String? ?? 'Bilinmeyen hata';
+        return AuthResult(success: false, errorMessage: error);
+      }
+    } catch (e) {
+      return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
+    }
+  }
+
+  static Future<AuthResult> deleteAccount() async {
+    final token = await getToken();
+    if (token == null) {
+      return AuthResult(success: false, errorMessage: 'Giriş yapılmamış');
+    }
+    try {
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/auth/account'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        await logout();
+        return AuthResult(success: true);
+      } else {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final error = body['error'] as String? ?? 'Bilinmeyen hata';
+        return AuthResult(success: false, errorMessage: error);
+      }
+    } catch (e) {
+      return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
     }
   }
 
