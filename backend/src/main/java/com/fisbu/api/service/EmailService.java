@@ -18,13 +18,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
-    private static final URI SENDGRID_ENDPOINT = URI.create("https://api.sendgrid.com/v3/mail/send");
+    private static final URI BREVO_ENDPOINT = URI.create("https://api.brevo.com/v3/smtp/email");
 
-    @Value("${sendgrid.api-key:}")
+    @Value("${brevo.api-key:}")
     private String apiKey;
 
-    @Value("${sendgrid.from-email:noreply@fisbu.app}")
+    @Value("${brevo.from-email:noreply@fisbu.app}")
     private String fromEmail;
+
+    @Value("${brevo.from-name:FişBu}")
+    private String fromName;
 
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient = HttpClient.newHttpClient();
@@ -54,28 +57,29 @@ public class EmailService {
 
     private void send(String toEmail, String subject, String htmlContent) {
         if (apiKey == null || apiKey.isBlank()) {
-            log.warn("SENDGRID_API_KEY tanımlı değil, e-posta gönderilmedi ({} -> {})", subject, toEmail);
+            log.warn("BREVO_API_KEY tanımlı değil, e-posta gönderilmedi ({} -> {})", subject, toEmail);
             return;
         }
         try {
             Map<String, Object> payload = Map.of(
-                    "personalizations", List.of(Map.of("to", List.of(Map.of("email", toEmail)))),
-                    "from", Map.of("email", fromEmail),
+                    "sender", Map.of("name", fromName, "email", fromEmail),
+                    "to", List.of(Map.of("email", toEmail)),
                     "subject", subject,
-                    "content", List.of(Map.of("type", "text/html", "value", htmlContent))
+                    "htmlContent", htmlContent
             );
             String json = objectMapper.writeValueAsString(payload);
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(SENDGRID_ENDPOINT)
-                    .header("Authorization", "Bearer " + apiKey)
+                    .uri(BREVO_ENDPOINT)
+                    .header("api-key", apiKey)
                     .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(json))
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() >= 300) {
-                log.error("SendGrid isteği başarısız: {} - {}", response.statusCode(), response.body());
+                log.error("Brevo isteği başarısız: {} - {}", response.statusCode(), response.body());
             }
         } catch (Exception e) {
             log.error("E-posta gönderilirken hata oluştu ({} -> {}): {}", subject, toEmail, e.getMessage());
