@@ -15,6 +15,7 @@ import com.fisbu.api.dto.ProfileResponse;
 import com.fisbu.api.dto.UpdateProfileRequest;
 import com.fisbu.api.dto.LoginRequest;
 import com.fisbu.api.dto.RegisterRequest;
+import com.fisbu.api.dto.RegisterResponse;
 import com.fisbu.api.dto.ResetPasswordRequest;
 import com.fisbu.api.dto.VerifyEmailRequest;
 import com.fisbu.api.entity.Category;
@@ -47,7 +48,7 @@ public class AuthService {
         this.emailService = emailService;
     }
 
-   public User register(RegisterRequest request) {
+   public RegisterResponse register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Bu email zaten kayıtlı");
         }
@@ -64,7 +65,8 @@ public class AuthService {
         createDefaultCategories(savedUser);
         emailService.sendVerificationCode(savedUser.getEmail(), savedUser.getVerificationCode());
 
-        return savedUser;
+        return new RegisterResponse(savedUser.getId(), savedUser.getEmail(), savedUser.getName(),
+                savedUser.getEmailVerified());
     }
 
     public ProfileResponse getProfile(String email) {

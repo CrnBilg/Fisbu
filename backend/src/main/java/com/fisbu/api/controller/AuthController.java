@@ -17,9 +17,9 @@ import com.fisbu.api.dto.ChangePasswordRequest;
 import com.fisbu.api.dto.EmailRequest;
 import com.fisbu.api.dto.LoginRequest;
 import com.fisbu.api.dto.RegisterRequest;
+import com.fisbu.api.dto.RegisterResponse;
 import com.fisbu.api.dto.ResetPasswordRequest;
 import com.fisbu.api.dto.VerifyEmailRequest;
-import com.fisbu.api.entity.User;
 import com.fisbu.api.service.AuthService;
 
 import jakarta.validation.Valid;
@@ -36,7 +36,8 @@ public class AuthController {
     }
 
     @PostMapping("/register") // HTTP POST isteği ile "/auth/register" endpoint'ine gelen kayıt isteklerini işler.
-public User register(@RequestBody @Valid RegisterRequest request) {        return authService.register(request);
+    public RegisterResponse register(@RequestBody @Valid RegisterRequest request) {
+        return authService.register(request);
     }
 
     @PostMapping("/login")// HTTP POST isteği ile "/auth/login" endpoint'ine gelen giriş isteklerini işler.
