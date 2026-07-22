@@ -6,6 +6,7 @@ import '../services/auth_service.dart';
 import '../services/biometric_service.dart';
 import 'auth_wrapper.dart';
 import 'categories_screen.dart';
+import 'notification_settings_screen.dart';
 import '../core/theme/app_colors.dart';
 import '../main.dart';
 
@@ -555,7 +556,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         _buildMenuItem(
                           icon: Icons.notifications_outlined,
                           label: 'Bildirimler',
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const NotificationSettingsScreen(),
+                              ),
+                            );
+                          },
                         ),
                         _buildMenuItem(
                           icon: Icons.lock_outline,
