@@ -5,8 +5,11 @@ import 'add_receipt_screen.dart';
 import 'receipt_list_screen.dart';
 import 'ocr_screen.dart';
 import 'statistics_screen.dart';
+import 'budget_screen.dart';
 import '../services/receipt_service.dart';
+import '../services/budget_service.dart';
 import '../models/receipt.dart';
+import '../models/budget.dart';
 import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
 import '../core/theme/app_colors.dart';
@@ -20,6 +23,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   List<Receipt> _receipts = [];
+  List<Budget> _budgets = [];
   bool _isLoading = true;
   final _currencyFormat = NumberFormat('#,##0.00', 'tr_TR');
 
@@ -39,6 +43,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
     }
+
+    try {
+      final budgets = await BudgetService.getBudgets();
+      if (mounted) setState(() => _budgets = budgets);
+    } catch (e) {
+      // Bütçeler yüklenemese de dashboard'un geri kalanı çalışmaya devam etsin
+    }
+  }
+
+  Color _budgetColor(double percentage) {
+    if (percentage > 100) return AppColors.error;
+    if (percentage >= 80) return AppColors.warning;
+    return AppColors.primary;
   }
 
   double get _thisMonthTotal {
@@ -259,6 +276,112 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         );
                       },
                     ),
+                    const SizedBox(height: 12),
+                    _QuickActionCard(
+                      icon: Icons.pie_chart_outline,
+                      label: 'Bütçe',
+                      color: AppColors.success,
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BudgetScreen(),
+                          ),
+                        );
+                        _loadReceipts();
+                      },
+                    ),
+
+                    if (!_isLoading && _budgets.any((b) => b.overBudget))
+                      Container(
+                        margin: const EdgeInsets.only(top: 20),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.errDim(context),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded, color: AppColors.error),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                '${_budgets.where((b) => b.overBudget).length} kategoride bütçe aşıldı',
+                                style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.error),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    if (!_isLoading && _budgets.isNotEmpty)
+                      Container(
+                        margin: const EdgeInsets.only(top: 20),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surf(context),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.brd(context)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Bütçe Durumu',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.txt(context),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            ..._budgets.map((budget) {
+                              final color = _budgetColor(budget.percentage);
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            budget.categoryName,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.txt(context),
+                                            ),
+                                          ),
+                                        ),
+                                        Text(
+                                          '${_currencyFormat.format(budget.currentSpend)} / ${_currencyFormat.format(budget.monthlyLimit)} TL  %${budget.percentage.toStringAsFixed(0)}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: color,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: LinearProgressIndicator(
+                                        value: (budget.percentage / 100).clamp(0.0, 1.0),
+                                        backgroundColor: AppColors.brd(context),
+                                        valueColor: AlwaysStoppedAnimation<Color>(color),
+                                        minHeight: 6,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
+                      ),
 
                     if (_topCategory != null && !_isLoading)
                       Container(

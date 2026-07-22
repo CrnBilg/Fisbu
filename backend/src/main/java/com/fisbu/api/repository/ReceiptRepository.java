@@ -13,4 +13,5 @@ public interface ReceiptRepository extends JpaRepository<Receipt, Long> {
     List<Receipt> findByUser(User user);
     List<Receipt> findByCategory(Category category);
     List<Receipt> findByUserAndReceiptDateBetween(User user, LocalDate start, LocalDate end);
+    List<Receipt> findByUserAndCategoryAndReceiptDateBetween(User user, Category category, LocalDate start, LocalDate end);
 }
