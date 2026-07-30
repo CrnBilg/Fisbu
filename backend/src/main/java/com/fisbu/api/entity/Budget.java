@@ -42,4 +42,12 @@ public class Budget {
 
     @Column(nullable = false)
     private Integer month;
+
+    // %80 uyarı bildirimi gönderildi mi? Aynı ay tekrar tekrar bildirim gitmesini önler.
+    @Column(name = "warning_notified", nullable = false, columnDefinition = "boolean default false")
+    private Boolean warningNotified = false;
+
+    // %100 aşım bildirimi gönderildi mi?
+    @Column(name = "overspend_notified", nullable = false, columnDefinition = "boolean default false")
+    private Boolean overspendNotified = false;
 }

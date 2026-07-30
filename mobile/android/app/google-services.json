@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "813259001677",
+    "project_id": "fisbuproject3545",
+    "storage_bucket": "fisbuproject3545.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:813259001677:android:adbce67d9e557fe12ab104",
+        "android_client_info": {
+          "package_name": "com.fisbu.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdbC7UK-vctNDAaoXmKiEAh6HIRweCacA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

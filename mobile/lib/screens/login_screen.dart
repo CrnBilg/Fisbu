@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/push_notification_service.dart';
 import '../core/theme/app_colors.dart';
 import 'dashboard_screen.dart';
 import 'register_screen.dart';
@@ -45,6 +46,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (result.success) {
+      // Giriş başarılı: FCM token'ını backend'e kaydet (bütçe bildirimleri için)
+      PushNotificationService.registerToken();
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const DashboardScreen()),

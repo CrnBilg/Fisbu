@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/biometric_service.dart';
+import '../services/push_notification_service.dart';
 import '../core/theme/app_colors.dart';
 import 'dashboard_screen.dart';
 import 'login_screen.dart';
@@ -28,7 +29,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
     final loggedIn = await AuthService.isLoggedIn();
     if (!mounted) return;
     setState(() => _isLoggedIn = loggedIn);
-    if (loggedIn) await _runBiometricGate();
+    if (loggedIn) {
+      // Oturum açık kullanıcının FCM token'ını backend'e (yeniden) kaydet
+      PushNotificationService.registerToken();
+      await _runBiometricGate();
+    }
   }
 
   Future<void> _runBiometricGate() async {

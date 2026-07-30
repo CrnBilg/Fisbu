@@ -22,13 +22,16 @@ public class ReceiptService {
     private final ReceiptRepository receiptRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final BudgetService budgetService;
 
     public ReceiptService(ReceiptRepository receiptRepository,
                           UserRepository userRepository,
-                          CategoryRepository categoryRepository) {
+                          CategoryRepository categoryRepository,
+                          BudgetService budgetService) {
         this.receiptRepository = receiptRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
+        this.budgetService = budgetService;
     }
 
     // Kullanıcının tüm fişlerini listeler
@@ -65,7 +68,17 @@ public class ReceiptService {
             receipt.setCategory(category);
         }
 
-        return toResponse(receiptRepository.save(receipt));
+        Receipt saved = receiptRepository.save(receipt);
+
+        // Fiş kategorili ve tarihliyse, o ayki bütçe eşiği geçildiyse push bildirimi gönder
+        if (saved.getCategory() != null && saved.getReceiptDate() != null) {
+            budgetService.checkBudgetAndNotify(
+                    user, saved.getCategory(),
+                    saved.getReceiptDate().getYear(),
+                    saved.getReceiptDate().getMonthValue());
+        }
+
+        return toResponse(saved);
     }
 
     public ReceiptResponse getReceiptById(String email, Long receiptId) {

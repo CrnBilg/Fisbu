@@ -52,4 +52,8 @@ public class User {
 
     @Column(name = "reset_password_code_expiry")
     private LocalDateTime resetPasswordCodeExpiry;
+
+    // Firebase Cloud Messaging cihaz token'ı — bütçe push bildirimleri buraya gönderilir
+    @Column(name = "fcm_token")
+    private String fcmToken;
 }

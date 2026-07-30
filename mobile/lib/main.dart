@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/auth_wrapper.dart';
+import 'services/push_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase + push bildirim altyapısı (native config dosyalarından okur)
+  try {
+    await Firebase.initializeApp();
+    await PushNotificationService.init();
+  } catch (_) {
+    // Firebase başlatılamazsa (ör. config eksik) uygulama yine de açılmalı
+  }
+
   final prefs = await SharedPreferences.getInstance();
   final isDark = prefs.getBool('isDarkMode') ?? false;
   SystemChrome.setSystemUIOverlayStyle(

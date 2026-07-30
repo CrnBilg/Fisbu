@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -28,13 +29,16 @@ public class BudgetService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final ReceiptRepository receiptRepository;
+    private final PushNotificationService pushService;
 
     public BudgetService(BudgetRepository budgetRepository, UserRepository userRepository,
-                          CategoryRepository categoryRepository, ReceiptRepository receiptRepository) {
+                          CategoryRepository categoryRepository, ReceiptRepository receiptRepository,
+                          PushNotificationService pushService) {
         this.budgetRepository = budgetRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.receiptRepository = receiptRepository;
+        this.pushService = pushService;
     }
 
     public List<BudgetResponse> getBudgets(String email, Integer year, Integer month) {
@@ -87,6 +91,65 @@ public class BudgetService {
         User user = getUserByEmail(email);
         Budget budget = getOwnedBudget(user, budgetId);
         budgetRepository.delete(budget);
+    }
+
+    /**
+     * Bir fiş eklendikten sonra çağrılır: ilgili kategori/ay bütçesinin harcama oranını
+     * hesaplar ve %80 (uyarı) / %100 (aşım) eşiklerini yeni geçtiyse push bildirimi gönderir.
+     * Aynı eşik için tekrar tekrar bildirim gitmesini warning/overspendNotified bayrakları önler.
+     * Bütçe tanımlı değilse veya Firebase yapılandırılmamışsa sessizce çıkar.
+     */
+    public void checkBudgetAndNotify(User user, Category category, int year, int month) {
+        if (category == null) return;
+
+        Optional<Budget> budgetOpt =
+                budgetRepository.findByUserAndCategoryAndYearAndMonth(user, category, year, month);
+        if (budgetOpt.isEmpty()) return;
+
+        Budget budget = budgetOpt.get();
+        BigDecimal limit = budget.getMonthlyLimit();
+        if (limit == null || limit.signum() <= 0) return;
+
+        BigDecimal spend = calculateSpend(user, category, year, month);
+        double pct = spend.divide(limit, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100)).doubleValue();
+        long pctRounded = Math.round(pct);
+        String fcmToken = user.getFcmToken();
+        boolean changed = false;
+
+        if (pct >= 100.0) {
+            if (!Boolean.TRUE.equals(budget.getOverspendNotified())) {
+                pushService.send(fcmToken, "Bütçe Aşıldı",
+                        category.getName() + " bütçeni aştın! (şu an %" + pctRounded + " kullanıldı)");
+                budget.setOverspendNotified(true);
+                budget.setWarningNotified(true);
+                changed = true;
+            }
+        } else if (pct >= 80.0) {
+            if (!Boolean.TRUE.equals(budget.getWarningNotified())) {
+                pushService.send(fcmToken, "Bütçe Uyarısı",
+                        category.getName() + " bütçenin %80'ine ulaştın (şu an %" + pctRounded + ")");
+                budget.setWarningNotified(true);
+                changed = true;
+            }
+            // Aşımdan uyarı bandına düştüyse aşım bayrağını sıfırla
+            if (Boolean.TRUE.equals(budget.getOverspendNotified())) {
+                budget.setOverspendNotified(false);
+                changed = true;
+            }
+        } else {
+            // %80 altına döndü → sonraki eşik geçişinde tekrar bildirebilmek için bayrakları sıfırla
+            if (Boolean.TRUE.equals(budget.getWarningNotified())
+                    || Boolean.TRUE.equals(budget.getOverspendNotified())) {
+                budget.setWarningNotified(false);
+                budget.setOverspendNotified(false);
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            budgetRepository.save(budget);
+        }
     }
 
     private BigDecimal calculateSpend(User user, Category category, int year, int month) {
