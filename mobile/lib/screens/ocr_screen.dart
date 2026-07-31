@@ -1,5 +1,7 @@
 import 'dart:io';
 import '../services/ocr_parser.dart';
+import '../services/receipt_service.dart';
+import '../models/restore_receipt_result.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,6 +23,11 @@ class _OcrScreenState extends State<OcrScreen> {
   String? _extractedDate;
   String? _extractedStoreName;
   bool _isProcessing = false;
+  bool _hasText = false;
+
+  bool _isRestoring = false;
+  RestoreReceiptResult? _aiResult;
+  String? _aiError;
 
   static const _channel = MethodChannel('com.fisbu/ocr');
 
@@ -33,6 +40,9 @@ class _OcrScreenState extends State<OcrScreen> {
       _selectedImage = image;
       _isProcessing = true;
       _recognizedText = '';
+      _hasText = false;
+      _aiResult = null;
+      _aiError = null;
     });
 
     try {
@@ -52,6 +62,7 @@ class _OcrScreenState extends State<OcrScreen> {
         _recognizedText = text.isEmpty
             ? 'Metin bulunamadı. Daha net bir fotoğraf deneyin.'
             : text;
+        _hasText = text.isNotEmpty;
         _extractedAmount = OcrParser.extractAmount(text)?.toStringAsFixed(2);
         _extractedDate = OcrParser.extractDate(text);
         _extractedStoreName = OcrParser.extractStoreName(text);
@@ -63,6 +74,35 @@ class _OcrScreenState extends State<OcrScreen> {
         _isProcessing = false;
       });
     }
+  }
+
+  Future<void> _restoreWithAi() async {
+    setState(() {
+      _isRestoring = true;
+      _aiResult = null;
+      _aiError = null;
+    });
+
+    try {
+      final result = await ReceiptService.restoreReceipt(_recognizedText);
+      setState(() => _aiResult = result);
+    } catch (e) {
+      setState(() => _aiError = 'AI restorasyonu başarısız oldu: $e');
+    } finally {
+      if (mounted) setState(() => _isRestoring = false);
+    }
+  }
+
+  Color _confidenceColor(int score) {
+    if (score >= 90) return AppColors.success;
+    if (score >= 60) return AppColors.warning;
+    return AppColors.error;
+  }
+
+  String _confidenceLabel(int score) {
+    if (score >= 90) return 'Yüksek Güven';
+    if (score >= 60) return 'Orta Güven';
+    return 'Düşük Güven';
   }
 
   Widget _buildExtractedRow(String label, String value) {
@@ -252,6 +292,128 @@ class _OcrScreenState extends State<OcrScreen> {
                   ],
                 ),
               ),
+            if (!_isProcessing && _hasText && _aiResult == null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: ElevatedButton.icon(
+                  onPressed: _isRestoring ? null : _restoreWithAi,
+                  icon: _isRestoring
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.auto_awesome),
+                  label: Text(_isRestoring ? 'AI okuyor...' : 'AI ile Güçlendir'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secondary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            if (_aiError != null)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.errDim(context),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(_aiError!,
+                          style: const TextStyle(color: AppColors.error, fontSize: 13)),
+                    ),
+                  ],
+                ),
+              ),
+            if (_aiResult != null)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.secondaryDim,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.auto_awesome, color: AppColors.secondaryDark, size: 18),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'AI Restorasyonu',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.secondaryDark,
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _confidenceColor(_aiResult!.confidenceScore).withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${_confidenceLabel(_aiResult!.confidenceScore)} · %${_aiResult!.confidenceScore}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _confidenceColor(_aiResult!.confidenceScore),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (_aiResult!.storeName != null)
+                      _buildExtractedRow('Mağaza', _aiResult!.storeName!),
+                    if (_aiResult!.totalAmount != null)
+                      _buildExtractedRow(
+                          'Tutar', '${_aiResult!.totalAmount!.toStringAsFixed(2)} TL'),
+                    if (_aiResult!.receiptDate != null)
+                      _buildExtractedRow('Tarih', _aiResult!.receiptDate!),
+                    if (_aiResult!.suggestedCategoryName != null)
+                      _buildExtractedRow('Kategori', _aiResult!.suggestedCategoryName!),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddReceiptScreen(
+                              initialStoreName: _aiResult!.storeName ?? _extractedStoreName,
+                              initialAmount: _aiResult!.totalAmount?.toStringAsFixed(2) ??
+                                  _extractedAmount,
+                              initialDate: _aiResult!.receiptDate ?? _extractedDate,
+                              initialImagePath: _selectedImage?.path,
+                              initialCategoryId: _aiResult!.matchedCategoryId,
+                            ),
+                          ),
+                        ),
+                        style: TextButton.styleFrom(foregroundColor: AppColors.secondaryDark),
+                        child: const Text(
+                          'AI Verisiyle Forma Aktar →',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             if (!_isProcessing && _recognizedText.isNotEmpty)
               Container(
                 padding: const EdgeInsets.all(16),
@@ -283,6 +445,9 @@ class _OcrScreenState extends State<OcrScreen> {
                             _extractedAmount = null;
                             _extractedDate = null;
                             _extractedStoreName = null;
+                            _hasText = false;
+                            _aiResult = null;
+                            _aiError = null;
                           }),
                           child: const Text('Temizle'),
                         ),

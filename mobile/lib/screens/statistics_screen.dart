@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/receipt_service.dart';
 import '../models/receipt.dart';
+import '../models/spending_analysis_result.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -18,6 +19,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   // Aylık filtre
   late DateTime _selectedMonth;
   List<DateTime> _availableMonths = [];
+
+  // AI harcama yorumu
+  bool _isLoadingAiComment = false;
+  SpendingAnalysisResult? _aiAnalysis;
+  String? _aiCommentError;
 
   @override
   void initState() {
@@ -94,6 +100,24 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         .key;
   }
 
+  Future<void> _loadAiAnalysis() async {
+    setState(() {
+      _isLoadingAiComment = true;
+      _aiCommentError = null;
+    });
+    try {
+      final result = await ReceiptService.getSpendingAnalysis(
+        year: _selectedMonth.year,
+        month: _selectedMonth.month,
+      );
+      setState(() => _aiAnalysis = result);
+    } catch (e) {
+      setState(() => _aiCommentError = 'AI yorumu alınamadı: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingAiComment = false);
+    }
+  }
+
   double get _maxReceipt => _filteredReceipts.isEmpty
       ? 0
       : _filteredReceipts
@@ -147,6 +171,144 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   double get _allTimeTotal =>
       _receipts.fold(0.0, (sum, receipt) => sum + receipt.totalAmount);
+
+  Widget _buildAiCommentCard(bool isDark) {
+    final surfaceColor = isDark ? const Color(0xFF2A2A3E) : Colors.white;
+    final titleColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    const accent = Color(0xFF6C63FF);
+
+    if (_isLoadingAiComment) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFEEEEF5)),
+        ),
+        child: const Row(
+          children: [
+            SizedBox(
+              height: 18,
+              width: 18,
+              child: CircularProgressIndicator(strokeWidth: 2, color: accent),
+            ),
+            SizedBox(width: 12),
+            Text('AI harcamalarını analiz ediyor...',
+                style: TextStyle(color: Color(0xFF9E9EBF), fontSize: 13)),
+          ],
+        ),
+      );
+    }
+
+    if (_aiCommentError != null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFF6B6B).withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Color(0xFFFF6B6B), size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(_aiCommentError!,
+                  style: const TextStyle(color: Color(0xFFFF6B6B), fontSize: 13)),
+            ),
+            TextButton(
+              onPressed: _loadAiAnalysis,
+              child: const Text('Tekrar Dene'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_aiAnalysis == null) {
+      return Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF6C63FF), Color(0xFF9C8FFF)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: _loadAiAnalysis,
+            child: const Padding(
+              padding: EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(Icons.auto_awesome, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Bu ayki harcamaların için AI yorumu al',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: Colors.white),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withOpacity(0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome, color: accent, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'AI Yorumu',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: titleColor,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: _loadAiAnalysis,
+                icon: const Icon(Icons.refresh, size: 18, color: accent),
+                tooltip: 'Yenile',
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _aiAnalysis!.comment,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.5,
+              color: isDark ? Colors.white70 : const Color(0xFF1A1A2E),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildGeneralStatistics(bool isDark) {
     final categoryTotals = _allCategoryTotals;
@@ -567,6 +729,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                   setState(() {
                                     _selectedMonth = val;
                                     _touchedIndex = -1;
+                                    _aiAnalysis = null;
+                                    _aiCommentError = null;
                                   });
                                 }
                               },
@@ -626,6 +790,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 20),
+
+                        // AI harcama yorumu
+                        _buildAiCommentCard(isDark),
                         const SizedBox(height: 24),
 
                         // Pasta grafik

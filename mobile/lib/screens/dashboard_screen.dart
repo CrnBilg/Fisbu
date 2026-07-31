@@ -6,6 +6,7 @@ import 'receipt_list_screen.dart';
 import 'ocr_screen.dart';
 import 'statistics_screen.dart';
 import 'budget_screen.dart';
+import 'export_screen.dart';
 import '../services/receipt_service.dart';
 import '../services/budget_service.dart';
 import '../models/receipt.dart';
@@ -289,6 +290,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         );
                         _loadReceipts();
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _QuickActionCard(
+                      icon: Icons.ios_share_outlined,
+                      label: 'Rapor Al',
+                      color: AppColors.warning,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ExportScreen(),
+                          ),
+                        );
                       },
                     ),
 

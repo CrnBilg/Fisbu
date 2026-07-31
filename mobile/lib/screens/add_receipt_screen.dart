@@ -11,6 +11,7 @@ class AddReceiptScreen extends StatefulWidget {
   final String? initialAmount;
   final String? initialDate;
   final String? initialImagePath;
+  final int? initialCategoryId;
 
   const AddReceiptScreen({
     super.key,
@@ -18,6 +19,7 @@ class AddReceiptScreen extends StatefulWidget {
     this.initialAmount,
     this.initialDate,
     this.initialImagePath,
+    this.initialCategoryId,
   });
 
   @override
@@ -60,9 +62,19 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
   Future<void> _loadCategories() async {
     try {
       final categories = await ReceiptService.getCategories();
+      Category? matched;
+      if (widget.initialCategoryId != null) {
+        for (final category in categories) {
+          if (category.id == widget.initialCategoryId) {
+            matched = category;
+            break;
+          }
+        }
+      }
       setState(() {
         _categories = categories;
         _isCategoriesLoading = false;
+        _selectedCategory = matched;
       });
     } catch (e) {
       setState(() => _isCategoriesLoading = false);

@@ -46,20 +46,30 @@ public class AiService {
 
     /** Düz metin prompt gönderir, modelin ürettiği metni döner. */
     public String generateText(String prompt) {
-        return chat(List.of(Map.of("role", "user", "content", prompt)), model);
+        return chat(List.of(Map.of("role", "user", "content", prompt)), model, false);
     }
 
-    private String chat(List<Map<String, Object>> messages, String modelName) {
+    /** Prompt gönderir, modelin ürettiği metni katı JSON olarak döndürmesini zorlar. */
+    public String generateJson(String prompt) {
+        return chat(List.of(Map.of("role", "user", "content", prompt)), model, true);
+    }
+
+    private String chat(List<Map<String, Object>> messages, String modelName, boolean jsonMode) {
         if (!isConfigured()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "AI servisi henüz yapılandırılmadı");
         }
 
         try {
-            Map<String, Object> payload = Map.of(
-                    "model", modelName,
-                    "messages", messages
-            );
+            Map<String, Object> payload = jsonMode
+                    ? Map.of(
+                            "model", modelName,
+                            "messages", messages,
+                            "response_format", Map.of("type", "json_object"))
+                    : Map.of(
+                            "model", modelName,
+                            "messages", messages
+                    );
             String json = objectMapper.writeValueAsString(payload);
 
             HttpRequest request = HttpRequest.newBuilder()

@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import '../models/receipt.dart';
 import '../models/category.dart';
+import '../models/restore_receipt_result.dart';
+import '../models/spending_analysis_result.dart';
 import 'auth_service.dart';
 
 class ReceiptService {
@@ -125,6 +128,61 @@ class ReceiptService {
       return Category.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Kategori güncellenemedi: ${response.statusCode}');
+    }
+  }
+
+  static Future<RestoreReceiptResult> restoreReceipt(String rawOcrText) async {
+    final token = await AuthService.getToken();
+    final response = await http.post(
+      Uri.parse('$_baseUrl/ai/restore-receipt'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'rawOcrText': rawOcrText}),
+    );
+    if (response.statusCode == 200) {
+      return RestoreReceiptResult.fromJson(jsonDecode(response.body));
+    } else if (response.statusCode == 503) {
+      throw Exception('AI servisi şu anda kullanılamıyor');
+    } else {
+      throw Exception('AI restorasyonu başarısız: ${response.statusCode}');
+    }
+  }
+
+  static Future<SpendingAnalysisResult> getSpendingAnalysis({
+    required int year,
+    required int month,
+  }) async {
+    final token = await AuthService.getToken();
+    final response = await http.get(
+      Uri.parse('$_baseUrl/ai/spending-analysis?year=$year&month=$month'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      return SpendingAnalysisResult.fromJson(jsonDecode(response.body));
+    } else if (response.statusCode == 503) {
+      throw Exception('AI servisi şu anda kullanılamıyor');
+    } else {
+      throw Exception('AI yorumu alınamadı: ${response.statusCode}');
+    }
+  }
+
+  /// format: 'pdf' | 'excel' | 'csv'; start/end: yyyy-MM-dd
+  static Future<Uint8List> exportReceipts({
+    required String format,
+    required String start,
+    required String end,
+  }) async {
+    final token = await AuthService.getToken();
+    final response = await http.get(
+      Uri.parse('$_baseUrl/receipts/export?format=$format&start=$start&end=$end'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      return response.bodyBytes;
+    } else {
+      throw Exception('Export başarısız oldu: ${response.statusCode}');
     }
   }
 

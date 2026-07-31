@@ -1,9 +1,15 @@
 package com.fisbu.api.service;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -23,15 +29,18 @@ public class ReceiptService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final BudgetService budgetService;
+    private final ExportService exportService;
 
     public ReceiptService(ReceiptRepository receiptRepository,
                           UserRepository userRepository,
                           CategoryRepository categoryRepository,
-                          BudgetService budgetService) {
+                          BudgetService budgetService,
+                          ExportService exportService) {
         this.receiptRepository = receiptRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.budgetService = budgetService;
+        this.exportService = exportService;
     }
 
     // Kullanıcının tüm fişlerini listeler
@@ -105,6 +114,54 @@ public class ReceiptService {
         }
 
         receiptRepository.delete(receipt);
+    }
+
+    // Gün 14/15: tarih aralığındaki fişleri PDF/Excel/CSV olarak dışa aktarır
+    public ResponseEntity<byte[]> exportReceipts(String email, String format, LocalDate start, LocalDate end) {
+        User user = getUserByEmail(email);
+
+        if (start == null || end == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "start ve end tarihleri zorunludur");
+        }
+        if (end.isBefore(start)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "end, start'tan önce olamaz");
+        }
+
+        List<Receipt> receipts = receiptRepository.findByUserAndReceiptDateBetween(user, start, end);
+        String normalizedFormat = format == null ? "" : format.toLowerCase(Locale.ROOT);
+
+        byte[] fileBytes;
+        MediaType mediaType;
+        String extension;
+
+        switch (normalizedFormat) {
+            case "pdf" -> {
+                fileBytes = exportService.toPdf(receipts, start.toString(), end.toString());
+                mediaType = MediaType.APPLICATION_PDF;
+                extension = "pdf";
+            }
+            case "excel" -> {
+                fileBytes = exportService.toExcel(receipts);
+                mediaType = MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+                extension = "xlsx";
+            }
+            case "csv" -> {
+                fileBytes = exportService.toCsv(receipts);
+                mediaType = MediaType.parseMediaType("text/csv");
+                extension = "csv";
+            }
+            default -> throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Geçersiz format — pdf, excel veya csv olmalı");
+        }
+
+        String filename = "fisler_" + start + "_" + end + "." + extension;
+        ContentDisposition disposition = ContentDisposition.attachment().filename(filename).build();
+
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+                .body(fileBytes);
     }
 
     private ReceiptResponse toResponse(Receipt receipt) {
