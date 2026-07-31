@@ -12,4 +12,6 @@ import com.fisbu.api.entity.User;
 public interface BudgetRepository extends JpaRepository<Budget, Long> {
     List<Budget> findByUserAndYearAndMonth(User user, Integer year, Integer month);
     Optional<Budget> findByUserAndCategoryAndYearAndMonth(User user, Category category, Integer year, Integer month);
+    List<Budget> findByUser(User user);
+    List<Budget> findByCategory(Category category);
 }

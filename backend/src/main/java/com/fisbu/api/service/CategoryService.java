@@ -12,6 +12,7 @@ import com.fisbu.api.dto.CategoryResponse;
 import com.fisbu.api.entity.Category;
 import com.fisbu.api.entity.Receipt;
 import com.fisbu.api.entity.User;
+import com.fisbu.api.repository.BudgetRepository;
 import com.fisbu.api.repository.CategoryRepository;
 import com.fisbu.api.repository.ReceiptRepository;
 import com.fisbu.api.repository.UserRepository;
@@ -22,12 +23,14 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final ReceiptRepository receiptRepository;
+    private final BudgetRepository budgetRepository;
 
     public CategoryService(CategoryRepository categoryRepository, UserRepository userRepository,
-                            ReceiptRepository receiptRepository) {
+                            ReceiptRepository receiptRepository, BudgetRepository budgetRepository) {
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
         this.receiptRepository = receiptRepository;
+        this.budgetRepository = budgetRepository;
     }
 
     public List<CategoryResponse> getCategories(String email) {
@@ -62,6 +65,9 @@ public class CategoryService {
     public void deleteCategory(String email, Long categoryId) {
         User user = getUserByEmail(email);
         Category category = getOwnedCategory(user, categoryId);
+
+        // Budget, category'ye NOT NULL FK ile bağlı — önce silinmeli, yoksa kategori silme FK hatası verir
+        budgetRepository.deleteAll(budgetRepository.findByCategory(category));
 
         // Bu kategoriyi kullanan fişleri kategorisiz bırak, FK hatasını önle
         List<Receipt> receipts = receiptRepository.findByCategory(category);

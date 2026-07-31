@@ -20,6 +20,7 @@ import com.fisbu.api.dto.ResetPasswordRequest;
 import com.fisbu.api.dto.VerifyEmailRequest;
 import com.fisbu.api.entity.Category;
 import com.fisbu.api.entity.User;
+import com.fisbu.api.repository.BudgetRepository;
 import com.fisbu.api.repository.CategoryRepository;
 import com.fisbu.api.repository.ReceiptRepository;
 import com.fisbu.api.repository.UserRepository;
@@ -35,16 +36,19 @@ public class AuthService {
     private final JwtService jwtService;
     private final CategoryRepository categoryRepository;
     private final ReceiptRepository receiptRepository;
+    private final BudgetRepository budgetRepository;
     private final EmailService emailService;
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
                        JwtService jwtService, CategoryRepository categoryRepository,
-                       ReceiptRepository receiptRepository, EmailService emailService) {
+                       ReceiptRepository receiptRepository, BudgetRepository budgetRepository,
+                       EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.categoryRepository = categoryRepository;
         this.receiptRepository = receiptRepository;
+        this.budgetRepository = budgetRepository;
         this.emailService = emailService;
     }
 
@@ -230,6 +234,8 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kullanıcı bulunamadı"));
 
+        // Budget, category'ye NOT NULL FK ile bağlı — önce silinmeli, yoksa kategori/kullanıcı silme FK hatası verir
+        budgetRepository.deleteAll(budgetRepository.findByUser(user));
         receiptRepository.deleteAll(receiptRepository.findByUser(user));
         categoryRepository.deleteAll(categoryRepository.findByUser(user));
         userRepository.delete(user);
