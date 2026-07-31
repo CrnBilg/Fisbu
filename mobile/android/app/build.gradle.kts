@@ -4,6 +4,8 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
     // Firebase Cloud Messaging (bütçe uyarı/aşım push bildirimleri)
     id("com.google.gms.google-services")
+    // Firebase Crashlytics (Gün 15) — çökme raporları
+    id("com.google.firebase.crashlytics")
 }
 
 android {

@@ -23,6 +23,8 @@ plugins {
     id("org.jetbrains.kotlin.android") version "2.3.20" apply false
     // Firebase: google-services.json'u işleyip FCM yapılandırmasını uygular
     id("com.google.gms.google-services") version "4.4.2" apply false
+    // Firebase Crashlytics (Gün 15) — çökme raporları
+    id("com.google.firebase.crashlytics") version "3.0.7" apply false
 }
 
 include(":app")
