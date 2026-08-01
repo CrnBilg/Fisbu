@@ -3,9 +3,12 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import '../models/receipt.dart';
+import '../models/receipt_item.dart';
 import '../models/category.dart';
 import '../models/restore_receipt_result.dart';
 import '../models/spending_analysis_result.dart';
+import '../models/personal_inflation_summary.dart';
+import '../models/product_price_history.dart';
 import 'auth_service.dart';
 
 class ReceiptService {
@@ -31,6 +34,7 @@ class ReceiptService {
     required String receiptDate,
     int? categoryId,
     String? imageUrl,
+    List<ReceiptItem>? items,
   }) async {
     final token = await AuthService.getToken();
     final response = await http.post(
@@ -45,6 +49,8 @@ class ReceiptService {
         'receiptDate': receiptDate,
         'categoryId': categoryId,
         'imageUrl': imageUrl,
+        if (items != null && items.isNotEmpty)
+          'items': items.map((e) => e.toJson()).toList(),
       }),
     );
     if (response.statusCode == 201) {
@@ -183,6 +189,32 @@ class ReceiptService {
       return response.bodyBytes;
     } else {
       throw Exception('Export başarısız oldu: ${response.statusCode}');
+    }
+  }
+
+  static Future<PersonalInflationSummary> getInflationSummary({int months = 3}) async {
+    final token = await AuthService.getToken();
+    final response = await http.get(
+      Uri.parse('$_baseUrl/inflation/summary?months=$months'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      return PersonalInflationSummary.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Enflasyon özeti alınamadı: ${response.statusCode}');
+    }
+  }
+
+  static Future<ProductPriceHistory> getProductPriceHistory(String normalizedName) async {
+    final token = await AuthService.getToken();
+    final response = await http.get(
+      Uri.parse('$_baseUrl/inflation/products/${Uri.encodeComponent(normalizedName)}/history'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      return ProductPriceHistory.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Ürün fiyat geçmişi alınamadı: ${response.statusCode}');
     }
   }
 

@@ -1,3 +1,5 @@
+import 'receipt_item.dart';
+
 class RestoreReceiptResult {
   final String? storeName;
   final double? totalAmount;
@@ -5,6 +7,7 @@ class RestoreReceiptResult {
   final String? suggestedCategoryName;
   final int? matchedCategoryId;
   final int confidenceScore;
+  final List<ReceiptItem> items;
 
   RestoreReceiptResult({
     this.storeName,
@@ -13,6 +16,7 @@ class RestoreReceiptResult {
     this.suggestedCategoryName,
     this.matchedCategoryId,
     required this.confidenceScore,
+    this.items = const [],
   });
 
   factory RestoreReceiptResult.fromJson(Map<String, dynamic> json) {
@@ -23,6 +27,10 @@ class RestoreReceiptResult {
       suggestedCategoryName: json['suggestedCategoryName'] as String?,
       matchedCategoryId: json['matchedCategoryId'] as int?,
       confidenceScore: (json['confidenceScore'] as num?)?.toInt() ?? 0,
+      items: (json['items'] as List<dynamic>?)
+              ?.map((e) => ReceiptItem.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'receipt_item.dart';
+
 class Receipt {
   final int id;
   final String storeName;
@@ -7,6 +9,7 @@ class Receipt {
   final String? categoryName;
   final String? imageUrl;
   final String? createdAt;
+  final List<ReceiptItem> items;
 
   Receipt({
     required this.id,
@@ -17,6 +20,7 @@ class Receipt {
     this.categoryName,
     this.imageUrl,
     this.createdAt,
+    this.items = const [],
   });
 
   factory Receipt.fromJson(Map<String, dynamic> json) {
@@ -29,6 +33,10 @@ class Receipt {
       categoryName: json['categoryName'] as String?,
       imageUrl: json['imageUrl'] as String?,
       createdAt: json['createdAt'] as String?,
+      items: (json['items'] as List<dynamic>?)
+              ?.map((e) => ReceiptItem.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
   }
 }

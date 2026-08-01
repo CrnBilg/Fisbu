@@ -3,6 +3,7 @@ package com.fisbu.api.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ReceiptResponse {
     private Long id;
@@ -14,6 +15,7 @@ public class ReceiptResponse {
     private Long categoryId;
     private String categoryName;
     private LocalDateTime createdAt;
+    private List<ReceiptItemResponse> items;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -41,4 +43,7 @@ public class ReceiptResponse {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public List<ReceiptItemResponse> getItems() { return items; }
+    public void setItems(List<ReceiptItemResponse> items) { this.items = items; }
 }

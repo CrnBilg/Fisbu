@@ -1,6 +1,7 @@
 package com.fisbu.api.service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -13,10 +14,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fisbu.api.dto.ReceiptItemRequest;
+import com.fisbu.api.dto.ReceiptItemResponse;
 import com.fisbu.api.dto.ReceiptRequest;
 import com.fisbu.api.dto.ReceiptResponse;
 import com.fisbu.api.entity.Category;
 import com.fisbu.api.entity.Receipt;
+import com.fisbu.api.entity.ReceiptItem;
 import com.fisbu.api.entity.User;
 import com.fisbu.api.repository.CategoryRepository;
 import com.fisbu.api.repository.ReceiptRepository;
@@ -75,6 +79,20 @@ public class ReceiptService {
             }
 
             receipt.setCategory(category);
+        }
+
+        if (request.getItems() != null) {
+            for (ReceiptItemRequest itemRequest : request.getItems()) {
+                ReceiptItem item = new ReceiptItem();
+                item.setReceipt(receipt);
+                item.setProductName(itemRequest.getProductName());
+                item.setNormalizedName(ProductNameNormalizer.normalize(itemRequest.getProductName()));
+                item.setUnitPrice(itemRequest.getUnitPrice());
+                if (itemRequest.getQuantity() != null) {
+                    item.setQuantity(itemRequest.getQuantity());
+                }
+                receipt.getItems().add(item);
+            }
         }
 
         Receipt saved = receiptRepository.save(receipt);
@@ -178,6 +196,17 @@ public class ReceiptService {
             response.setCategoryId(receipt.getCategory().getId());
             response.setCategoryName(receipt.getCategory().getName());
         }
+
+        List<ReceiptItemResponse> itemResponses = new ArrayList<>();
+        for (ReceiptItem item : receipt.getItems()) {
+            ReceiptItemResponse itemResponse = new ReceiptItemResponse();
+            itemResponse.setId(item.getId());
+            itemResponse.setProductName(item.getProductName());
+            itemResponse.setUnitPrice(item.getUnitPrice());
+            itemResponse.setQuantity(item.getQuantity());
+            itemResponses.add(itemResponse);
+        }
+        response.setItems(itemResponses);
 
         return response;
     }

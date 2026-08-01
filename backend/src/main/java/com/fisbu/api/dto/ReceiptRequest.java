@@ -1,5 +1,6 @@
 package com.fisbu.api.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -8,6 +9,7 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 public class ReceiptRequest {
 
@@ -27,6 +29,9 @@ public class ReceiptRequest {
     private String rawOcrText;
     private Long categoryId;
 
+    @Valid
+    private List<ReceiptItemRequest> items;
+
     public String getStoreName() { return storeName; }
     public void setStoreName(String storeName) { this.storeName = storeName; }
     public BigDecimal getTotalAmount() { return totalAmount; }
@@ -39,4 +44,6 @@ public class ReceiptRequest {
     public void setRawOcrText(String rawOcrText) { this.rawOcrText = rawOcrText; }
     public Long getCategoryId() { return categoryId; }
     public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
+    public List<ReceiptItemRequest> getItems() { return items; }
+    public void setItems(List<ReceiptItemRequest> items) { this.items = items; }
 }

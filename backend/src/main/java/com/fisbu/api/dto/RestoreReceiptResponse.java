@@ -2,6 +2,7 @@ package com.fisbu.api.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -16,4 +17,5 @@ public class RestoreReceiptResponse {
     private String suggestedCategoryName;
     private Long matchedCategoryId;
     private int confidenceScore;
+    private List<LineItemDto> items;
 }

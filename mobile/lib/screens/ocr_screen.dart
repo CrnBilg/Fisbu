@@ -387,6 +387,41 @@ class _OcrScreenState extends State<OcrScreen> {
                       _buildExtractedRow('Tarih', _aiResult!.receiptDate!),
                     if (_aiResult!.suggestedCategoryName != null)
                       _buildExtractedRow('Kategori', _aiResult!.suggestedCategoryName!),
+                    if (_aiResult!.items.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Ürünler (${_aiResult!.items.length})',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.txtSecondary(context),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      ..._aiResult!.items.map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item.productName,
+                                  style: TextStyle(fontSize: 13, color: AppColors.txt(context)),
+                                ),
+                              ),
+                              Text(
+                                '${item.unitPrice.toStringAsFixed(2)} TL',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.txt(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerRight,
@@ -401,6 +436,7 @@ class _OcrScreenState extends State<OcrScreen> {
                               initialDate: _aiResult!.receiptDate ?? _extractedDate,
                               initialImagePath: _selectedImage?.path,
                               initialCategoryId: _aiResult!.matchedCategoryId,
+                              initialItems: _aiResult!.items,
                             ),
                           ),
                         ),

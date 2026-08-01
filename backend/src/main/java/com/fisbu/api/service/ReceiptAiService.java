@@ -3,6 +3,7 @@ package com.fisbu.api.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fisbu.api.dto.LineItemDto;
 import com.fisbu.api.dto.RestoreReceiptRequest;
 import com.fisbu.api.dto.RestoreReceiptResponse;
 import com.fisbu.api.dto.SpendingAnalysisResponse;
@@ -68,8 +70,13 @@ public class ReceiptAiService {
                   "totalAmount": sayısal tutar (TL, ondalık ayraç nokta, bulunamazsa null),
                   "receiptDate": "yyyy-MM-dd formatında tarih (bulunamazsa null)",
                   "suggestedCategoryName": "şu listeden en uygun kategori adını seç: [%s] (hiçbiri uymuyorsa null)",
-                  "confidenceScore": 0 ile 100 arasında tam sayı, verinin ne kadar güvenilir olduğunu belirtir
+                  "confidenceScore": 0 ile 100 arasında tam sayı, verinin ne kadar güvenilir olduğunu belirtir,
+                  "items": [
+                    {"productName": "ürün adı", "unitPrice": birim fiyat (sayı), "quantity": adet (sayı, bulunamazsa 1)}
+                  ]
                 }
+                Fişte tek tek ürün satırları okunabiliyorsa "items" dizisini doldur, okunamıyorsa boş dizi ver.
+                KDV/toplam/indirim/ödeme satırlarını ürün sayma.
 
                 OCR metni:
                 %s
@@ -92,7 +99,30 @@ public class ReceiptAiService {
                     .ifPresent(c -> response.setMatchedCategoryId(c.getId()));
         }
 
+        response.setItems(parseItems(root.get("items")));
+
         return response;
+    }
+
+    private List<LineItemDto> parseItems(JsonNode itemsNode) {
+        List<LineItemDto> items = new ArrayList<>();
+        if (itemsNode == null || !itemsNode.isArray()) {
+            return items;
+        }
+        for (JsonNode itemNode : itemsNode) {
+            String productName = textOrNull(itemNode, "productName");
+            BigDecimal unitPrice = decimalOrNull(itemNode.get("unitPrice"));
+            if (productName == null || unitPrice == null) {
+                continue;
+            }
+            LineItemDto item = new LineItemDto();
+            item.setProductName(productName);
+            item.setUnitPrice(unitPrice);
+            BigDecimal quantity = decimalOrNull(itemNode.get("quantity"));
+            item.setQuantity(quantity != null ? quantity : BigDecimal.ONE);
+            items.add(item);
+        }
+        return items;
     }
 
     public SpendingAnalysisResponse getSpendingAnalysis(String email, Integer year, Integer month) {

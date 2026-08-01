@@ -4,7 +4,25 @@ import 'dart:io' show File;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../services/receipt_service.dart';
 import '../models/category.dart';
+import '../models/receipt_item.dart';
 import '../core/theme/app_colors.dart';
+
+class _ItemRow {
+  final TextEditingController nameController;
+  final TextEditingController priceController;
+  final TextEditingController qtyController;
+
+  _ItemRow({String name = '', String price = '', String qty = '1'})
+      : nameController = TextEditingController(text: name),
+        priceController = TextEditingController(text: price),
+        qtyController = TextEditingController(text: qty);
+
+  void dispose() {
+    nameController.dispose();
+    priceController.dispose();
+    qtyController.dispose();
+  }
+}
 
 class AddReceiptScreen extends StatefulWidget {
   final String? initialStoreName;
@@ -12,6 +30,7 @@ class AddReceiptScreen extends StatefulWidget {
   final String? initialDate;
   final String? initialImagePath;
   final int? initialCategoryId;
+  final List<ReceiptItem>? initialItems;
 
   const AddReceiptScreen({
     super.key,
@@ -20,6 +39,7 @@ class AddReceiptScreen extends StatefulWidget {
     this.initialDate,
     this.initialImagePath,
     this.initialCategoryId,
+    this.initialItems,
   });
 
   @override
@@ -36,11 +56,22 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
   bool _isLoading = false;
   bool _isCategoriesLoading = true;
   XFile? _selectedImage;
+  final List<_ItemRow> _itemRows = [];
 
   @override
   void initState() {
     super.initState();
     _loadCategories();
+
+    if (widget.initialItems != null && widget.initialItems!.isNotEmpty) {
+      for (final item in widget.initialItems!) {
+        _itemRows.add(_ItemRow(
+          name: item.productName,
+          price: item.unitPrice.toStringAsFixed(2),
+          qty: item.quantity.toStringAsFixed(0),
+        ));
+      }
+    }
 
     // OCR'dan gelen verileri otomatik doldur
     if (widget.initialStoreName != null) {
@@ -238,6 +269,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
         receiptDate: _formatDate(_selectedDate!),
         categoryId: _selectedCategory?.id,
         imageUrl: imageUrl,
+        items: _collectItems(),
       );
 
       if (mounted) {
@@ -261,7 +293,33 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
   void dispose() {
     _storeController.dispose();
     _amountController.dispose();
+    for (final row in _itemRows) {
+      row.dispose();
+    }
     super.dispose();
+  }
+
+  void _addItemRow() {
+    setState(() => _itemRows.add(_ItemRow()));
+  }
+
+  void _removeItemRow(int index) {
+    setState(() {
+      _itemRows[index].dispose();
+      _itemRows.removeAt(index);
+    });
+  }
+
+  List<ReceiptItem> _collectItems() {
+    final items = <ReceiptItem>[];
+    for (final row in _itemRows) {
+      final name = row.nameController.text.trim();
+      final price = double.tryParse(row.priceController.text.trim().replaceAll(',', '.'));
+      if (name.isEmpty || price == null || price <= 0) continue;
+      final qty = double.tryParse(row.qtyController.text.trim().replaceAll(',', '.')) ?? 1;
+      items.add(ReceiptItem(productName: name, unitPrice: price, quantity: qty));
+    }
+    return items;
   }
 
   @override
@@ -430,6 +488,100 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                       setState(() => _selectedCategory = value);
                     },
                   ),
+            const SizedBox(height: 24),
+
+            // Ürünler (opsiyonel) — kişisel enflasyon takibi için satır kalemleri
+            Row(
+              children: [
+                Text(
+                  'Ürünler (opsiyonel)',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.txt(context),
+                  ),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: _addItemRow,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Ürün Ekle'),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+                ),
+              ],
+            ),
+            if (_itemRows.isEmpty)
+              Text(
+                'Ürün eklersen zamanla fiyat değişimini takip edebilirsin.',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ..._itemRows.asMap().entries.map((entry) {
+              final index = entry.key;
+              final row = entry.value;
+              return Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: TextField(
+                        controller: row.nameController,
+                        decoration: InputDecoration(
+                          labelText: 'Ürün adı',
+                          isDense: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.surf(context),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: TextField(
+                        controller: row.priceController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: 'Fiyat',
+                          isDense: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.surf(context),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: TextField(
+                        controller: row.qtyController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: 'Adet',
+                          isDense: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.surf(context),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => _removeItemRow(index),
+                      icon: const Icon(Icons.close, size: 18),
+                      color: AppColors.error,
+                    ),
+                  ],
+                ),
+              );
+            }),
+
             const SizedBox(height: 32),
 
             // Kaydet butonu

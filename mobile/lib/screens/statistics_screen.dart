@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../services/receipt_service.dart';
 import '../models/receipt.dart';
 import '../models/spending_analysis_result.dart';
+import '../models/personal_inflation_summary.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -25,12 +26,33 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   SpendingAnalysisResult? _aiAnalysis;
   String? _aiCommentError;
 
+  // Kişisel enflasyon
+  bool _isLoadingInflation = true;
+  PersonalInflationSummary? _inflationSummary;
+  String? _inflationError;
+
   @override
   void initState() {
     super.initState();
     _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
     _availableMonths = [_selectedMonth];
     _loadReceipts();
+    _loadInflationSummary();
+  }
+
+  Future<void> _loadInflationSummary() async {
+    setState(() {
+      _isLoadingInflation = true;
+      _inflationError = null;
+    });
+    try {
+      final summary = await ReceiptService.getInflationSummary(months: 3);
+      setState(() => _inflationSummary = summary);
+    } catch (e) {
+      setState(() => _inflationError = 'Enflasyon özeti alınamadı: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingInflation = false);
+    }
   }
 
   Future<void> _loadReceipts() async {
@@ -646,6 +668,168 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
+  Color _changeColor(double changePercent) {
+    if (changePercent > 0) return const Color(0xFFFF6B6B);
+    if (changePercent < 0) return const Color(0xFF00BFA6);
+    return const Color(0xFF9E9EBF);
+  }
+
+  Widget _buildProductInflationRow(ProductInflation product, bool isDark) {
+    final surfaceColor = isDark ? const Color(0xFF2A2A3E) : Colors.white;
+    final titleColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final changeColor = _changeColor(product.changePercent);
+    final sign = product.changePercent > 0 ? '+' : '';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFEEEEF5)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.displayName,
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: titleColor),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${product.firstPrice.toStringAsFixed(2)} TL → ${product.lastPrice.toStringAsFixed(2)} TL',
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF9E9EBF)),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: changeColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '$sign${product.changePercent.toStringAsFixed(1)}%',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: changeColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInflationTab(bool isDark) {
+    final surfaceColor = isDark ? const Color(0xFF2A2A3E) : Colors.white;
+    final titleColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+
+    Widget emptyCard(String message) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFEEEEF5)),
+        ),
+        child: Center(
+          child: Text(message, textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFF9E9EBF))),
+        ),
+      );
+    }
+
+    if (_isLoadingInflation) {
+      return const Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF)));
+    }
+
+    if (_inflationError != null) {
+      return RefreshIndicator(
+        onRefresh: _loadInflationSummary,
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            emptyCard(_inflationError!),
+            const SizedBox(height: 12),
+            TextButton(onPressed: _loadInflationSummary, child: const Text('Tekrar Dene')),
+          ],
+        ),
+      );
+    }
+
+    final summary = _inflationSummary;
+    final personalRate = summary?.personalInflationPercent;
+
+    return RefreshIndicator(
+      onRefresh: _loadInflationSummary,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6C63FF), Color(0xFF9C8FFF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Son ${summary?.months ?? 3} Ayda Kişisel Enflasyonun',
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    personalRate == null
+                        ? 'Henüz yeterli veri yok'
+                        : '${personalRate > 0 ? '+' : ''}${personalRate.toStringAsFixed(1)}%',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: personalRate == null ? 18 : 30,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${summary?.trackedProductCount ?? 0} ürün takip ediliyor · aynı ürünü en az 2 kez almalısın',
+                    style: const TextStyle(color: Colors.white70, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text('En Çok Zamlananlar',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: titleColor)),
+            const SizedBox(height: 12),
+            if (summary == null || summary.topIncreasing.isEmpty)
+              emptyCard('Henüz yeterli fiyat verisi yok.\nFiş eklerken ürün girdikçe burası dolacak.')
+            else
+              ...summary.topIncreasing.map((p) => _buildProductInflationRow(p, isDark)),
+            const SizedBox(height: 24),
+            Text('En Çok Ucuzlayanlar',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: titleColor)),
+            const SizedBox(height: 12),
+            if (summary == null || summary.topDecreasing.isEmpty)
+              emptyCard('Henüz yeterli fiyat verisi yok.')
+            else
+              ...summary.topDecreasing.map((p) => _buildProductInflationRow(p, isDark)),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -660,7 +844,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         : dropdownMonths.first;
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         backgroundColor:
             isDark ? const Color(0xFF1A1A2E) : const Color(0xFFF8F7FF),
@@ -672,9 +856,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             indicatorColor: Colors.white,
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
+            isScrollable: true,
             tabs: [
               Tab(text: 'Aylık İstatistik'),
               Tab(text: 'Genel İstatistik'),
+              Tab(text: 'Enflasyonum'),
             ],
           ),
         ),
@@ -1188,6 +1374,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   ),
                 ),
                   _buildGeneralStatistics(isDark),
+                  _buildInflationTab(isDark),
                 ],
               ),
       ),
