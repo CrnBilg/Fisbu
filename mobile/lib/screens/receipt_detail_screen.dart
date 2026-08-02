@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
 import '../core/theme/app_colors.dart';
+import 'split_bill_screen.dart';
 
 class ReceiptDetailScreen extends StatefulWidget {
   final Receipt receipt;
@@ -258,6 +259,42 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
               ),
               const SizedBox(height: 24),
             ],
+
+            // Böl / Paylaştır butonu
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SplitBillScreen(receipt: receipt),
+                  ),
+                );
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.primDim(context),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.call_split, color: AppColors.primary, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Böl / Paylaştır',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
             // Sil butonu
             GestureDetector(

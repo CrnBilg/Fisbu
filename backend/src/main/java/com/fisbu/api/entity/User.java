@@ -56,4 +56,9 @@ public class User {
     // Firebase Cloud Messaging cihaz token'ı — bütçe push bildirimleri buraya gönderilir
     @Column(name = "fcm_token")
     private String fcmToken;
+
+    // Şifre değişince/resetlenince artırılır — JWT'ye gömülen versiyonla eşleşmeyen
+    // eski token'lar JwtAuthFilter tarafından reddedilir (oturum iptali/revocation)
+    @Column(name = "token_version", nullable = false, columnDefinition = "integer default 0")
+    private Integer tokenVersion = 0;
 }

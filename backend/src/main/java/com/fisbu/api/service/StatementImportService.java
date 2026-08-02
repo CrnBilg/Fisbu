@@ -72,6 +72,10 @@ public class StatementImportService {
         }
 
         if (filename.endsWith(".pdf")) {
+            if (!hasPdfMagicBytes(file)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Dosya içeriği geçerli bir PDF değil.");
+            }
             String text = extractPdfText(file);
             if (text.isBlank()) {
                 throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
@@ -161,6 +165,21 @@ public class StatementImportService {
         response.setTransactions(transactions);
         response.setWarnings(warnings);
         return response;
+    }
+
+    /** Dosya uzantısı .pdf olsa bile içerik gerçekten PDF olmayabilir (spoof edilmiş uzantı) —
+     * gerçek PDFBox parse'ından önce ucuz bir magic-byte kontrolüyle boşa CPU harcanmasını önler. */
+    private boolean hasPdfMagicBytes(MultipartFile file) {
+        try {
+            byte[] header = new byte[5];
+            int read;
+            try (var in = file.getInputStream()) {
+                read = in.readNBytes(header, 0, header.length);
+            }
+            return read >= 4 && new String(header, 0, 4, StandardCharsets.US_ASCII).equals("%PDF");
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     private String extractPdfText(MultipartFile file) {

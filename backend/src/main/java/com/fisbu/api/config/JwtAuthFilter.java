@@ -50,20 +50,23 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         String email = jwtService.extractEmail(token);
+        int tokenVersion = jwtService.extractTokenVersion(token);
 
-        userRepository.findByEmail(email).ifPresent(user -> {
-            UserDetails userDetails = User.builder()
-                    .username(user.getEmail())
-                    .password(user.getPassword())
-                    .authorities(List.of())
-                    .build();
+        userRepository.findByEmail(email)
+                .filter(user -> tokenVersion == (user.getTokenVersion() != null ? user.getTokenVersion() : 0))
+                .ifPresent(user -> {
+                    UserDetails userDetails = User.builder()
+                            .username(user.getEmail())
+                            .password(user.getPassword())
+                            .authorities(List.of())
+                            .build();
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails, null, userDetails.getAuthorities());
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-        });
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                });
 
         filterChain.doFilter(request, response);
     }

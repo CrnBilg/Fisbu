@@ -149,7 +149,7 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "E-postanı doğrulaman gerekiyor");
         }
 
-        return jwtService.generateToken(user.getEmail());
+        return jwtService.generateToken(user.getEmail(), currentTokenVersion(user));
     }
 
     public void changePassword(String email, ChangePasswordRequest request) {
@@ -161,6 +161,8 @@ public class AuthService {
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        // Şifre değişince eski cihazlardaki/oturumlardaki token'lar anında geçersiz kılınır
+        user.setTokenVersion(currentTokenVersion(user) + 1);
         userRepository.save(user);
     }
 
@@ -190,6 +192,8 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         user.setResetPasswordCode(null);
         user.setResetPasswordCodeExpiry(null);
+        // Şifre resetlenince eski token'lar (olası hesap ele geçirme senaryosunda saldırganınki dahil) geçersiz kılınır
+        user.setTokenVersion(currentTokenVersion(user) + 1);
         userRepository.save(user);
     }
 
@@ -240,6 +244,10 @@ public class AuthService {
         receiptRepository.deleteAll(receiptRepository.findByUser(user));
         categoryRepository.deleteAll(categoryRepository.findByUser(user));
         userRepository.delete(user);
+    }
+
+    private static int currentTokenVersion(User user) {
+        return user.getTokenVersion() != null ? user.getTokenVersion() : 0;
     }
 
     private static String generateCode() {

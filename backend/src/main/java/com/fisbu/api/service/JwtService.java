@@ -23,10 +23,12 @@ public class JwtService {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    // Bir kullanıcı için yeni token üretir
-    public String generateToken(String email) {
+    // Bir kullanıcı için yeni token üretir; tokenVersion, şifre değişince/resetlenince
+    // artırılıp eski token'ların JwtAuthFilter'da reddedilmesini sağlar
+    public String generateToken(String email, int tokenVersion) {
         return Jwts.builder()
                 .subject(email)
+                .claim("tokenVersion", tokenVersion)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(getSigningKey())
@@ -36,6 +38,12 @@ public class JwtService {
     // Token'dan email'i (subject) çıkarır
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    // Token'a gömülü tokenVersion'ı çıkarır (eski token'lar bu claim'e sahip olmayabilir, bu durumda 0 varsayılır)
+    public int extractTokenVersion(String token) {
+        Integer version = extractClaim(token, claims -> claims.get("tokenVersion", Integer.class));
+        return version != null ? version : 0;
     }
 
     // Token geçerli mi kontrol eder

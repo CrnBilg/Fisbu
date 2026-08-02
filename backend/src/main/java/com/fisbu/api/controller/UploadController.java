@@ -50,7 +50,7 @@ public class UploadController {
         } catch (IOException e) {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Resim yüklenemedi: " + e.getMessage()
+                    "Resim yüklenemedi"
             );
         }
     }

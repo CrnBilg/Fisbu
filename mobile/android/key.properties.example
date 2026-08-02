@@ -1,0 +1,11 @@
+# Bu dosyayı "key.properties" olarak kopyala ve gerçek değerlerle doldur.
+# key.properties GİT'E GİRMEMELİ — imzalama anahtarı sırdır.
+#
+# Keystore üretmek için (tek seferlik, Barış'ın kendi makinesinde):
+#   keytool -genkey -v -keystore ~/fisbu-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias fisbu
+#
+# storeFile burada key.properties dosyasına göre relatif veya mutlak yol olabilir.
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=fisbu
+storeFile=/mutlak/yol/fisbu-release.jks

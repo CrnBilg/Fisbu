@@ -1,7 +1,7 @@
 package com.fisbu.api.config;
 
 import java.io.IOException;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -14,22 +14,30 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * IP başına, brute-force/spam'e açık /auth/** uçlarını dakikada sabit istekle sınırlar.
- * Dış kütüphane gerektirmeyen basit sabit pencereli sayaç — tek Railway instance'ı için yeterli.
+ * IP başına, brute-force/spam'e ve maliyetli işlemlere açık uçları dakikada sabit
+ * istekle sınırlar. Dış kütüphane gerektirmeyen basit sabit pencereli sayaç — tek
+ * Railway instance'ı için yeterli.
  */
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    private static final int MAX_REQUESTS_PER_WINDOW = 10;
     private static final long WINDOW_MILLIS = 60_000;
 
-    private static final Set<String> LIMITED_PATHS = Set.of(
-            "/auth/login",
-            "/auth/register",
-            "/auth/forgot-password",
-            "/auth/reset-password",
-            "/auth/verify-email",
-            "/auth/resend-verification"
+    // Tam yol eşleşmesi — brute-force'a açık auth uçları
+    private static final Map<String, Integer> EXACT_LIMITS = Map.of(
+            "/auth/login", 10,
+            "/auth/register", 10,
+            "/auth/forgot-password", 10,
+            "/auth/reset-password", 10,
+            "/auth/verify-email", 10,
+            "/auth/resend-verification", 10
+    );
+
+    // Önek eşleşmesi — Groq AI çağrısı yapan veya CPU-ağır PDF/CSV parse eden uçlar,
+    // maliyet/DoS istismarına karşı daha sıkı sınırlanır
+    private static final Map<String, Integer> PREFIX_LIMITS = Map.of(
+            "/ai/", 5,
+            "/receipts/import/", 5
     );
 
     private final ConcurrentHashMap<String, Window> windows = new ConcurrentHashMap<>();
@@ -39,12 +47,26 @@ public class RateLimitFilter extends OncePerRequestFilter {
         final AtomicInteger count = new AtomicInteger(0);
     }
 
+    private Integer resolveLimit(String path) {
+        Integer exact = EXACT_LIMITS.get(path);
+        if (exact != null) {
+            return exact;
+        }
+        for (Map.Entry<String, Integer> entry : PREFIX_LIMITS.entrySet()) {
+            if (path.startsWith(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                      HttpServletResponse response,
                                      FilterChain filterChain) throws ServletException, IOException {
         String path = request.getRequestURI();
-        if (!LIMITED_PATHS.contains(path)) {
+        Integer maxRequests = resolveLimit(path);
+        if (maxRequests == null) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -57,7 +79,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 window.start = now;
                 window.count.set(0);
             }
-            allowed = window.count.incrementAndGet() <= MAX_REQUESTS_PER_WINDOW;
+            allowed = window.count.incrementAndGet() <= maxRequests;
         }
 
         if (!allowed) {
