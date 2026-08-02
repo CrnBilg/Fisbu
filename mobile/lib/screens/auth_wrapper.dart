@@ -53,12 +53,16 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoggedIn == null || _gateStatus == _GateStatus.checking) {
+    if (_isLoggedIn == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_isLoggedIn == false) {
       return const LoginScreen();
+    }
+
+    if (_gateStatus == _GateStatus.checking) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_gateStatus == _GateStatus.passed) {

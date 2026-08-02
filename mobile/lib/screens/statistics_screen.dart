@@ -205,7 +205,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFEEEEF5)),
+          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
         ),
         child: const Row(
           children: [
@@ -347,7 +347,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFEEEEF5)),
+          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
         ),
         child: Center(
           child: Text(
@@ -412,7 +412,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     decoration: BoxDecoration(
                       color: surfaceColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFEEEEF5)),
+                      border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
                     ),
                     child: SizedBox(
                       height: 240,
@@ -514,7 +514,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     decoration: BoxDecoration(
                       color: surfaceColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFEEEEF5)),
+                      border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
                     ),
                     child: Column(
                       children: [
@@ -592,7 +592,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   decoration: BoxDecoration(
                     color: surfaceColor,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFEEEEF5)),
+                    border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
                   ),
                   child: Row(
                     children: [
@@ -627,7 +627,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
                                 value: percentage / 100,
-                                backgroundColor: const Color(0xFFEEEEF5),
+                                backgroundColor: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5)),
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   _categoryColor(entry.key),
                                 ),
@@ -686,7 +686,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEEEEF5)),
+        border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
       ),
       child: Row(
         children: [
@@ -734,7 +734,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFEEEEF5)),
+          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
         ),
         child: Center(
           child: Text(message, textAlign: TextAlign.center,
@@ -1019,7 +1019,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                       : Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                      color: const Color(0xFFEEEEF5)),
+                                      color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
                                 ),
                                 child: Column(
                                   children: [
@@ -1142,7 +1142,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                       : Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                      color: const Color(0xFFEEEEF5)),
+                                      color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
                                 ),
                                 child: const Center(
                                   child: Text(
@@ -1161,7 +1161,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                       : Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                      color: const Color(0xFFEEEEF5)),
+                                      color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
                                 ),
                                 child: SizedBox(
                                   height: 200,
@@ -1291,7 +1291,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                   : Colors.white,
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                  color: const Color(0xFFEEEEF5)),
+                                  color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
                             ),
                             child: Row(
                               children: [
@@ -1332,7 +1332,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                         child: LinearProgressIndicator(
                                           value: percentage / 100,
                                           backgroundColor:
-                                              const Color(0xFFEEEEF5),
+                                              (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5)),
                                           valueColor:
                                               AlwaysStoppedAnimation<Color>(
                                             _categoryColor(index),
@@ -1404,7 +1404,7 @@ class _SummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF2A2A3E) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEEEEF5)),
+        border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

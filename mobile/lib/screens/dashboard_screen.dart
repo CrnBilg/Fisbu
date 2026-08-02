@@ -431,7 +431,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   'Bu ay en çok harcama',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: AppColors.textSecondary,
+                                    color: AppColors.txtSecondary(context),
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -517,7 +517,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           fontSize: 13,
-                                          color: AppColors.textSecondary,
+                                          color: AppColors.txtSecondary(context),
                                           height: 1.5,
                                         ),
                                       ),
@@ -533,7 +533,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     decoration: BoxDecoration(
                                       color: AppColors.surf(context),
                                       borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(color: AppColors.border),
+                                      border: Border.all(color: AppColors.brd(context)),
                                     ),
                                     child: Row(
                                       children: [
@@ -588,7 +588,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                     DateFormatter.formatShort(receipt.receiptDate),
                                                     style: TextStyle(
                                                       fontSize: 11,
-                                                      color: AppColors.textSecondary,
+                                                      color: AppColors.txtSecondary(context),
                                                     ),
                                                   ),
                                                 ],
@@ -642,7 +642,7 @@ class _QuickActionCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surf(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.brd(context)),
           boxShadow: [
             BoxShadow(
               color: color.withOpacity(0.08),
