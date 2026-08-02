@@ -2,6 +2,7 @@ package com.fisbu.api.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,6 +20,7 @@ public class ResetPasswordRequest {
     private String code;
 
     @NotBlank(message = "Yeni şifre boş olamaz")
-    @Size(min = 6, message = "Yeni şifre en az 6 karakter olmalıdır")
+    @Size(min = 8, message = "Yeni şifre en az 8 karakter olmalıdır")
+    @Pattern(regexp = ".*\\d.*", message = "Yeni şifre en az bir rakam içermelidir")
     private String newPassword;
 }

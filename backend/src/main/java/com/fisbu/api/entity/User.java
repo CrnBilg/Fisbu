@@ -53,6 +53,14 @@ public class User {
     @Column(name = "reset_password_code_expiry")
     private LocalDateTime resetPasswordCodeExpiry;
 
+    // Kod başına başarısız deneme sayacı — brute force koruması: eşik aşılırsa kod
+    // süresi dolmamış olsa bile geçersiz sayılır, yeni kod istenmesi gerekir
+    @Column(name = "verification_attempts", nullable = false, columnDefinition = "integer default 0")
+    private Integer verificationAttempts = 0;
+
+    @Column(name = "reset_password_attempts", nullable = false, columnDefinition = "integer default 0")
+    private Integer resetPasswordAttempts = 0;
+
     // Firebase Cloud Messaging cihaz token'ı — bütçe push bildirimleri buraya gönderilir
     @Column(name = "fcm_token")
     private String fcmToken;

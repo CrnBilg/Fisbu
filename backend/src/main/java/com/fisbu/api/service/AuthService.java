@@ -29,6 +29,7 @@ import com.fisbu.api.repository.UserRepository;
 public class AuthService {
 
     private static final int CODE_VALIDITY_MINUTES = 15;
+    private static final int MAX_CODE_ATTEMPTS = 5;
     private static final SecureRandom RANDOM = new SecureRandom();
 
    private final UserRepository userRepository;
@@ -166,32 +167,44 @@ public class AuthService {
         userRepository.save(user);
     }
 
+    // Kullanıcı bulunamasa bile aynı (başarılı) yanıt döner — e-posta enumeration'ı önler,
+    // bir saldırganın hangi e-postaların kayıtlı olduğunu bu uçla anlamasını engeller
     public void forgotPassword(String email) {
-        User user = userRepository.findByEmail(normalizeEmail(email))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kullanıcı bulunamadı"));
+        userRepository.findByEmail(normalizeEmail(email)).ifPresent(user -> {
+            String code = generateCode();
+            user.setResetPasswordCode(code);
+            user.setResetPasswordCodeExpiry(LocalDateTime.now().plusMinutes(CODE_VALIDITY_MINUTES));
+            user.setResetPasswordAttempts(0);
+            userRepository.save(user);
 
-        String code = generateCode();
-        user.setResetPasswordCode(code);
-        user.setResetPasswordCodeExpiry(LocalDateTime.now().plusMinutes(CODE_VALIDITY_MINUTES));
-        userRepository.save(user);
-
-        emailService.sendPasswordResetCode(user.getEmail(), code);
+            emailService.sendPasswordResetCode(user.getEmail(), code);
+        });
     }
 
     public void resetPassword(ResetPasswordRequest request) {
         User user = userRepository.findByEmail(normalizeEmail(request.getEmail()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kullanıcı bulunamadı"));
 
+        // Deneme limiti aşıldıysa kod süresi dolmamış olsa bile geçersiz sayılır (brute force koruması)
+        if (user.getResetPasswordAttempts() != null && user.getResetPasswordAttempts() >= MAX_CODE_ATTEMPTS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Çok fazla hatalı deneme yapıldı, lütfen yeni bir kod isteyin");
+        }
+
         if (user.getResetPasswordCode() == null
                 || !user.getResetPasswordCode().equals(request.getCode())
                 || user.getResetPasswordCodeExpiry() == null
                 || user.getResetPasswordCodeExpiry().isBefore(LocalDateTime.now())) {
+            user.setResetPasswordAttempts(
+                    (user.getResetPasswordAttempts() != null ? user.getResetPasswordAttempts() : 0) + 1);
+            userRepository.save(user);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kod geçersiz veya süresi dolmuş");
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         user.setResetPasswordCode(null);
         user.setResetPasswordCodeExpiry(null);
+        user.setResetPasswordAttempts(0);
         // Şifre resetlenince eski token'lar (olası hesap ele geçirme senaryosunda saldırganınki dahil) geçersiz kılınır
         user.setTokenVersion(currentTokenVersion(user) + 1);
         userRepository.save(user);
@@ -205,33 +218,46 @@ public class AuthService {
             return;
         }
 
+        // Deneme limiti aşıldıysa kod süresi dolmamış olsa bile geçersiz sayılır (brute force koruması)
+        if (user.getVerificationAttempts() != null && user.getVerificationAttempts() >= MAX_CODE_ATTEMPTS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Çok fazla hatalı deneme yapıldı, lütfen yeni bir kod isteyin");
+        }
+
         if (user.getVerificationCode() == null
                 || !user.getVerificationCode().equals(request.getCode())
                 || user.getVerificationCodeExpiry() == null
                 || user.getVerificationCodeExpiry().isBefore(LocalDateTime.now())) {
+            user.setVerificationAttempts(
+                    (user.getVerificationAttempts() != null ? user.getVerificationAttempts() : 0) + 1);
+            userRepository.save(user);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kod geçersiz veya süresi dolmuş");
         }
 
         user.setEmailVerified(true);
         user.setVerificationCode(null);
         user.setVerificationCodeExpiry(null);
+        user.setVerificationAttempts(0);
         userRepository.save(user);
     }
 
+    // Kullanıcı bulunamasa bile sessizce döner (e-posta enumeration önlemi) — "zaten doğrulanmış"
+    // durumu ise korunur, çünkü bu akış zaten kendi e-postasını bilen, az önce kayıt olmuş bir
+    // kullanıcı tarafından tetiklenir, ek bir bilgi sızıntısı oluşturmaz
     public void resendVerificationCode(String email) {
-        User user = userRepository.findByEmail(normalizeEmail(email))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kullanıcı bulunamadı"));
+        userRepository.findByEmail(normalizeEmail(email)).ifPresent(user -> {
+            if (Boolean.TRUE.equals(user.getEmailVerified())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-posta zaten doğrulanmış");
+            }
 
-        if (Boolean.TRUE.equals(user.getEmailVerified())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-posta zaten doğrulanmış");
-        }
+            String code = generateCode();
+            user.setVerificationCode(code);
+            user.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(CODE_VALIDITY_MINUTES));
+            user.setVerificationAttempts(0);
+            userRepository.save(user);
 
-        String code = generateCode();
-        user.setVerificationCode(code);
-        user.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(CODE_VALIDITY_MINUTES));
-        userRepository.save(user);
-
-        emailService.sendVerificationCode(user.getEmail(), code);
+            emailService.sendVerificationCode(user.getEmail(), code);
+        });
     }
 
     @Transactional

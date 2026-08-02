@@ -362,9 +362,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ).showSnackBar(const SnackBar(content: Text('Yeni şifreler eşleşmiyor')));
       return;
     }
-    if (newPass.length < 6) {
+    if (newPass.length < 8) {
       ScaffoldMessenger.of(sheetContext).showSnackBar(
-        const SnackBar(content: Text('Yeni şifre en az 6 karakter olmalı')),
+        const SnackBar(content: Text('Yeni şifre en az 8 karakter olmalı')),
+      );
+      return;
+    }
+    if (!newPass.contains(RegExp(r'\d'))) {
+      ScaffoldMessenger.of(sheetContext).showSnackBar(
+        const SnackBar(content: Text('Yeni şifre en az bir rakam içermeli')),
       );
       return;
     }
