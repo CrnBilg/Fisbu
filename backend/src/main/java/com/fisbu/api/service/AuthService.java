@@ -53,12 +53,13 @@ public class AuthService {
     }
 
    public RegisterResponse register(RegisterRequest request) {
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+        String normalizedEmail = normalizeEmail(request.getEmail());
+        if (userRepository.findByEmail(normalizedEmail).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Bu email zaten kayıtlı");
         }
 
         User user = new User();
-        user.setEmail(request.getEmail());
+        user.setEmail(normalizedEmail);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setName(request.getName());
         user.setEmailVerified(false);
@@ -136,7 +137,7 @@ public class AuthService {
     public String login(LoginRequest request) {
         //findByEmail() -> Email ile kullanıcıyı arar
         //Bulamaz ise 401 hatası
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(normalizeEmail(request.getEmail()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email veya şifre hatalı"));
         // Parola doğrulaması yapar, eşleşmezse 401 hatası
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -164,7 +165,7 @@ public class AuthService {
     }
 
     public void forgotPassword(String email) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmail(normalizeEmail(email))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kullanıcı bulunamadı"));
 
         String code = generateCode();
@@ -176,7 +177,7 @@ public class AuthService {
     }
 
     public void resetPassword(ResetPasswordRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(normalizeEmail(request.getEmail()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kullanıcı bulunamadı"));
 
         if (user.getResetPasswordCode() == null
@@ -193,7 +194,7 @@ public class AuthService {
     }
 
     public void verifyEmail(VerifyEmailRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(normalizeEmail(request.getEmail()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kullanıcı bulunamadı"));
 
         if (Boolean.TRUE.equals(user.getEmailVerified())) {
@@ -214,7 +215,7 @@ public class AuthService {
     }
 
     public void resendVerificationCode(String email) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmail(normalizeEmail(email))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kullanıcı bulunamadı"));
 
         if (Boolean.TRUE.equals(user.getEmailVerified())) {
@@ -243,5 +244,10 @@ public class AuthService {
 
     private static String generateCode() {
         return String.format("%06d", RANDOM.nextInt(1_000_000));
+    }
+
+    // E-postalar büyük/küçük harfe duyarsız olmalı — hem kayıt hem arama aynı normalize edilmiş haliyle yapılır
+    private static String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
     }
 }

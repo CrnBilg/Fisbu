@@ -8,6 +8,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -15,7 +16,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "receipt_items")
+@Table(name = "receipt_items", indexes = {
+        @Index(name = "idx_receipt_items_receipt_id", columnList = "receipt_id"),
+        @Index(name = "idx_receipt_items_normalized_name", columnList = "normalized_name")
+})
 @Getter
 @Setter
 public class ReceiptItem {
