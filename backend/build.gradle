@@ -31,6 +31,9 @@ dependencies {
 	// PDF/Excel export — Hafta 3 fiş export endpoint'i
 	implementation 'com.github.librepdf:openpdf:1.3.30'
 	implementation 'org.apache.poi:poi-ooxml:5.2.5'
+	// Ekstre içe aktarma — PDF metin çıkarma ve CSV ayrıştırma
+	implementation 'org.apache.pdfbox:pdfbox:3.0.3'
+	implementation 'org.apache.commons:commons-csv:1.11.0'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'

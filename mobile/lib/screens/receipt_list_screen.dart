@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
 import '../core/theme/app_colors.dart';
+import '../core/widgets/offline_banner.dart';
 
 class ReceiptListScreen extends StatefulWidget {
   const ReceiptListScreen({super.key});
@@ -164,7 +165,12 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
           ),
         ),
       ),
-      body: _buildBody(),
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(child: _buildBody()),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _goToAddReceipt,
         child: const Icon(Icons.add),

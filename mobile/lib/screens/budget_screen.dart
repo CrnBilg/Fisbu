@@ -5,6 +5,7 @@ import '../models/budget.dart';
 import '../services/receipt_service.dart';
 import '../services/budget_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/widgets/offline_banner.dart';
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -181,7 +182,12 @@ class _BudgetScreenState extends State<BudgetScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Bütçelerim')),
-      body: _buildBody(),
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(child: _buildBody()),
+        ],
+      ),
     );
   }
 

@@ -48,6 +48,15 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", "Geçersiz JSON formatı. Lütfen tarih formatını kontrol edin (YYYY-MM-DD)"));
     }
 
+    // Dosya boyutu limiti aşıldığında (örn. çok büyük ekstre yükleme)
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, String>> handleMaxUploadSizeExceeded(
+            org.springframework.web.multipart.MaxUploadSizeExceededException ex) {
+        return ResponseEntity
+                .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(Map.of("error", "Dosya boyutu çok büyük"));
+    }
+
     // Genel beklenmedik hatalar
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGenericError(Exception ex) {

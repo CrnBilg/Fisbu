@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fisbu.api.dto.ImportedTransactionDto;
 import com.fisbu.api.dto.LineItemDto;
 import com.fisbu.api.dto.RestoreReceiptRequest;
 import com.fisbu.api.dto.RestoreReceiptResponse;
@@ -92,16 +93,88 @@ public class ReceiptAiService {
 
         String suggestedCategoryName = textOrNull(root, "suggestedCategoryName");
         response.setSuggestedCategoryName(suggestedCategoryName);
-        if (suggestedCategoryName != null) {
-            categories.stream()
-                    .filter(c -> c.getName().equalsIgnoreCase(suggestedCategoryName))
-                    .findFirst()
-                    .ifPresent(c -> response.setMatchedCategoryId(c.getId()));
-        }
+        response.setMatchedCategoryId(matchCategory(suggestedCategoryName, categories));
 
         response.setItems(parseItems(root.get("items")));
 
         return response;
+    }
+
+    /**
+     * Banka/kredi kartı ekstresi veya genel harcama listesi metninden harcama işlemlerini çıkarır.
+     * Ekstre içe aktarma akışında hem PDF hem de bilinmeyen formatlı CSV metinleri için kullanılır.
+     */
+    public List<ImportedTransactionDto> extractTransactions(String email, String rawText) {
+        User user = getUserByEmail(email);
+        List<Category> categories = categoryRepository.findByUser(user);
+        String categoryNames = categories.stream()
+                .map(Category::getName)
+                .collect(Collectors.joining(", "));
+
+        String prompt = """
+                Sen bir banka ekstresi / harcama listesi ayrıştırma asistanısın. Aşağıda bir banka veya \
+                kredi kartı ekstresinden ya da genel bir harcama listesinden çıkarılmış ham metin var. \
+                Bu metindeki HARCAMA (gider) işlemlerini çıkar. Ödeme, tahsilat, kredi kartı ödemesi, \
+                faiz iadesi, nakit avans, EFT/havale gelen para gibi harcama OLMAYAN satırları YOKSAY. \
+                Sadece gerçek harcama/alışveriş işlemlerini pozitif tutar olarak döndür. SADECE aşağıdaki \
+                JSON formatında yanıt ver, başka hiçbir açıklama ekleme:
+
+                {
+                  "transactions": [
+                    {
+                      "date": "yyyy-MM-dd formatında tarih (bulunamazsa null)",
+                      "description": "işlem açıklaması / mağaza adı",
+                      "amount": sayısal tutar (pozitif, TL, ondalık ayraç nokta),
+                      "suggestedCategoryName": "şu listeden en uygun kategori adını seç: [%s] (hiçbiri uymuyorsa null)",
+                      "confidenceScore": 0 ile 100 arasında tam sayı, verinin ne kadar güvenilir olduğunu belirtir
+                    }
+                  ]
+                }
+                Bir satırı harcama olarak tanımlayamıyorsan listeye ekleme.
+
+                Metin:
+                %s
+                """.formatted(categoryNames, rawText);
+
+        JsonNode root = parseJsonResponse(aiService.generateJson(prompt));
+        return parseTransactions(root.get("transactions"), categories);
+    }
+
+    private List<ImportedTransactionDto> parseTransactions(JsonNode transactionsNode, List<Category> categories) {
+        List<ImportedTransactionDto> transactions = new ArrayList<>();
+        if (transactionsNode == null || !transactionsNode.isArray()) {
+            return transactions;
+        }
+        for (JsonNode node : transactionsNode) {
+            BigDecimal amount = decimalOrNull(node.get("amount"));
+            if (amount == null) {
+                continue;
+            }
+            ImportedTransactionDto dto = new ImportedTransactionDto();
+            dto.setDate(dateOrNull(textOrNull(node, "date")));
+            dto.setDescription(textOrNull(node, "description"));
+            dto.setAmount(amount);
+            String suggestedCategoryName = textOrNull(node, "suggestedCategoryName");
+            dto.setSuggestedCategoryName(suggestedCategoryName);
+            Long matchedCategoryId = matchCategory(suggestedCategoryName, categories);
+            if (matchedCategoryId != null) {
+                dto.setMatchedCategoryId(matchedCategoryId);
+            }
+            dto.setConfidenceScore(Math.max(0, Math.min(100, node.path("confidenceScore").asInt(0))));
+            transactions.add(dto);
+        }
+        return transactions;
+    }
+
+    private Long matchCategory(String suggestedCategoryName, List<Category> categories) {
+        if (suggestedCategoryName == null) {
+            return null;
+        }
+        return categories.stream()
+                .filter(c -> c.getName().equalsIgnoreCase(suggestedCategoryName))
+                .findFirst()
+                .map(Category::getId)
+                .orElse(null);
     }
 
     private List<LineItemDto> parseItems(JsonNode itemsNode) {

@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/receipt.dart';
 import '../models/receipt_item.dart';
 import '../models/category.dart';
@@ -9,23 +11,98 @@ import '../models/restore_receipt_result.dart';
 import '../models/spending_analysis_result.dart';
 import '../models/personal_inflation_summary.dart';
 import '../models/product_price_history.dart';
+import '../models/imported_transaction.dart';
+import '../models/parsed_statement_result.dart';
+import '../models/bulk_import_result.dart';
 import 'auth_service.dart';
+import 'local_cache_service.dart';
+import 'pending_receipt_queue.dart';
 
 class ReceiptService {
   static const String _baseUrl = 'https://fisbu-production-613c.up.railway.app';
 
+  static bool _isNetworkFailure(Object e) {
+    return e is SocketException || e is http.ClientException;
+  }
+
   static Future<List<Receipt>> getReceipts() async {
-    final token = await AuthService.getToken();
-    final response = await http.get(
-      Uri.parse('$_baseUrl/receipts'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => Receipt.fromJson(json)).toList();
-    } else {
-      throw Exception('Fişler yüklenemedi: ${response.statusCode}');
+    try {
+      final token = await AuthService.getToken();
+      final response = await http.get(
+        Uri.parse('$_baseUrl/receipts'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        await LocalCacheService.put(LocalCacheService.receiptsBox, 'all', data);
+        return data.map((json) => Receipt.fromJson(json)).toList();
+      } else {
+        throw Exception('Fişler yüklenemedi: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (_isNetworkFailure(e)) {
+        final cached = LocalCacheService.get(LocalCacheService.receiptsBox, 'all');
+        if (cached != null) {
+          return (cached as List)
+              .map((json) => Receipt.fromJson(Map<String, dynamic>.from(json as Map)))
+              .toList();
+        }
+      }
+      rethrow;
     }
+  }
+
+  /// Fotoğraf yükleme + fiş kaydını tek çağrıda yapar. Bağlantı yoksa
+  /// (görsel varsa dosyayı kalıcı bir konuma kopyalayıp) her ikisini de
+  /// yerel sıraya alır ve bağlantı gelince otomatik gönderilir.
+  static Future<Receipt?> submitReceipt({
+    required String storeName,
+    required double totalAmount,
+    required String receiptDate,
+    int? categoryId,
+    XFile? image,
+    List<ReceiptItem>? items,
+  }) async {
+    try {
+      String? imageUrl;
+      if (image != null) {
+        imageUrl = await uploadImage(image);
+      }
+      return await createReceipt(
+        storeName: storeName,
+        totalAmount: totalAmount,
+        receiptDate: receiptDate,
+        categoryId: categoryId,
+        imageUrl: imageUrl,
+        items: items,
+      );
+    } catch (e) {
+      if (!_isNetworkFailure(e)) rethrow;
+
+      String? localImagePath;
+      if (image != null) {
+        localImagePath = await _persistImageLocally(image);
+      }
+
+      await PendingReceiptQueue.enqueue(PendingReceipt(
+        localId: DateTime.now().microsecondsSinceEpoch.toString(),
+        storeName: storeName,
+        totalAmount: totalAmount,
+        receiptDate: receiptDate,
+        categoryId: categoryId,
+        localImagePath: localImagePath,
+        items: items ?? const [],
+      ));
+      return null;
+    }
+  }
+
+  static Future<String> _persistImageLocally(XFile image) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final filename = 'pending_${DateTime.now().microsecondsSinceEpoch}_${image.name}';
+    final destPath = '${dir.path}/$filename';
+    await File(image.path).copy(destPath);
+    return destPath;
   }
 
   static Future<Receipt> createReceipt({
@@ -72,16 +149,29 @@ class ReceiptService {
   }
 
   static Future<List<Category>> getCategories() async {
-    final token = await AuthService.getToken();
-    final response = await http.get(
-      Uri.parse('$_baseUrl/categories'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => Category.fromJson(json)).toList();
-    } else {
-      throw Exception('Kategoriler yüklenemedi: ${response.statusCode}');
+    try {
+      final token = await AuthService.getToken();
+      final response = await http.get(
+        Uri.parse('$_baseUrl/categories'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        await LocalCacheService.put(LocalCacheService.categoriesBox, 'all', data);
+        return data.map((json) => Category.fromJson(json)).toList();
+      } else {
+        throw Exception('Kategoriler yüklenemedi: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (_isNetworkFailure(e)) {
+        final cached = LocalCacheService.get(LocalCacheService.categoriesBox, 'all');
+        if (cached != null) {
+          return (cached as List)
+              .map((json) => Category.fromJson(Map<String, dynamic>.from(json as Map)))
+              .toList();
+        }
+      }
+      rethrow;
     }
   }
 
@@ -218,6 +308,52 @@ class ReceiptService {
     }
   }
 
+  /// Banka ekstresi (PDF/CSV) ya da uygulamanın kendi CSV export'unu yükleyip
+  /// içindeki işlemleri harcama önerisi listesine dönüştürür. Hiçbir şey kaydetmez.
+  static Future<ParsedStatementResult> importStatement(File file) async {
+    final token = await AuthService.getToken();
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$_baseUrl/receipts/import/parse'),
+    );
+    request.headers['Authorization'] = 'Bearer $token';
+    request.files.add(await http.MultipartFile.fromPath('file', file.path));
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    if (response.statusCode == 200) {
+      return ParsedStatementResult.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Ekstre okunamadı: ${response.statusCode}');
+    }
+  }
+
+  /// Kullanıcının seçtiği işlemleri toplu olarak fiş olarak kaydeder.
+  static Future<BulkImportResult> confirmImport(List<ImportedTransaction> transactions) async {
+    final token = await AuthService.getToken();
+    final response = await http.post(
+      Uri.parse('$_baseUrl/receipts/import/confirm'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'receipts': transactions
+            .map((t) => {
+                  'storeName': t.description,
+                  'totalAmount': t.amount,
+                  'receiptDate': t.date,
+                  'categoryId': t.matchedCategoryId,
+                })
+            .toList(),
+      }),
+    );
+    if (response.statusCode == 201) {
+      return BulkImportResult.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('İçe aktarma başarısız oldu: ${response.statusCode}');
+    }
+  }
+
   static Future<String> uploadImage(XFile image) async {
     final token = await AuthService.getToken();
     final request = http.MultipartRequest(
@@ -232,6 +368,26 @@ class ReceiptService {
       filename: image.name,
     );
     request.files.add(multipartFile);
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return data['imageUrl'] as String;
+    } else {
+      throw Exception('Fotoğraf yüklenemedi: ${response.statusCode}');
+    }
+  }
+
+  /// Çevrimdışıyken sıraya alınmış bir fişin daha önce diske kopyalanmış
+  /// görselini bağlantı gelince yüklemek için kullanılır.
+  static Future<String> uploadImageFile(File file) async {
+    final token = await AuthService.getToken();
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$_baseUrl/receipts/upload'),
+    );
+    request.headers['Authorization'] = 'Bearer $token';
+    request.files.add(await http.MultipartFile.fromPath('file', file.path));
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
     if (response.statusCode == 200) {

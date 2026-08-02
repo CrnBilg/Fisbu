@@ -8,6 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/auth_wrapper.dart';
 import 'services/push_notification_service.dart';
+import 'services/local_cache_service.dart';
+import 'services/connectivity_service.dart';
+import 'services/pending_receipt_queue.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +29,18 @@ void main() async {
     };
   } catch (_) {
     // Firebase başlatılamazsa (ör. config eksik) uygulama yine de açılmalı
+  }
+
+  // Çevrimdışı cache + bekleyen fiş kuyruğu altyapısı — biri başarısız olsa da uygulama açılmalı
+  try {
+    await LocalCacheService.init();
+    await ConnectivityService.init(onReconnected: () => PendingReceiptQueue.flush());
+    // Uygulama açılışında zaten çevrimiçiysek bekleyen fişleri hemen göndermeyi dene
+    if (ConnectivityService.isOnline.value) {
+      PendingReceiptQueue.flush();
+    }
+  } catch (_) {
+    // Offline altyapısı başlatılamazsa uygulama yine de (online modda) çalışmaya devam etmeli
   }
 
   final prefs = await SharedPreferences.getInstance();

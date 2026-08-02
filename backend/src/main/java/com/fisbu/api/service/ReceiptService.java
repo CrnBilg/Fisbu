@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fisbu.api.dto.BulkImportError;
+import com.fisbu.api.dto.BulkReceiptImportResponse;
 import com.fisbu.api.dto.ReceiptItemRequest;
 import com.fisbu.api.dto.ReceiptItemResponse;
 import com.fisbu.api.dto.ReceiptRequest;
@@ -106,6 +108,27 @@ public class ReceiptService {
         }
 
         return toResponse(saved);
+    }
+
+    // Ekstre içe aktarma onayı: her satır bağımsız denenir, bir satırın hatası diğerlerini etkilemez
+    public BulkReceiptImportResponse createReceiptsBulk(String email, List<ReceiptRequest> requests) {
+        List<ReceiptResponse> created = new ArrayList<>();
+        List<BulkImportError> failed = new ArrayList<>();
+
+        for (int i = 0; i < requests.size(); i++) {
+            try {
+                created.add(createReceipt(email, requests.get(i)));
+            } catch (ResponseStatusException e) {
+                failed.add(new BulkImportError(i, e.getReason() != null ? e.getReason() : "Hata oluştu"));
+            } catch (Exception e) {
+                failed.add(new BulkImportError(i, "Beklenmedik bir hata oluştu"));
+            }
+        }
+
+        BulkReceiptImportResponse response = new BulkReceiptImportResponse();
+        response.setCreated(created);
+        response.setFailed(failed);
+        return response;
     }
 
     public ReceiptResponse getReceiptById(String email, Long receiptId) {

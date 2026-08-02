@@ -1,25 +1,43 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/budget.dart';
 import 'auth_service.dart';
+import 'local_cache_service.dart';
 
 class BudgetService {
   static const String _baseUrl = 'https://fisbu-production-613c.up.railway.app';
 
   static Future<List<Budget>> getBudgets({int? year, int? month}) async {
-    final token = await AuthService.getToken();
-    final query = <String, String>{
-      if (year != null) 'year': '$year',
-      if (month != null) 'month': '$month',
-    };
-    final uri = Uri.parse('$_baseUrl/budgets')
-        .replace(queryParameters: query.isEmpty ? null : query);
-    final response = await http.get(uri, headers: {'Authorization': 'Bearer $token'});
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => Budget.fromJson(json)).toList();
-    } else {
-      throw Exception('Bütçeler yüklenemedi: ${response.statusCode}');
+    try {
+      final token = await AuthService.getToken();
+      final query = <String, String>{
+        if (year != null) 'year': '$year',
+        if (month != null) 'month': '$month',
+      };
+      final uri = Uri.parse('$_baseUrl/budgets')
+          .replace(queryParameters: query.isEmpty ? null : query);
+      final response = await http.get(uri, headers: {'Authorization': 'Bearer $token'});
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        // Sadece filtresiz (tüm bütçeler) sorguyu cache'liyoruz — dashboard'un offline fallback ihtiyacı bu
+        if (year == null && month == null) {
+          await LocalCacheService.put(LocalCacheService.budgetsBox, 'all', data);
+        }
+        return data.map((json) => Budget.fromJson(json)).toList();
+      } else {
+        throw Exception('Bütçeler yüklenemedi: ${response.statusCode}');
+      }
+    } catch (e) {
+      if ((e is SocketException || e is http.ClientException) && year == null && month == null) {
+        final cached = LocalCacheService.get(LocalCacheService.budgetsBox, 'all');
+        if (cached != null) {
+          return (cached as List)
+              .map((json) => Budget.fromJson(Map<String, dynamic>.from(json as Map)))
+              .toList();
+        }
+      }
+      rethrow;
     }
   }
 

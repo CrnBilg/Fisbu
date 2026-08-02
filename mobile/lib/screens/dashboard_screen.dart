@@ -7,6 +7,7 @@ import 'ocr_screen.dart';
 import 'statistics_screen.dart';
 import 'budget_screen.dart';
 import 'export_screen.dart';
+import 'import_statement_screen.dart';
 import '../services/receipt_service.dart';
 import '../services/budget_service.dart';
 import '../models/receipt.dart';
@@ -14,6 +15,7 @@ import '../models/budget.dart';
 import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
 import '../core/theme/app_colors.dart';
+import '../core/widgets/offline_banner.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -212,6 +214,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const OfflineBanner(),
                     Row(
                       children: [
                         Expanded(
@@ -304,6 +307,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             builder: (context) => const ExportScreen(),
                           ),
                         );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _QuickActionCard(
+                      icon: Icons.upload_file_outlined,
+                      label: 'Ekstre İçe Aktar',
+                      color: const Color(0xFF10B981),
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ImportStatementScreen(),
+                          ),
+                        );
+                        _loadReceipts();
                       },
                     ),
 

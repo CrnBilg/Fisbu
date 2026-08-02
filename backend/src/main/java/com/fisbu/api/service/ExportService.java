@@ -35,8 +35,8 @@ import com.lowagie.text.pdf.PdfWriter;
 @Service
 public class ExportService {
 
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-    private static final String[] HEADERS = {"Mağaza", "Tutar (TL)", "Tarih", "Kategori"};
+    static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    static final String[] HEADERS = {"Mağaza", "Tutar (TL)", "Tarih", "Kategori"};
 
     public byte[] toCsv(List<Receipt> receipts) {
         StringBuilder sb = new StringBuilder();
