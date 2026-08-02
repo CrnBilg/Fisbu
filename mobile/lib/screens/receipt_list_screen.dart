@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
 import '../core/theme/app_colors.dart';
+import '../core/widgets/brand_avatar.dart';
 import '../core/widgets/offline_banner.dart';
 
 class ReceiptListScreen extends StatefulWidget {
@@ -362,18 +363,12 @@ class _ReceiptCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: CategoryHelper.getColor(receipt.categoryName)
-                    .withOpacity(0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                CategoryHelper.getIcon(receipt.categoryName),
-                color: CategoryHelper.getColor(receipt.categoryName),
-                size: 22,
-              ),
+            BrandAvatar(
+              storeName: receipt.storeName,
+              categoryName: receipt.categoryName,
+              backgroundColor: CategoryHelper.getColor(receipt.categoryName)
+                  .withOpacity(0.12),
+              iconColor: CategoryHelper.getColor(receipt.categoryName),
             ),
             const SizedBox(width: 14),
             Expanded(

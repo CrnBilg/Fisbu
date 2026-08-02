@@ -16,6 +16,7 @@ import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
 import '../core/theme/app_colors.dart';
 import '../core/widgets/offline_banner.dart';
+import '../core/widgets/brand_avatar.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -555,17 +556,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                     child: Row(
                                       children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(10),
-                                          decoration: BoxDecoration(
-                                            color: CategoryHelper.getColor(receipt.categoryName).withOpacity(0.12),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Icon(
-                                            CategoryHelper.getIcon(receipt.categoryName),
-                                            color: CategoryHelper.getColor(receipt.categoryName),
-                                            size: 22,
-                                          ),
+                                        BrandAvatar(
+                                          storeName: receipt.storeName,
+                                          categoryName: receipt.categoryName,
+                                          backgroundColor: CategoryHelper.getColor(receipt.categoryName).withOpacity(0.12),
+                                          iconColor: CategoryHelper.getColor(receipt.categoryName),
+                                          padding: 10,
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(

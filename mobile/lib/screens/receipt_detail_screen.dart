@@ -3,9 +3,9 @@ import '../models/receipt.dart';
 import '../services/receipt_service.dart';
 import 'package:intl/intl.dart';
 import '../core/utils/date_formatter.dart';
-import '../core/utils/category_helper.dart';
 import '../core/theme/app_colors.dart';
 import 'split_bill_screen.dart';
+import '../core/widgets/brand_avatar.dart';
 
 class ReceiptDetailScreen extends StatefulWidget {
   final Receipt receipt;
@@ -94,17 +94,14 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
               ),
               child: Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(
-                      CategoryHelper.getIcon(receipt.categoryName),
-                      size: 36,
-                      color: Colors.white,
-                    ),
+                  BrandAvatar(
+                    storeName: receipt.storeName,
+                    categoryName: receipt.categoryName,
+                    backgroundColor: Colors.white24,
+                    iconColor: Colors.white,
+                    padding: 16,
+                    iconSize: 36,
+                    borderRadius: 16,
                   ),
                   const SizedBox(height: 16),
                   Text(
