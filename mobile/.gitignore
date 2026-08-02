@@ -43,6 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/build/
 
 # Release imzalama sırları — asla commit edilmemeli
 /android/key.properties
