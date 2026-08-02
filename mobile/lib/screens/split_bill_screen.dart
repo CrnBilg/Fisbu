@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/receipt.dart';
+import '../models/split_participant.dart';
+import '../services/receipt_service.dart';
 import '../core/theme/app_colors.dart';
 
 class _Participant {
@@ -18,9 +20,8 @@ class _Participant {
   }
 }
 
-/// Toplu ödenen bir fişi (otel, yemek vb.) kişiler arasında böler ve sonucu
-/// mesaj olarak paylaşır. Tamamen uygulama-içi hesaplama — backend'e hiç
-/// istek atmaz, harici katılımcı/link yok.
+/// Toplu ödenen bir fişi (otel, yemek vb.) kişiler arasında böler, sonucu
+/// hem backend'e kalıcı olarak kaydeder hem mesaj olarak paylaşır.
 class SplitBillScreen extends StatefulWidget {
   final Receipt receipt;
 
@@ -98,8 +99,26 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
     return text.isEmpty ? 'Kişi ${index + 1}' : text;
   }
 
+  bool _isSaving = false;
+
   Future<void> _share() async {
     final shares = _equalSplit ? _equalShares() : _customShares().map((v) => v ?? 0).toList();
+
+    final participants = [
+      for (var i = 0; i < _participants.length; i++)
+        SplitParticipant(name: _participantName(i), amount: shares[i]),
+    ];
+
+    Receipt? updatedReceipt;
+    setState(() => _isSaving = true);
+    try {
+      updatedReceipt = await ReceiptService.saveSplit(widget.receipt.id, participants);
+    } catch (e) {
+      // Kaydetme başarısız olsa bile (ör. çevrimdışı) paylaşma akışı engellenmez —
+      // bölüştürme zaten aşağıdaki metin olarak paylaşılıyor.
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
 
     final buffer = StringBuffer();
     buffer.writeln('🧾 ${widget.receipt.storeName} - ${_currencyFormat.format(widget.receipt.totalAmount)} TL');
@@ -112,6 +131,10 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
     buffer.write('FişBu ile paylaşıldı 📱');
 
     await SharePlus.instance.share(ShareParams(text: buffer.toString()));
+
+    if (mounted && updatedReceipt != null) {
+      Navigator.pop(context, updatedReceipt);
+    }
   }
 
   @override
@@ -310,8 +333,14 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
               child: ElevatedButton.icon(
-                onPressed: _canShare ? _share : null,
-                icon: const Icon(Icons.ios_share),
+                onPressed: _canShare && !_isSaving ? _share : null,
+                icon: _isSaving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.ios_share),
                 label: const Text('Paylaş'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,

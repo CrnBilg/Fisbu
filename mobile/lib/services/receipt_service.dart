@@ -14,6 +14,7 @@ import '../models/product_price_history.dart';
 import '../models/imported_transaction.dart';
 import '../models/parsed_statement_result.dart';
 import '../models/bulk_import_result.dart';
+import '../models/split_participant.dart';
 import 'auth_service.dart';
 import 'local_cache_service.dart';
 import 'pending_receipt_queue.dart';
@@ -134,6 +135,25 @@ class ReceiptService {
       return Receipt.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Fiş eklenemedi: ${response.statusCode}');
+    }
+  }
+
+  static Future<Receipt> saveSplit(int receiptId, List<SplitParticipant> participants) async {
+    final token = await AuthService.getToken();
+    final response = await http.put(
+      Uri.parse('$_baseUrl/receipts/$receiptId/split'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'participants': participants.map((e) => e.toJson()).toList(),
+      }),
+    );
+    if (response.statusCode == 200) {
+      return Receipt.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Bölüştürme kaydedilemedi: ${response.statusCode}');
     }
   }
 

@@ -7,7 +7,6 @@ class LocalCacheService {
   static const receiptsBox = 'receiptsBox';
   static const budgetsBox = 'budgetsBox';
   static const categoriesBox = 'categoriesBox';
-  static const statsBox = 'statsBox';
   static const pendingReceiptsBox = 'pendingReceiptsBox';
 
   static Future<void> init() async {
@@ -15,7 +14,6 @@ class LocalCacheService {
     await Hive.openBox(receiptsBox);
     await Hive.openBox(budgetsBox);
     await Hive.openBox(categoriesBox);
-    await Hive.openBox(statsBox);
     await Hive.openBox(pendingReceiptsBox);
   }
 

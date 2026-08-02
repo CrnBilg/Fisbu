@@ -19,6 +19,13 @@ class ReceiptDetailScreen extends StatefulWidget {
 class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
   bool _isDeleting = false;
   final _currencyFormat = NumberFormat('#,##0.00', 'tr_TR');
+  late Receipt _receipt;
+
+  @override
+  void initState() {
+    super.initState();
+    _receipt = widget.receipt;
+  }
 
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
@@ -62,7 +69,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final receipt = widget.receipt;
+    final receipt = _receipt;
 
     return Scaffold(
 
@@ -260,15 +267,64 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
               const SizedBox(height: 24),
             ],
 
+            if (receipt.splitParticipants != null && receipt.splitParticipants!.isNotEmpty) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surf(context),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.brd(context)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.call_split, color: AppColors.primary, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${receipt.splitParticipants!.length} kişi arasında bölüşüldü',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: AppColors.txt(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    for (final p in receipt.splitParticipants!)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(p.name, style: TextStyle(color: AppColors.txtSecondary(context), fontSize: 13)),
+                            Text(
+                              '${_currencyFormat.format(p.amount)} TL',
+                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.txt(context)),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+
             // Böl / Paylaştır butonu
             GestureDetector(
-              onTap: () {
-                Navigator.push(
+              onTap: () async {
+                final result = await Navigator.push<Receipt>(
                   context,
                   MaterialPageRoute(
                     builder: (context) => SplitBillScreen(receipt: receipt),
                   ),
                 );
+                if (result != null && mounted) {
+                  setState(() => _receipt = result);
+                }
               },
               child: Container(
                 margin: const EdgeInsets.only(bottom: 12),

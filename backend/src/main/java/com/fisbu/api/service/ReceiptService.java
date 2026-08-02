@@ -14,12 +14,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fisbu.api.dto.BulkImportError;
 import com.fisbu.api.dto.BulkReceiptImportResponse;
 import com.fisbu.api.dto.ReceiptItemRequest;
 import com.fisbu.api.dto.ReceiptItemResponse;
 import com.fisbu.api.dto.ReceiptRequest;
 import com.fisbu.api.dto.ReceiptResponse;
+import com.fisbu.api.dto.SaveSplitRequest;
+import com.fisbu.api.dto.SplitParticipantDto;
 import com.fisbu.api.entity.Category;
 import com.fisbu.api.entity.Receipt;
 import com.fisbu.api.entity.ReceiptItem;
@@ -36,17 +40,20 @@ public class ReceiptService {
     private final CategoryRepository categoryRepository;
     private final BudgetService budgetService;
     private final ExportService exportService;
+    private final ObjectMapper objectMapper;
 
     public ReceiptService(ReceiptRepository receiptRepository,
                           UserRepository userRepository,
                           CategoryRepository categoryRepository,
                           BudgetService budgetService,
-                          ExportService exportService) {
+                          ExportService exportService,
+                          ObjectMapper objectMapper) {
         this.receiptRepository = receiptRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.budgetService = budgetService;
         this.exportService = exportService;
+        this.objectMapper = objectMapper;
     }
 
     // Kullanıcının tüm fişlerini listeler
@@ -144,6 +151,26 @@ public class ReceiptService {
         return toResponse(receipt);
     }
 
+    // Fiş bölüştürme sonucunu kalıcı hale getirir (kimin ne kadar ödeyeceği)
+    public ReceiptResponse saveSplit(String email, Long receiptId, SaveSplitRequest request) {
+        User user = getUserByEmail(email);
+        Receipt receipt = receiptRepository.findById(receiptId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Fiş bulunamadı"));
+
+        if (!receipt.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bu fişe erişim yetkiniz yok");
+        }
+
+        try {
+            receipt.setSplitDetailsJson(objectMapper.writeValueAsString(request.getParticipants()));
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Bölüştürme kaydedilemedi");
+        }
+
+        return toResponse(receiptRepository.save(receipt));
+    }
+
     public void deleteReceipt(String email, Long receiptId) {
         User user = getUserByEmail(email);
         Receipt receipt = receiptRepository.findById(receiptId)
@@ -230,6 +257,15 @@ public class ReceiptService {
             itemResponses.add(itemResponse);
         }
         response.setItems(itemResponses);
+
+        if (receipt.getSplitDetailsJson() != null) {
+            try {
+                response.setSplitParticipants(objectMapper.readValue(
+                        receipt.getSplitDetailsJson(), new TypeReference<List<SplitParticipantDto>>() {}));
+            } catch (Exception e) {
+                response.setSplitParticipants(null);
+            }
+        }
 
         return response;
     }

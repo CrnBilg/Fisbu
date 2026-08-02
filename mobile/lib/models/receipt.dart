@@ -1,4 +1,5 @@
 import 'receipt_item.dart';
+import 'split_participant.dart';
 
 class Receipt {
   final int id;
@@ -10,6 +11,7 @@ class Receipt {
   final String? imageUrl;
   final String? createdAt;
   final List<ReceiptItem> items;
+  final List<SplitParticipant>? splitParticipants;
 
   Receipt({
     required this.id,
@@ -21,6 +23,7 @@ class Receipt {
     this.imageUrl,
     this.createdAt,
     this.items = const [],
+    this.splitParticipants,
   });
 
   factory Receipt.fromJson(Map<String, dynamic> json) {
@@ -37,6 +40,9 @@ class Receipt {
               ?.map((e) => ReceiptItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
+      splitParticipants: (json['splitParticipants'] as List<dynamic>?)
+          ?.map((e) => SplitParticipant.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
   }
 }

@@ -16,6 +16,7 @@ public class ReceiptResponse {
     private String categoryName;
     private LocalDateTime createdAt;
     private List<ReceiptItemResponse> items;
+    private List<SplitParticipantDto> splitParticipants;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -46,4 +47,7 @@ public class ReceiptResponse {
 
     public List<ReceiptItemResponse> getItems() { return items; }
     public void setItems(List<ReceiptItemResponse> items) { this.items = items; }
+
+    public List<SplitParticipantDto> getSplitParticipants() { return splitParticipants; }
+    public void setSplitParticipants(List<SplitParticipantDto> splitParticipants) { this.splitParticipants = splitParticipants; }
 }

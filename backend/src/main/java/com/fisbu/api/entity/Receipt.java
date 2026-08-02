@@ -57,6 +57,10 @@ public class Receipt {
     @Column(name = "raw_ocr_text", columnDefinition = "TEXT")
     private String rawOcrText;
 
+    // Fiş bölüştürme (split bill) sonucu — katılımcı/tutar listesi JSON olarak saklanır
+    @Column(name = "split_details_json", columnDefinition = "TEXT")
+    private String splitDetailsJson;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
