@@ -217,6 +217,11 @@ public class ReceiptAiService {
                 Bu verilere dayanarak kullanıcıya samimi, kısa (3-4 cümle), Türkçe bir harcama yorumu yaz. \
                 En çok harcanan kategoriyi belirt, dikkat çekici bir gözlem yap ve varsa kısa bir tasarruf \
                 önerisi ver. Sadece yorum metnini yaz, başlık veya madde işareti kullanma.
+
+                ÖNEMLİ: Yanıtın SADECE Türkçe olmalı — İngilizce, Çince veya başka herhangi bir dilden \
+                tek bir kelime ya da karakter bile kullanma (örn. "yıl" yerine "year" yazma). Ayrıca \
+                birbiriyle çelişen iki gözlem yazma (örn. bir kategori harcamanın yarısını oluşturuyorsa \
+                bunu hem "dikkat çekici" hem "dengesizlik yok" diye sunma).
                 """.formatted(stats.getYear(), stats.getMonth(), stats.getTotalAmount(), breakdown);
 
         String comment = aiService.generateText(prompt).trim();

@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -126,12 +127,18 @@ public class PersonalInflationService {
                 ? weightedChangeSum.divide(totalWeight, 2, RoundingMode.HALF_UP)
                 : null);
 
-        List<ProductInflationResponse> increasing = new ArrayList<>(productChanges);
-        increasing.sort(Comparator.comparing(ProductInflationResponse::getChangePercent).reversed());
+        // Sadece gerçekten artan/azalan ürünler ilgili listeye girer — aksi halde
+        // tüm ürünler artmışken "en az artan" ürün yanlışlıkla "ucuzlayan" gibi görünür
+        List<ProductInflationResponse> increasing = productChanges.stream()
+                .filter(p -> p.getChangePercent().compareTo(BigDecimal.ZERO) > 0)
+                .sorted(Comparator.comparing(ProductInflationResponse::getChangePercent).reversed())
+                .collect(Collectors.toList());
         response.setTopIncreasing(increasing.subList(0, Math.min(TOP_LIST_SIZE, increasing.size())));
 
-        List<ProductInflationResponse> decreasing = new ArrayList<>(productChanges);
-        decreasing.sort(Comparator.comparing(ProductInflationResponse::getChangePercent));
+        List<ProductInflationResponse> decreasing = productChanges.stream()
+                .filter(p -> p.getChangePercent().compareTo(BigDecimal.ZERO) < 0)
+                .sorted(Comparator.comparing(ProductInflationResponse::getChangePercent))
+                .collect(Collectors.toList());
         response.setTopDecreasing(decreasing.subList(0, Math.min(TOP_LIST_SIZE, decreasing.size())));
 
         return response;

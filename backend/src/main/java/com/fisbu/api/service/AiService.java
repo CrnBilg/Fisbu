@@ -61,14 +61,17 @@ public class AiService {
         }
 
         try {
+            // Düşük temperature: tutarlı çıktı, model diller arası karışma (code-switching) yapma riskini azaltır
             Map<String, Object> payload = jsonMode
                     ? Map.of(
                             "model", modelName,
                             "messages", messages,
+                            "temperature", 0.3,
                             "response_format", Map.of("type", "json_object"))
                     : Map.of(
                             "model", modelName,
-                            "messages", messages
+                            "messages", messages,
+                            "temperature", 0.3
                     );
             String json = objectMapper.writeValueAsString(payload);
 
