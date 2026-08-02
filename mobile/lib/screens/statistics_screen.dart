@@ -4,6 +4,7 @@ import '../services/receipt_service.dart';
 import '../models/receipt.dart';
 import '../models/spending_analysis_result.dart';
 import '../models/personal_inflation_summary.dart';
+import '../core/widgets/offline_banner.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -864,11 +865,15 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             ],
           ),
         ),
-        body: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
-              )
-            : TabBarView(
+        body: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+                    )
+                  : TabBarView(
                 children: [
                   RefreshIndicator(
                     onRefresh: _loadReceipts,
@@ -1377,6 +1382,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   _buildInflationTab(isDark),
                 ],
               ),
+            ),
+          ],
+        ),
       ),
     );
   }
