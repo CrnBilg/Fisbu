@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:image_picker/image_picker.dart';
 import '../services/receipt_service.dart';
 import '../services/auth_service.dart';
@@ -171,6 +172,93 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
               style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
               child: const Text('Kaydet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAboutSheet() {
+    const supportEmail = 'baris.hansu57@outlook.com';
+    const privacyText =
+        '6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında, '
+        'FişBu uygulamasına kaydolurken e-posta adresin ve şifren şifreli olarak saklanır. '
+        'Uygulamaya yüklediğin fiş görselleri ve bu görsellerden çıkarılan harcama verileri '
+        '(tutar, tarih, kategori) yalnızca senin harcama takibini yapabilmen amacıyla işlenir '
+        've üçüncü taraflarla paylaşılmaz. Verilerinin silinmesini istediğinde profil ekranından '
+        'hesabını ve tüm verilerini kalıcı olarak silebilirsin. Kaydolarak bu şartları kabul etmiş olursun.';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.brd(ctx), borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 20),
+            Text('Hakkında', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.txt(ctx))),
+            const SizedBox(height: 16),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: AppColors.primDim(ctx), borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.info_outline, color: AppColors.primary),
+              ),
+              title: Text('Sürüm', style: TextStyle(color: AppColors.txt(ctx), fontWeight: FontWeight.w600)),
+              subtitle: const Text('1.0.0'),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: AppColors.primDim(ctx), borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.mail_outline, color: AppColors.primary),
+              ),
+              title: Text('İletişim', style: TextStyle(color: AppColors.txt(ctx), fontWeight: FontWeight.w600)),
+              subtitle: const Text(supportEmail),
+              trailing: const Icon(Icons.copy, size: 18),
+              onTap: () async {
+                await Clipboard.setData(const ClipboardData(text: supportEmail));
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(content: Text('E-posta adresi kopyalandı')),
+                  );
+                }
+              },
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: AppColors.primDim(ctx), borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.privacy_tip_outlined, color: AppColors.primary),
+              ),
+              title: Text('Gizlilik Politikası (KVKK)', style: TextStyle(color: AppColors.txt(ctx), fontWeight: FontWeight.w600)),
+              trailing: const Icon(Icons.chevron_right, size: 20),
+              onTap: () {
+                showDialog(
+                  context: ctx,
+                  builder: (dialogContext) => AlertDialog(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    title: const Text('Gizlilik Politikası (KVKK)', style: TextStyle(fontWeight: FontWeight.w700)),
+                    content: SingleChildScrollView(
+                      child: Text(privacyText, style: TextStyle(color: AppColors.textSecondary, height: 1.5)),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: const Text('Kapat'),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -600,7 +688,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           icon: Icons.info_outline,
                           label: 'Hakkında',
                           isLast: true,
-                          onTap: () {},
+                          onTap: _showAboutSheet,
                         ),
                       ],
                     ),

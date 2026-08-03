@@ -241,13 +241,13 @@ public class AuthService {
         userRepository.save(user);
     }
 
-    // Kullanıcı bulunamasa bile sessizce döner (e-posta enumeration önlemi) — "zaten doğrulanmış"
-    // durumu ise korunur, çünkü bu akış zaten kendi e-postasını bilen, az önce kayıt olmuş bir
-    // kullanıcı tarafından tetiklenir, ek bir bilgi sızıntısı oluşturmaz
+    // Kullanıcı bulunamasa ya da zaten doğrulanmış olsa bile sessizce döner (e-posta enumeration
+    // önlemi) — aksi halde "zaten doğrulanmış" hatası, kayıtlı olmayan bir e-postadan ayırt
+    // edilerek hangi e-postaların kayıtlı olduğunu anlamak için kullanılabilirdi
     public void resendVerificationCode(String email) {
         userRepository.findByEmail(normalizeEmail(email)).ifPresent(user -> {
             if (Boolean.TRUE.equals(user.getEmailVerified())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-posta zaten doğrulanmış");
+                return;
             }
 
             String code = generateCode();

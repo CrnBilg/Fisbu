@@ -236,7 +236,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
     );
   }
 
-  Future<void> _handleSave() async {
+  Future<void> _handleSave({bool allowDuplicate = false}) async {
     final store = _storeController.text.trim();
     final amountText = _amountController.text.trim();
 
@@ -265,6 +265,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
         categoryId: _selectedCategory?.id,
         image: _selectedImage,
         items: _collectItems(),
+        allowDuplicate: allowDuplicate,
       );
 
       if (mounted) {
@@ -275,6 +276,33 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
         ));
         Navigator.pop(context);
       }
+    } on DuplicateReceiptException {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Bu fiş zaten kayıtlı'),
+            content: const Text(
+              'Aynı mağaza, tutar ve tarihe sahip bir fiş zaten kayıtlı görünüyor. Yine de eklensin mi?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Vazgeç'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Yine de Ekle'),
+              ),
+            ],
+          ),
+        );
+        if (confirmed == true) {
+          await _handleSave(allowDuplicate: true);
+        }
+      }
+      return;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(

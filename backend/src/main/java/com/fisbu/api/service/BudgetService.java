@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fisbu.api.dto.BudgetRequest;
 import com.fisbu.api.dto.BudgetResponse;
+import com.fisbu.api.dto.BudgetSuggestionResponse;
 import com.fisbu.api.entity.Budget;
 import com.fisbu.api.entity.Category;
 import com.fisbu.api.entity.Receipt;
@@ -25,20 +26,25 @@ import com.fisbu.api.repository.UserRepository;
 @Service
 public class BudgetService {
 
+    private static final int SUGGESTION_LOOKBACK_MONTHS = 3;
+    private static final BigDecimal ROUNDING_STEP = BigDecimal.valueOf(50);
+
     private final BudgetRepository budgetRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final ReceiptRepository receiptRepository;
     private final PushNotificationService pushService;
+    private final AiService aiService;
 
     public BudgetService(BudgetRepository budgetRepository, UserRepository userRepository,
                           CategoryRepository categoryRepository, ReceiptRepository receiptRepository,
-                          PushNotificationService pushService) {
+                          PushNotificationService pushService, AiService aiService) {
         this.budgetRepository = budgetRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.receiptRepository = receiptRepository;
         this.pushService = pushService;
+        this.aiService = aiService;
     }
 
     public List<BudgetResponse> getBudgets(String email, Integer year, Integer month) {
@@ -149,6 +155,76 @@ public class BudgetService {
 
         if (changed) {
             budgetRepository.save(budget);
+        }
+    }
+
+    /**
+     * Son 3 ayın ortalama harcamasına göre bu kategori için bir bütçe önerisi üretir.
+     * Öneri tutarı deterministik hesaplanır (AI'a bırakılmaz, hatalı/tutarsız rakam riskini önler);
+     * AI sadece bu rakamı açıklayan kısa bir not yazmak için kullanılır ve o adım başarısız olursa
+     * (Groq yapılandırılmamış/kesinti) sabit bir metne düşülür, öneri yine de döner.
+     */
+    public BudgetSuggestionResponse getBudgetSuggestion(String email, Long categoryId, Integer year, Integer month) {
+        User user = getUserByEmail(email);
+        Category category = getOwnedCategory(user, categoryId);
+
+        LocalDate today = LocalDate.now();
+        int resolvedYear = year != null ? year : today.getYear();
+        int resolvedMonth = month != null ? month : today.getMonthValue();
+        LocalDate targetMonth = LocalDate.of(resolvedYear, resolvedMonth, 1);
+
+        BigDecimal total = BigDecimal.ZERO;
+        int monthsWithData = 0;
+        for (int i = 1; i <= SUGGESTION_LOOKBACK_MONTHS; i++) {
+            LocalDate pastMonth = targetMonth.minusMonths(i);
+            BigDecimal spend = calculateSpend(user, category, pastMonth.getYear(), pastMonth.getMonthValue());
+            if (spend.signum() > 0) {
+                monthsWithData++;
+            }
+            total = total.add(spend);
+        }
+
+        BudgetSuggestionResponse response = new BudgetSuggestionResponse();
+        response.setCategoryId(category.getId());
+        response.setCategoryName(category.getName());
+        response.setMonthsAnalyzed(monthsWithData);
+
+        if (monthsWithData == 0) {
+            response.setComment("Bu kategori için son " + SUGGESTION_LOOKBACK_MONTHS
+                    + " ayda yeterli harcama verisi yok, öneri sunulamıyor");
+            return response;
+        }
+
+        BigDecimal average = total.divide(BigDecimal.valueOf(SUGGESTION_LOOKBACK_MONTHS), 2, RoundingMode.HALF_UP);
+        BigDecimal suggestedLimit = average
+                .divide(ROUNDING_STEP, 0, RoundingMode.UP)
+                .multiply(ROUNDING_STEP);
+
+        response.setAverageSpend(average);
+        response.setSuggestedLimit(suggestedLimit);
+        response.setComment(buildSuggestionComment(category.getName(), average, suggestedLimit));
+        return response;
+    }
+
+    private String buildSuggestionComment(String categoryName, BigDecimal average, BigDecimal suggestedLimit) {
+        String fallback = "Son " + SUGGESTION_LOOKBACK_MONTHS + " ayın ortalamasına göre " + categoryName
+                + " için " + suggestedLimit + " TL bütçe öneriyoruz";
+
+        if (!aiService.isConfigured()) {
+            return fallback;
+        }
+
+        try {
+            String prompt = """
+                    Kullanıcının son %d ayda "%s" kategorisindeki ortalama aylık harcaması %s TL. \
+                    Buna göre %s TL'lik bir aylık bütçe öneriyoruz. Kullanıcıya bunu açıklayan, \
+                    samimi ve kısa (tek cümle), Türkçe bir not yaz. Sadece cümleyi yaz, başka \
+                    açıklama ekleme. Yanıtın SADECE Türkçe olmalı, başka dilden tek kelime bile kullanma.
+                    """.formatted(SUGGESTION_LOOKBACK_MONTHS, categoryName, average, suggestedLimit);
+            String comment = aiService.generateText(prompt).trim();
+            return comment.isEmpty() ? fallback : comment;
+        } catch (Exception e) {
+            return fallback;
         }
     }
 

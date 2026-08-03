@@ -7,7 +7,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 import com.fisbu.api.dto.MonthlyStatisticsResponse;
+import com.fisbu.api.dto.StoreStatResponse;
+import com.fisbu.api.dto.TopProductResponse;
 import com.fisbu.api.service.StatisticsService;
 
 @RestController
@@ -25,5 +29,16 @@ public class StatisticsController {
                                                            @RequestParam(required = false) Integer year,
                                                            @RequestParam(required = false) Integer month) {
         return statisticsService.getMonthlyStatistics(userDetails.getUsername(), year, month);
+    }
+
+    @GetMapping("/stores")
+    public List<StoreStatResponse> getStoreStatistics(@AuthenticationPrincipal UserDetails userDetails) {
+        return statisticsService.getStoreStatistics(userDetails.getUsername());
+    }
+
+    @GetMapping("/top-products")
+    public List<TopProductResponse> getTopProducts(@AuthenticationPrincipal UserDetails userDetails,
+                                                     @RequestParam(required = false) Integer limit) {
+        return statisticsService.getTopProducts(userDetails.getUsername(), limit);
     }
 }

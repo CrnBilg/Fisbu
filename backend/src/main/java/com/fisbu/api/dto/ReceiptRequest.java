@@ -29,6 +29,10 @@ public class ReceiptRequest {
     private String rawOcrText;
     private Long categoryId;
 
+    // true ise aynı mağaza+tutar+tarih eşleşmesi olsa bile fiş yine de kaydedilir
+    // (kullanıcı "yine de ekle" uyarısını onayladıysa)
+    private boolean allowDuplicate;
+
     @Valid
     private List<ReceiptItemRequest> items;
 
@@ -44,6 +48,8 @@ public class ReceiptRequest {
     public void setRawOcrText(String rawOcrText) { this.rawOcrText = rawOcrText; }
     public Long getCategoryId() { return categoryId; }
     public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
+    public boolean isAllowDuplicate() { return allowDuplicate; }
+    public void setAllowDuplicate(boolean allowDuplicate) { this.allowDuplicate = allowDuplicate; }
     public List<ReceiptItemRequest> getItems() { return items; }
     public void setItems(List<ReceiptItemRequest> items) { this.items = items; }
 }

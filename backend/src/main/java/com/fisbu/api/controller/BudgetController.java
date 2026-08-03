@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fisbu.api.dto.BudgetRequest;
 import com.fisbu.api.dto.BudgetResponse;
+import com.fisbu.api.dto.BudgetSuggestionResponse;
 import com.fisbu.api.service.BudgetService;
 
 import jakarta.validation.Valid;
@@ -44,6 +45,14 @@ public class BudgetController {
     public BudgetResponse createBudget(@AuthenticationPrincipal UserDetails userDetails,
                                         @RequestBody @Valid BudgetRequest request) {
         return budgetService.createBudget(userDetails.getUsername(), request);
+    }
+
+    @GetMapping("/suggestion")
+    public BudgetSuggestionResponse getBudgetSuggestion(@AuthenticationPrincipal UserDetails userDetails,
+                                                         @RequestParam Long categoryId,
+                                                         @RequestParam(required = false) Integer year,
+                                                         @RequestParam(required = false) Integer month) {
+        return budgetService.getBudgetSuggestion(userDetails.getUsername(), categoryId, year, month);
     }
 
     @PutMapping("/{id}")

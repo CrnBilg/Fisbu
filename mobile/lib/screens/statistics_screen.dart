@@ -4,6 +4,8 @@ import '../services/receipt_service.dart';
 import '../models/receipt.dart';
 import '../models/spending_analysis_result.dart';
 import '../models/personal_inflation_summary.dart';
+import '../models/store_stat.dart';
+import '../models/top_product.dart';
 import '../core/widgets/offline_banner.dart';
 
 class StatisticsScreen extends StatefulWidget {
@@ -32,6 +34,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   PersonalInflationSummary? _inflationSummary;
   String? _inflationError;
 
+  // Mağaza bazlı istatistik
+  bool _isLoadingStoreStats = true;
+  List<StoreStat> _storeStats = [];
+  String? _storeStatsError;
+
+  // En çok alınan ürünler
+  bool _isLoadingTopProducts = true;
+  List<TopProduct> _topProducts = [];
+  String? _topProductsError;
+
   @override
   void initState() {
     super.initState();
@@ -39,6 +51,38 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     _availableMonths = [_selectedMonth];
     _loadReceipts();
     _loadInflationSummary();
+    _loadStoreStats();
+    _loadTopProducts();
+  }
+
+  Future<void> _loadStoreStats() async {
+    setState(() {
+      _isLoadingStoreStats = true;
+      _storeStatsError = null;
+    });
+    try {
+      final stats = await ReceiptService.getStoreStatistics();
+      setState(() => _storeStats = stats);
+    } catch (e) {
+      setState(() => _storeStatsError = 'Mağaza istatistikleri alınamadı: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingStoreStats = false);
+    }
+  }
+
+  Future<void> _loadTopProducts() async {
+    setState(() {
+      _isLoadingTopProducts = true;
+      _topProductsError = null;
+    });
+    try {
+      final products = await ReceiptService.getTopProducts();
+      setState(() => _topProducts = products);
+    } catch (e) {
+      setState(() => _topProductsError = 'En çok alınan ürünler alınamadı: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingTopProducts = false);
+    }
   }
 
   Future<void> _loadInflationSummary() async {
@@ -360,7 +404,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: _loadReceipts,
+      onRefresh: () => Future.wait([_loadReceipts(), _loadStoreStats(), _loadTopProducts()]),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(20),
@@ -663,9 +707,213 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   ),
                 );
               }),
+            const SizedBox(height: 24),
+            Text(
+              'Mağaza Bazlı Harcama',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: titleColor,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildStoreStatsSection(isDark, surfaceColor, titleColor),
+            const SizedBox(height: 24),
+            Text(
+              'En Çok Alınan Ürünler',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: titleColor,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildTopProductsSection(isDark, surfaceColor, titleColor),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildStoreStatsSection(bool isDark, Color surfaceColor, Color titleColor) {
+    if (_isLoadingStoreStats) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+        ),
+      );
+    }
+    if (_storeStatsError != null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+        ),
+        child: Text(_storeStatsError!, style: const TextStyle(color: Color(0xFF9E9EBF))),
+      );
+    }
+    if (_storeStats.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+        ),
+        child: const Center(
+          child: Text('Henüz mağaza verisi yok', style: TextStyle(color: Color(0xFF9E9EBF))),
+        ),
+      );
+    }
+
+    return Column(
+      children: _storeStats.take(10).map((store) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4D96FF).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.storefront_outlined, color: Color(0xFF4D96FF), size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      store.storeName,
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: titleColor),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${store.receiptCount} fiş · ort. ${store.averageAmount.toStringAsFixed(2)} TL',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF9E9EBF)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${store.totalAmount.toStringAsFixed(2)} TL',
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF4D96FF)),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildTopProductsSection(bool isDark, Color surfaceColor, Color titleColor) {
+    if (_isLoadingTopProducts) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+        ),
+      );
+    }
+    if (_topProductsError != null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+        ),
+        child: Text(_topProductsError!, style: const TextStyle(color: Color(0xFF9E9EBF))),
+      );
+    }
+    if (_topProducts.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+        ),
+        child: const Center(
+          child: Text(
+            'Henüz ürün verisi yok.\nFiş eklerken ürün girdikçe burası dolacak.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Color(0xFF9E9EBF)),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: _topProducts.asMap().entries.map((entry) {
+        final index = entry.key;
+        final product = entry.value;
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6BCB77).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${index + 1}',
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF6BCB77)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.displayName,
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: titleColor),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${product.purchaseCount} kez alındı',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF9E9EBF)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${product.totalSpent.toStringAsFixed(2)} TL',
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF6BCB77)),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 

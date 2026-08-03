@@ -102,6 +102,10 @@ class PendingReceiptQueue {
             final file = File(pending.localImagePath!);
             if (await file.exists()) await file.delete();
           }
+        } on DuplicateReceiptException {
+          // Bu fiş zaten (ör. manuel olarak) eklenmiş — sırada tutmaya gerek yok,
+          // kaldırıp kuyruktaki diğer öğelerin işlenmesine devam et
+          await remove(pending.localId);
         } catch (e) {
           // Hâlâ çevrimdışıysak ya da geçici bir hata varsa dur, kalanları sırada bırak
           break;

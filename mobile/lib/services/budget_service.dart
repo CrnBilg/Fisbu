@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/budget.dart';
+import '../models/budget_suggestion.dart';
 import 'auth_service.dart';
 import 'local_cache_service.dart';
 
@@ -95,6 +96,26 @@ class BudgetService {
       return Budget.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Bütçe güncellenemedi: ${response.statusCode}');
+    }
+  }
+
+  static Future<BudgetSuggestion> getBudgetSuggestion({
+    required int categoryId,
+    int? year,
+    int? month,
+  }) async {
+    final token = await AuthService.getToken();
+    final query = <String, String>{
+      'categoryId': '$categoryId',
+      if (year != null) 'year': '$year',
+      if (month != null) 'month': '$month',
+    };
+    final uri = Uri.parse('$_baseUrl/budgets/suggestion').replace(queryParameters: query);
+    final response = await http.get(uri, headers: {'Authorization': 'Bearer $token'});
+    if (response.statusCode == 200) {
+      return BudgetSuggestion.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Bütçe önerisi alınamadı: ${response.statusCode}');
     }
   }
 

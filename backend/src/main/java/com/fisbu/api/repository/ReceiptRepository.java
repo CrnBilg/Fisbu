@@ -1,5 +1,6 @@
 package com.fisbu.api.repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -14,4 +15,6 @@ public interface ReceiptRepository extends JpaRepository<Receipt, Long> {
     List<Receipt> findByCategory(Category category);
     List<Receipt> findByUserAndReceiptDateBetween(User user, LocalDate start, LocalDate end);
     List<Receipt> findByUserAndCategoryAndReceiptDateBetween(User user, Category category, LocalDate start, LocalDate end);
+    List<Receipt> findByUserAndStoreNameIgnoreCaseAndTotalAmountAndReceiptDate(
+            User user, String storeName, BigDecimal totalAmount, LocalDate receiptDate);
 }

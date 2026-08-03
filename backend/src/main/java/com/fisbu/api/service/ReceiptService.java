@@ -69,6 +69,21 @@ public class ReceiptService {
     public ReceiptResponse createReceipt(String email, ReceiptRequest request) {
         User user = getUserByEmail(email);
 
+        // Aynı mağaza+tutar+tarih ile daha önce eklenmiş bir fiş varsa, kullanıcı
+        // "yine de ekle" demediyse (allowDuplicate) yanlışlıkla tekrar eklemeyi önle
+        if (!request.isAllowDuplicate()
+                && request.getStoreName() != null
+                && request.getTotalAmount() != null
+                && request.getReceiptDate() != null) {
+            List<Receipt> duplicates = receiptRepository
+                    .findByUserAndStoreNameIgnoreCaseAndTotalAmountAndReceiptDate(
+                            user, request.getStoreName().trim(), request.getTotalAmount(), request.getReceiptDate());
+            if (!duplicates.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Bu fiş zaten kayıtlı görünüyor (aynı mağaza, tutar ve tarih)");
+            }
+        }
+
         Receipt receipt = new Receipt();
         receipt.setUser(user);
         receipt.setStoreName(request.getStoreName());
@@ -117,13 +132,15 @@ public class ReceiptService {
         return toResponse(saved);
     }
 
-    // Ekstre içe aktarma onayı: her satır bağımsız denenir, bir satırın hatası diğerlerini etkilemez
+    // Ekstre içe aktarma onayı: her satır bağımsız denenir, bir satırın hatası diğerlerini etkilemez.
+    // Kullanıcı zaten parse edilen listeyi gözden geçirip onayladığı için duplicate kontrolü atlanır.
     public BulkReceiptImportResponse createReceiptsBulk(String email, List<ReceiptRequest> requests) {
         List<ReceiptResponse> created = new ArrayList<>();
         List<BulkImportError> failed = new ArrayList<>();
 
         for (int i = 0; i < requests.size(); i++) {
             try {
+                requests.get(i).setAllowDuplicate(true);
                 created.add(createReceipt(email, requests.get(i)));
             } catch (ResponseStatusException e) {
                 failed.add(new BulkImportError(i, e.getReason() != null ? e.getReason() : "Hata oluştu"));
