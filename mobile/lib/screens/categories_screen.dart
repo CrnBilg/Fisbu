@@ -14,6 +14,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   List<Category> _categories = [];
   bool _isLoading = true;
   String? _errorMessage;
+  bool _isDialogOpen = false;
 
   @override
   void initState() {
@@ -42,6 +43,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   Future<void> _showAddCategoryDialog() async {
+    // Hızlı çift dokunmada FAB iki kez tetiklenip aynı anda iki dialog açılmasın
+    // (bağımsız iki TextEditingController + çakışan Navigator.pop yığını riski)
+    if (_isDialogOpen) return;
+    _isDialogOpen = true;
+
     final nameController = TextEditingController();
     Color selectedColor = AppColors.primary;
 
@@ -141,6 +147,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       _createCategory(nameController.text.trim(), selectedColor);
     }
     nameController.dispose();
+    _isDialogOpen = false;
   }
 
   Future<void> _createCategory(String name, Color color) async {
@@ -159,6 +166,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   Future<void> _showEditCategoryDialog(Category category) async {
+    if (_isDialogOpen) return;
+    _isDialogOpen = true;
+
     final nameController = TextEditingController(text: category.name);
     Color selectedColor = _parseColor(category.color);
 
@@ -272,6 +282,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       }
     }
     nameController.dispose();
+    _isDialogOpen = false;
   }
 
 

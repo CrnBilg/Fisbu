@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/receipt.dart';
 import '../models/receipt_page.dart';
@@ -534,10 +536,15 @@ class ReceiptService {
     );
     request.headers['Authorization'] = 'Bearer $token';
     final bytes = await image.readAsBytes();
+    // http.MultipartFile.fromBytes contentType belirtilmezse application/octet-stream'e
+    // düşer — backend'in content-type doğrulaması bunu reddeder, o yüzden dosya
+    // baytlarından (uzantı yoksa/yanlışsa bile güvenilir) MIME türünü açıkça belirliyoruz
+    final mimeType = lookupMimeType(image.name, headerBytes: bytes) ?? 'image/jpeg';
     final multipartFile = http.MultipartFile.fromBytes(
       'file',
       bytes,
       filename: image.name,
+      contentType: MediaType.parse(mimeType),
     );
     request.files.add(multipartFile);
     final streamedResponse = await request.send();
@@ -559,7 +566,12 @@ class ReceiptService {
       Uri.parse('$_baseUrl/receipts/upload'),
     );
     request.headers['Authorization'] = 'Bearer $token';
-    request.files.add(await http.MultipartFile.fromPath('file', file.path));
+    final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
+    request.files.add(await http.MultipartFile.fromPath(
+      'file',
+      file.path,
+      contentType: MediaType.parse(mimeType),
+    ));
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
     if (response.statusCode == 200) {

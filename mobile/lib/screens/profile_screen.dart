@@ -189,7 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() => _isUpdatingPhoto = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fotoğraf yüklenemedi: \$e')),
+          SnackBar(content: Text('Fotoğraf yüklenemedi: $e')),
         );
       }
     }
