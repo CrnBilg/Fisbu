@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'add_receipt_screen.dart';
+import 'receipt_verification_screen.dart';
 import '../core/theme/app_colors.dart';
 
 class OcrScreen extends StatefulWidget {
@@ -426,24 +427,42 @@ class _OcrScreenState extends State<OcrScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AddReceiptScreen(
-                              initialStoreName: _aiResult!.storeName ?? _extractedStoreName,
-                              initialAmount: _aiResult!.totalAmount?.toStringAsFixed(2) ??
-                                  _extractedAmount,
-                              initialDate: _aiResult!.receiptDate ?? _extractedDate,
-                              initialImagePath: _selectedImage?.path,
-                              initialCategoryId: _aiResult!.matchedCategoryId,
-                              initialItems: _aiResult!.items,
+                        onPressed: () {
+                          // Güven skoru düşükse (%60 altı) tüm alanları tek formda göstermek
+                          // yerine tek tek doğrulatan bir akışa yönlendir
+                          if (_aiResult!.confidenceScore < 60) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ReceiptVerificationScreen(
+                                  aiResult: _aiResult!,
+                                  imagePath: _selectedImage?.path,
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddReceiptScreen(
+                                initialStoreName: _aiResult!.storeName ?? _extractedStoreName,
+                                initialAmount: _aiResult!.totalAmount?.toStringAsFixed(2) ??
+                                    _extractedAmount,
+                                initialDate: _aiResult!.receiptDate ?? _extractedDate,
+                                initialImagePath: _selectedImage?.path,
+                                initialCategoryId: _aiResult!.matchedCategoryId,
+                                initialItems: _aiResult!.items,
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                         style: TextButton.styleFrom(foregroundColor: AppColors.secondaryDark),
-                        child: const Text(
-                          'AI Verisiyle Forma Aktar →',
-                          style: TextStyle(fontWeight: FontWeight.w700),
+                        child: Text(
+                          _aiResult!.confidenceScore < 60
+                              ? 'Bilgileri Tek Tek Doğrula →'
+                              : 'AI Verisiyle Forma Aktar →',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ),
                     ),
