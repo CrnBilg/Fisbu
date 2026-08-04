@@ -247,6 +247,20 @@ class ReceiptService {
     }
   }
 
+  /// Elle fiş eklerken mağaza adına göre kategori önerisi. Öneri yoksa null döner.
+  static Future<({int categoryId, String categoryName})?> getCategorySuggestion(String storeName) async {
+    if (storeName.trim().length < 2) return null;
+    final token = await AuthService.getToken();
+    final uri = Uri.parse('$_baseUrl/receipts/category-suggestion')
+        .replace(queryParameters: {'storeName': storeName.trim()});
+    final response = await http.get(uri, headers: {'Authorization': 'Bearer $token'});
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return (categoryId: data['categoryId'] as int, categoryName: data['categoryName'] as String);
+    }
+    return null;
+  }
+
   static Future<Category> createCategory({
     required String name,
     required String color,

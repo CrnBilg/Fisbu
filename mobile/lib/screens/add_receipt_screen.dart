@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io' show File;
@@ -57,6 +58,9 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
   bool _isCategoriesLoading = true;
   XFile? _selectedImage;
   final List<_ItemRow> _itemRows = [];
+
+  Timer? _categorySuggestionDebounce;
+  ({int categoryId, String categoryName})? _categorySuggestion;
 
   @override
   void initState() {
@@ -316,12 +320,49 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
 
   @override
   void dispose() {
+    _categorySuggestionDebounce?.cancel();
     _storeController.dispose();
     _amountController.dispose();
     for (final row in _itemRows) {
       row.dispose();
     }
     super.dispose();
+  }
+
+  void _onStoreNameChanged(String value) {
+    _categorySuggestionDebounce?.cancel();
+    if (_selectedCategory != null || value.trim().length < 2) {
+      if (_categorySuggestion != null) setState(() => _categorySuggestion = null);
+      return;
+    }
+    _categorySuggestionDebounce = Timer(const Duration(milliseconds: 500), () async {
+      try {
+        final suggestion = await ReceiptService.getCategorySuggestion(value);
+        if (mounted && _selectedCategory == null) {
+          setState(() => _categorySuggestion = suggestion);
+        }
+      } catch (_) {
+        // Öneri ikincil bir UX iyileştirmesi — sessizce yok say
+      }
+    });
+  }
+
+  void _applyCategorySuggestion() {
+    final suggestion = _categorySuggestion;
+    if (suggestion == null) return;
+    Category? matched;
+    for (final category in _categories) {
+      if (category.id == suggestion.categoryId) {
+        matched = category;
+        break;
+      }
+    }
+    if (matched != null) {
+      setState(() {
+        _selectedCategory = matched;
+        _categorySuggestion = null;
+      });
+    }
   }
 
   void _addItemRow() {
@@ -427,6 +468,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
             // Mağaza adı
             TextField(
               controller: _storeController,
+              onChanged: _onStoreNameChanged,
               decoration: InputDecoration(
                 labelText: 'Mağaza Adı',
                 prefixIcon: const Icon(Icons.store_outlined),
@@ -486,6 +528,42 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
             ),
             const SizedBox(height: 16),
 
+            if (_categorySuggestion != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: GestureDetector(
+                  onTap: _applyCategorySuggestion,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primDim(context),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.auto_awesome, size: 16, color: AppColors.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Öneri: ${_categorySuggestion!.categoryName}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                        const Text(
+                          'Kullan',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
             // Kategori seçici
             _isCategoriesLoading
                 ? const Center(
@@ -510,7 +588,10 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                       );
                     }).toList(),
                     onChanged: (value) {
-                      setState(() => _selectedCategory = value);
+                      setState(() {
+                        _selectedCategory = value;
+                        _categorySuggestion = null;
+                      });
                     },
                   ),
             const SizedBox(height: 24),

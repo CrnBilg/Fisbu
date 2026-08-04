@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fisbu.api.dto.CategorySuggestionResponse;
 import com.fisbu.api.dto.PageResponse;
 import com.fisbu.api.dto.ReceiptRequest;
 import com.fisbu.api.dto.ReceiptResponse;
@@ -56,6 +57,14 @@ public class ReceiptController {
     public ReceiptResponse createReceipt(@AuthenticationPrincipal UserDetails userDetails,
                                           @RequestBody @Valid ReceiptRequest request) {
         return receiptService.createReceipt(userDetails.getUsername(), request);
+    }
+
+    // Elle fiş eklerken mağaza adına göre kategori önerisi — öneri yoksa 204 döner
+    @GetMapping("/category-suggestion")
+    public ResponseEntity<CategorySuggestionResponse> suggestCategory(@AuthenticationPrincipal UserDetails userDetails,
+                                                                        @RequestParam String storeName) {
+        CategorySuggestionResponse suggestion = receiptService.suggestCategory(userDetails.getUsername(), storeName);
+        return suggestion != null ? ResponseEntity.ok(suggestion) : ResponseEntity.noContent().build();
     }
     @GetMapping("/{id}")
     public ReceiptResponse getReceiptById(@AuthenticationPrincipal UserDetails userDetails,

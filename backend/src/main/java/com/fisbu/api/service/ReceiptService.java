@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fisbu.api.dto.BulkImportError;
 import com.fisbu.api.dto.BulkReceiptImportResponse;
+import com.fisbu.api.dto.CategorySuggestionResponse;
 import com.fisbu.api.dto.PageResponse;
 import com.fisbu.api.dto.ReceiptItemRequest;
 import com.fisbu.api.dto.ReceiptItemResponse;
@@ -97,6 +99,36 @@ public class ReceiptService {
 
         Page<Receipt> result = receiptRepository.findAll(spec, pageable);
         return PageResponse.from(result, this::toResponse);
+    }
+
+    // Elle fiş eklerken mağaza adına göre kategori önerir — bu mağazadan daha önce
+    // eklenmiş fişlerde en sık kullanılan kategoriyi döner (AI çağrısı gerektirmez)
+    public CategorySuggestionResponse suggestCategory(String email, String storeName) {
+        if (storeName == null || storeName.trim().length() < 2) {
+            return null;
+        }
+        User user = getUserByEmail(email);
+
+        Specification<Receipt> spec = ReceiptSpecifications.hasUser(user)
+                .and(ReceiptSpecifications.storeNameContains(storeName.trim()));
+        List<Receipt> matches = receiptRepository.findAll(spec);
+
+        Map<Long, Category> categoryById = new java.util.HashMap<>();
+        Map<Long, Long> countsByCategoryId = new java.util.HashMap<>();
+        for (Receipt receipt : matches) {
+            Category category = receipt.getCategory();
+            if (category == null) {
+                continue;
+            }
+            categoryById.putIfAbsent(category.getId(), category);
+            countsByCategoryId.merge(category.getId(), 1L, Long::sum);
+        }
+
+        return countsByCategoryId.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(entry -> categoryById.get(entry.getKey()))
+                .map(category -> new CategorySuggestionResponse(category.getId(), category.getName()))
+                .orElse(null);
     }
 
     // Yeni fiş ekler
