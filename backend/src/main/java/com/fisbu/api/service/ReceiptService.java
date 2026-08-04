@@ -1,5 +1,7 @@
 package com.fisbu.api.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -162,8 +164,9 @@ public class ReceiptService {
         receipt.setWarrantyExpiryDate(request.getWarrantyExpiryDate());
 
         // Kategori opsiyonel — gönderilmişse set et
+        Category category = null;
         if (request.getCategoryId() != null) {
-            Category category = categoryRepository.findById(request.getCategoryId())
+            category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.NOT_FOUND, "Kategori bulunamadı"));
 
@@ -173,6 +176,12 @@ public class ReceiptService {
 
             receipt.setCategory(category);
         }
+
+        // Kaydetmeden önce, aynı kategorideki geçmiş fişlere göre bu tutar aykırı mı bak
+        // (sadece bilgilendirici — engellemez, 409 duplicate uyarısından farklı olarak)
+        String anomalyWarning = category != null
+                ? detectAmountAnomaly(category, request.getTotalAmount())
+                : null;
 
         if (request.getItems() != null) {
             for (ReceiptItemRequest itemRequest : request.getItems()) {
@@ -198,7 +207,46 @@ public class ReceiptService {
                     saved.getReceiptDate().getMonthValue());
         }
 
-        return toResponse(saved);
+        ReceiptResponse response = toResponse(saved);
+        response.setAnomalyWarning(anomalyWarning);
+        return response;
+    }
+
+    private static final int ANOMALY_MIN_SAMPLE_SIZE = 3;
+    private static final BigDecimal ANOMALY_HIGH_MULTIPLIER = BigDecimal.valueOf(2.5);
+    private static final BigDecimal ANOMALY_LOW_MULTIPLIER = BigDecimal.valueOf(0.25);
+    private static final BigDecimal ANOMALY_MIN_AVERAGE = BigDecimal.valueOf(20);
+
+    // Bu kategorideki geçmiş fişlere kıyasla tutar normalden çok yüksek/düşükse uyarı metni döner
+    private String detectAmountAnomaly(Category category, BigDecimal newAmount) {
+        if (newAmount == null) {
+            return null;
+        }
+        List<Receipt> previous = receiptRepository.findByCategory(category).stream()
+                .filter(r -> r.getTotalAmount() != null)
+                .collect(Collectors.toList());
+        if (previous.size() < ANOMALY_MIN_SAMPLE_SIZE) {
+            return null;
+        }
+
+        BigDecimal total = BigDecimal.ZERO;
+        for (Receipt r : previous) {
+            total = total.add(r.getTotalAmount());
+        }
+        BigDecimal average = total.divide(BigDecimal.valueOf(previous.size()), 2, RoundingMode.HALF_UP);
+        if (average.compareTo(ANOMALY_MIN_AVERAGE) < 0) {
+            return null;
+        }
+
+        if (newAmount.compareTo(average.multiply(ANOMALY_HIGH_MULTIPLIER)) > 0) {
+            return category.getName() + " kategorisinde her zamankinden çok daha yüksek bir tutar ("
+                    + newAmount.toPlainString() + " TL) — ortalaman " + average.toPlainString() + " TL";
+        }
+        if (newAmount.compareTo(average.multiply(ANOMALY_LOW_MULTIPLIER)) < 0) {
+            return category.getName() + " kategorisinde her zamankinden çok daha düşük bir tutar ("
+                    + newAmount.toPlainString() + " TL) — ortalaman " + average.toPlainString() + " TL";
+        }
+        return null;
     }
 
     // Ekstre içe aktarma onayı: her satır bağımsız denenir, bir satırın hatası diğerlerini etkilemez.

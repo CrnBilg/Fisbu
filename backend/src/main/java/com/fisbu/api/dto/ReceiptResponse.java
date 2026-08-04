@@ -19,6 +19,7 @@ public class ReceiptResponse {
     private List<SplitParticipantDto> splitParticipants;
     private LocalDate returnDeadline;
     private LocalDate warrantyExpiryDate;
+    private String anomalyWarning;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -58,4 +59,7 @@ public class ReceiptResponse {
 
     public LocalDate getWarrantyExpiryDate() { return warrantyExpiryDate; }
     public void setWarrantyExpiryDate(LocalDate warrantyExpiryDate) { this.warrantyExpiryDate = warrantyExpiryDate; }
+
+    public String getAnomalyWarning() { return anomalyWarning; }
+    public void setAnomalyWarning(String anomalyWarning) { this.anomalyWarning = anomalyWarning; }
 }

@@ -273,12 +273,35 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(saved != null
-              ? 'Fiş başarıyla eklendi!'
-              : 'Bağlantı yok — fiş kaydedilmek üzere sıraya alındı'),
-        ));
-        Navigator.pop(context);
+        if (saved?.anomalyWarning != null) {
+          await showDialog<void>(
+            context: context,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: AppColors.warning),
+                  const SizedBox(width: 8),
+                  const Text('Dikkat çekici bir tutar'),
+                ],
+              ),
+              content: Text(saved!.anomalyWarning!),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Tamam'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(saved != null
+                ? 'Fiş başarıyla eklendi!'
+                : 'Bağlantı yok — fiş kaydedilmek üzere sıraya alındı'),
+          ));
+        }
+        if (mounted) Navigator.pop(context);
       }
     } on DuplicateReceiptException {
       if (mounted) {

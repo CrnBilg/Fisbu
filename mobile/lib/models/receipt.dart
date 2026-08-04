@@ -14,6 +14,7 @@ class Receipt {
   final List<SplitParticipant>? splitParticipants;
   final String? returnDeadline;
   final String? warrantyExpiryDate;
+  final String? anomalyWarning;
 
   Receipt({
     required this.id,
@@ -28,6 +29,7 @@ class Receipt {
     this.splitParticipants,
     this.returnDeadline,
     this.warrantyExpiryDate,
+    this.anomalyWarning,
   });
 
   factory Receipt.fromJson(Map<String, dynamic> json) {
@@ -49,6 +51,7 @@ class Receipt {
           .toList(),
       returnDeadline: json['returnDeadline'] as String?,
       warrantyExpiryDate: json['warrantyExpiryDate'] as String?,
+      anomalyWarning: json['anomalyWarning'] as String?,
     );
   }
 }
