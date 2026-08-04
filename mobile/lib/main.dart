@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/auth_wrapper.dart';
@@ -14,6 +15,10 @@ import 'services/pending_receipt_queue.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // table_calendar gibi intl DateFormat kullanan paketler locale verisi
+  // başlatılmadan çağrılırsa LocaleDataException fırlatır
+  await initializeDateFormatting('tr_TR', null);
 
   // Firebase + push bildirim altyapısı (native config dosyalarından okur)
   try {
