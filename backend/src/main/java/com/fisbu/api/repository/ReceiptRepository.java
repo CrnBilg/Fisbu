@@ -21,4 +21,8 @@ public interface ReceiptRepository extends JpaRepository<Receipt, Long>, JpaSpec
 
     // Aile bütçe modu — household üyelerinin fişlerini tek sorguda toplamak için
     List<Receipt> findByUserInAndReceiptDateBetween(List<User> users, LocalDate start, LocalDate end);
+
+    // Garanti/iade hatırlatıcı — WarrantyReminderScheduler'ın günlük taraması için
+    List<Receipt> findByReturnDeadlineBetweenAndReturnReminderSentFalse(LocalDate start, LocalDate end);
+    List<Receipt> findByWarrantyExpiryDateBetweenAndWarrantyReminderSentFalse(LocalDate start, LocalDate end);
 }

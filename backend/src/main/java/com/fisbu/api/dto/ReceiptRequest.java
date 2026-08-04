@@ -29,6 +29,10 @@ public class ReceiptRequest {
     private String rawOcrText;
     private Long categoryId;
 
+    // Garanti/iade hatırlatıcı — opsiyonel, ikisi de gönderilmezse hatırlatma kurulmaz
+    private LocalDate returnDeadline;
+    private LocalDate warrantyExpiryDate;
+
     // true ise aynı mağaza+tutar+tarih eşleşmesi olsa bile fiş yine de kaydedilir
     // (kullanıcı "yine de ekle" uyarısını onayladıysa)
     private boolean allowDuplicate;
@@ -48,6 +52,10 @@ public class ReceiptRequest {
     public void setRawOcrText(String rawOcrText) { this.rawOcrText = rawOcrText; }
     public Long getCategoryId() { return categoryId; }
     public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
+    public LocalDate getReturnDeadline() { return returnDeadline; }
+    public void setReturnDeadline(LocalDate returnDeadline) { this.returnDeadline = returnDeadline; }
+    public LocalDate getWarrantyExpiryDate() { return warrantyExpiryDate; }
+    public void setWarrantyExpiryDate(LocalDate warrantyExpiryDate) { this.warrantyExpiryDate = warrantyExpiryDate; }
     public boolean isAllowDuplicate() { return allowDuplicate; }
     public void setAllowDuplicate(boolean allowDuplicate) { this.allowDuplicate = allowDuplicate; }
     public List<ReceiptItemRequest> getItems() { return items; }

@@ -17,6 +17,8 @@ public class ReceiptResponse {
     private LocalDateTime createdAt;
     private List<ReceiptItemResponse> items;
     private List<SplitParticipantDto> splitParticipants;
+    private LocalDate returnDeadline;
+    private LocalDate warrantyExpiryDate;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -50,4 +52,10 @@ public class ReceiptResponse {
 
     public List<SplitParticipantDto> getSplitParticipants() { return splitParticipants; }
     public void setSplitParticipants(List<SplitParticipantDto> splitParticipants) { this.splitParticipants = splitParticipants; }
+
+    public LocalDate getReturnDeadline() { return returnDeadline; }
+    public void setReturnDeadline(LocalDate returnDeadline) { this.returnDeadline = returnDeadline; }
+
+    public LocalDate getWarrantyExpiryDate() { return warrantyExpiryDate; }
+    public void setWarrantyExpiryDate(LocalDate warrantyExpiryDate) { this.warrantyExpiryDate = warrantyExpiryDate; }
 }

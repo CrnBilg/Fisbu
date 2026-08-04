@@ -18,6 +18,7 @@ class ReceiptDetailScreen extends StatefulWidget {
 
 class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
   bool _isDeleting = false;
+  bool _isSavingReminders = false;
   final _currencyFormat = NumberFormat('#,##0.00', 'tr_TR');
   late Receipt _receipt;
 
@@ -25,6 +26,146 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
   void initState() {
     super.initState();
     _receipt = widget.receipt;
+  }
+
+  String _formatDate(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+  int? _daysUntil(String? isoDate) {
+    if (isoDate == null) return null;
+    try {
+      final date = DateTime.parse(isoDate);
+      final today = DateTime.now();
+      return DateTime(date.year, date.month, date.day)
+          .difference(DateTime(today.year, today.month, today.day))
+          .inDays;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _reminderLabel(String isoDate, int daysLeft) {
+    final formatted = DateFormatter.formatLong(isoDate);
+    if (daysLeft < 0) return '$formatted (süresi doldu)';
+    if (daysLeft == 0) return '$formatted (bugün)';
+    return '$formatted ($daysLeft gün kaldı)';
+  }
+
+  Future<void> _showRemindersSheet() async {
+    DateTime? returnDeadline =
+        _receipt.returnDeadline != null ? DateTime.tryParse(_receipt.returnDeadline!) : null;
+    DateTime? warrantyExpiryDate =
+        _receipt.warrantyExpiryDate != null ? DateTime.tryParse(_receipt.warrantyExpiryDate!) : null;
+
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.brd(ctx),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text('Garanti / İade Hatırlatıcısı',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.txt(ctx))),
+              const SizedBox(height: 16),
+              _buildDateField(
+                label: 'İade Son Tarihi',
+                value: returnDeadline,
+                onPick: () async {
+                  final picked = await showDatePicker(
+                    context: ctx,
+                    initialDate: returnDeadline ?? DateTime.now(),
+                    firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                    lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
+                  );
+                  if (picked != null) setSheetState(() => returnDeadline = picked);
+                },
+                onClear: () => setSheetState(() => returnDeadline = null),
+              ),
+              const SizedBox(height: 14),
+              _buildDateField(
+                label: 'Garanti Bitiş Tarihi',
+                value: warrantyExpiryDate,
+                onPick: () async {
+                  final picked = await showDatePicker(
+                    context: ctx,
+                    initialDate: warrantyExpiryDate ?? DateTime.now(),
+                    firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                    lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+                  );
+                  if (picked != null) setSheetState(() => warrantyExpiryDate = picked);
+                },
+                onClear: () => setSheetState(() => warrantyExpiryDate = null),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Kaydet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (result != true) return;
+
+    setState(() => _isSavingReminders = true);
+    try {
+      final updated = await ReceiptService.setReminders(
+        _receipt.id,
+        returnDeadline: returnDeadline != null ? _formatDate(returnDeadline!) : null,
+        warrantyExpiryDate: warrantyExpiryDate != null ? _formatDate(warrantyExpiryDate!) : null,
+      );
+      if (mounted) setState(() => _receipt = updated);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hatırlatıcı kaydedilemedi: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingReminders = false);
+    }
+  }
+
+  Widget _buildDateField({
+    required String label,
+    required DateTime? value,
+    required VoidCallback onPick,
+    required VoidCallback onClear,
+  }) {
+    return InkWell(
+      onTap: onPick,
+      borderRadius: BorderRadius.circular(12),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: const Icon(Icons.event_outlined),
+          suffixIcon: value != null
+              ? IconButton(icon: const Icon(Icons.clear, size: 18), onPressed: onClear)
+              : null,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: Text(value == null ? 'Seçilmedi' : _formatDate(value)),
+      ),
+    );
   }
 
   Future<void> _confirmDelete() async {
@@ -169,8 +310,22 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                     icon: Icons.store_outlined,
                     label: 'Mağaza',
                     value: receipt.storeName,
-                    isLast: true,
+                    isLast: receipt.returnDeadline == null && receipt.warrantyExpiryDate == null,
                   ),
+                  if (receipt.returnDeadline != null)
+                    _buildDetailRow(
+                      icon: Icons.assignment_return_outlined,
+                      label: 'İade Son Tarihi',
+                      value: _reminderLabel(receipt.returnDeadline!, _daysUntil(receipt.returnDeadline!) ?? 0),
+                      isLast: receipt.warrantyExpiryDate == null,
+                    ),
+                  if (receipt.warrantyExpiryDate != null)
+                    _buildDetailRow(
+                      icon: Icons.verified_user_outlined,
+                      label: 'Garanti Bitişi',
+                      value: _reminderLabel(receipt.warrantyExpiryDate!, _daysUntil(receipt.warrantyExpiryDate!) ?? 0),
+                      isLast: true,
+                    ),
                 ],
               ),
             ),
@@ -312,6 +467,43 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                 ),
               ),
             ],
+
+            // Garanti/iade hatırlatıcı butonu
+            GestureDetector(
+              onTap: _isSavingReminders ? null : _showRemindersSheet,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.surf(context),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.brd(context)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _isSavingReminders
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                          )
+                        : Icon(Icons.notifications_active_outlined, color: AppColors.txt(context), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      receipt.returnDeadline != null || receipt.warrantyExpiryDate != null
+                          ? 'Hatırlatıcıyı Düzenle'
+                          : 'Garanti/İade Hatırlatıcısı Ekle',
+                      style: TextStyle(
+                        color: AppColors.txt(context),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
             // Böl / Paylaştır butonu
             GestureDetector(

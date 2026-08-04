@@ -12,6 +12,8 @@ class Receipt {
   final String? createdAt;
   final List<ReceiptItem> items;
   final List<SplitParticipant>? splitParticipants;
+  final String? returnDeadline;
+  final String? warrantyExpiryDate;
 
   Receipt({
     required this.id,
@@ -24,6 +26,8 @@ class Receipt {
     this.createdAt,
     this.items = const [],
     this.splitParticipants,
+    this.returnDeadline,
+    this.warrantyExpiryDate,
   });
 
   factory Receipt.fromJson(Map<String, dynamic> json) {
@@ -43,6 +47,8 @@ class Receipt {
       splitParticipants: (json['splitParticipants'] as List<dynamic>?)
           ?.map((e) => SplitParticipant.fromJson(e as Map<String, dynamic>))
           .toList(),
+      returnDeadline: json['returnDeadline'] as String?,
+      warrantyExpiryDate: json['warrantyExpiryDate'] as String?,
     );
   }
 }

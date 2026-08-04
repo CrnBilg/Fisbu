@@ -105,6 +105,8 @@ class ReceiptService {
     XFile? image,
     List<ReceiptItem>? items,
     bool allowDuplicate = false,
+    String? returnDeadline,
+    String? warrantyExpiryDate,
   }) async {
     try {
       String? imageUrl;
@@ -117,6 +119,8 @@ class ReceiptService {
         receiptDate: receiptDate,
         categoryId: categoryId,
         imageUrl: imageUrl,
+        returnDeadline: returnDeadline,
+        warrantyExpiryDate: warrantyExpiryDate,
         items: items,
         allowDuplicate: allowDuplicate,
       );
@@ -158,6 +162,8 @@ class ReceiptService {
     String? imageUrl,
     List<ReceiptItem>? items,
     bool allowDuplicate = false,
+    String? returnDeadline,
+    String? warrantyExpiryDate,
   }) async {
     final token = await AuthService.getToken();
     final response = await http.post(
@@ -173,6 +179,8 @@ class ReceiptService {
         'categoryId': categoryId,
         'imageUrl': imageUrl,
         'allowDuplicate': allowDuplicate,
+        'returnDeadline': returnDeadline,
+        'warrantyExpiryDate': warrantyExpiryDate,
         if (items != null && items.isNotEmpty)
           'items': items.map((e) => e.toJson()).toList(),
       }),
@@ -206,6 +214,28 @@ class ReceiptService {
       return Receipt.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Bölüştürme kaydedilemedi: ${response.statusCode}');
+    }
+  }
+
+  /// Garanti/iade hatırlatıcı tarihlerini fiş eklendikten sonra kurar/günceller.
+  /// null gönderilen alan temizlenir (hatırlatma kaldırılır).
+  static Future<Receipt> setReminders(int receiptId, {String? returnDeadline, String? warrantyExpiryDate}) async {
+    final token = await AuthService.getToken();
+    final response = await http.put(
+      Uri.parse('$_baseUrl/receipts/$receiptId/reminders'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'returnDeadline': returnDeadline,
+        'warrantyExpiryDate': warrantyExpiryDate,
+      }),
+    );
+    if (response.statusCode == 200) {
+      return Receipt.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Hatırlatıcı kaydedilemedi: ${response.statusCode}');
     }
   }
 

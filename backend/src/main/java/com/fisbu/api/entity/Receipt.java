@@ -64,6 +64,19 @@ public class Receipt {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    // Garanti/iade hatırlatıcı — WarrantyReminderScheduler bu tarihler yaklaşınca push gönderir
+    @Column(name = "return_deadline")
+    private LocalDate returnDeadline;
+
+    @Column(name = "warranty_expiry_date")
+    private LocalDate warrantyExpiryDate;
+
+    @Column(name = "return_reminder_sent", nullable = false, columnDefinition = "boolean default false")
+    private Boolean returnReminderSent = false;
+
+    @Column(name = "warranty_reminder_sent", nullable = false, columnDefinition = "boolean default false")
+    private Boolean warrantyReminderSent = false;
+
     @OneToMany(mappedBy = "receipt", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReceiptItem> items = new ArrayList<>();
 }

@@ -33,6 +33,7 @@ import com.fisbu.api.dto.ReceiptItemResponse;
 import com.fisbu.api.dto.ReceiptRequest;
 import com.fisbu.api.dto.ReceiptResponse;
 import com.fisbu.api.dto.SaveSplitRequest;
+import com.fisbu.api.dto.SetReceiptRemindersRequest;
 import com.fisbu.api.dto.SplitParticipantDto;
 import com.fisbu.api.entity.Category;
 import com.fisbu.api.entity.Receipt;
@@ -157,6 +158,8 @@ public class ReceiptService {
         receipt.setReceiptDate(request.getReceiptDate());
         receipt.setImageUrl(request.getImageUrl());
         receipt.setRawOcrText(request.getRawOcrText());
+        receipt.setReturnDeadline(request.getReturnDeadline());
+        receipt.setWarrantyExpiryDate(request.getWarrantyExpiryDate());
 
         // Kategori opsiyonel — gönderilmişse set et
         if (request.getCategoryId() != null) {
@@ -232,6 +235,26 @@ public class ReceiptService {
         }
 
         return toResponse(receipt);
+    }
+
+    // Garanti/iade hatırlatıcı tarihlerini fiş eklendikten sonra da kurabilmek/güncelleyebilmek için
+    public ReceiptResponse setReminders(String email, Long receiptId, SetReceiptRemindersRequest request) {
+        User user = getUserByEmail(email);
+        Receipt receipt = receiptRepository.findById(receiptId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Fiş bulunamadı"));
+
+        if (!receipt.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bu fişe erişim yetkiniz yok");
+        }
+
+        receipt.setReturnDeadline(request.getReturnDeadline());
+        receipt.setWarrantyExpiryDate(request.getWarrantyExpiryDate());
+        // Tarih değişmiş/yeniden kurulmuş olabilir — hatırlatma tekrar tetiklenebilsin
+        receipt.setReturnReminderSent(false);
+        receipt.setWarrantyReminderSent(false);
+
+        return toResponse(receiptRepository.save(receipt));
     }
 
     // Fiş bölüştürme sonucunu kalıcı hale getirir (kimin ne kadar ödeyeceği)
@@ -324,6 +347,8 @@ public class ReceiptService {
         response.setImageUrl(receipt.getImageUrl());
         response.setRawOcrText(receipt.getRawOcrText());
         response.setCreatedAt(receipt.getCreatedAt());
+        response.setReturnDeadline(receipt.getReturnDeadline());
+        response.setWarrantyExpiryDate(receipt.getWarrantyExpiryDate());
 
         if (receipt.getCategory() != null) {
             response.setCategoryId(receipt.getCategory().getId());

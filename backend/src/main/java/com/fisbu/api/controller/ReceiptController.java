@@ -24,6 +24,7 @@ import com.fisbu.api.dto.PageResponse;
 import com.fisbu.api.dto.ReceiptRequest;
 import com.fisbu.api.dto.ReceiptResponse;
 import com.fisbu.api.dto.SaveSplitRequest;
+import com.fisbu.api.dto.SetReceiptRemindersRequest;
 import com.fisbu.api.service.ReceiptService;
 
 @RestController
@@ -84,6 +85,14 @@ public class ReceiptController {
                                       @PathVariable Long id,
                                       @RequestBody @Valid SaveSplitRequest request) {
         return receiptService.saveSplit(userDetails.getUsername(), id, request);
+    }
+
+    // Garanti/iade hatırlatıcı tarihlerini fiş eklendikten sonra kurar/günceller
+    @PutMapping("/{id}/reminders")
+    public ReceiptResponse setReminders(@AuthenticationPrincipal UserDetails userDetails,
+                                         @PathVariable Long id,
+                                         @RequestBody SetReceiptRemindersRequest request) {
+        return receiptService.setReminders(userDetails.getUsername(), id, request);
     }
 
     @GetMapping("/export")
