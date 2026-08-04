@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fisbu.api.dto.PageResponse;
 import com.fisbu.api.dto.ReceiptRequest;
 import com.fisbu.api.dto.ReceiptResponse;
 import com.fisbu.api.dto.SaveSplitRequest;
@@ -37,6 +38,17 @@ public class ReceiptController {
     @GetMapping
     public List<ReceiptResponse> getReceipts(@AuthenticationPrincipal UserDetails userDetails) {
         return receiptService.getReceipts(userDetails.getUsername());
+    }
+
+    // Fiş listesi ekranı: mağaza adına göre arama + kategori filtresi + sayfalama (infinite scroll)
+    @GetMapping("/search")
+    public PageResponse<ReceiptResponse> searchReceipts(@AuthenticationPrincipal UserDetails userDetails,
+                                                          @RequestParam(required = false) String query,
+                                                          @RequestParam(required = false) Long categoryId,
+                                                          @RequestParam(defaultValue = "false") boolean uncategorized,
+                                                          @RequestParam(defaultValue = "0") int page,
+                                                          @RequestParam(defaultValue = "20") int size) {
+        return receiptService.searchReceipts(userDetails.getUsername(), query, categoryId, uncategorized, page, size);
     }
 
     @PostMapping

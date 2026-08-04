@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/receipt.dart';
+import '../models/receipt_page.dart';
 import '../models/receipt_item.dart';
 import '../models/category.dart';
 import '../models/restore_receipt_result.dart';
@@ -58,6 +59,37 @@ class ReceiptService {
         }
       }
       rethrow;
+    }
+  }
+
+  /// Fiş listesi ekranı: mağaza adına göre arama + kategori filtresi + sayfalama.
+  /// [categoryId] ve [uncategorized] aynı anda kullanılmaz; uncategorized true ise
+  /// categoryId yok sayılır.
+  static Future<ReceiptPage> searchReceipts({
+    String? query,
+    int? categoryId,
+    bool uncategorized = false,
+    int page = 0,
+    int size = 20,
+  }) async {
+    final token = await AuthService.getToken();
+    final params = <String, String>{
+      'page': '$page',
+      'size': '$size',
+    };
+    if (query != null && query.trim().isNotEmpty) params['query'] = query.trim();
+    if (uncategorized) {
+      params['uncategorized'] = 'true';
+    } else if (categoryId != null) {
+      params['categoryId'] = '$categoryId';
+    }
+
+    final uri = Uri.parse('$_baseUrl/receipts/search').replace(queryParameters: params);
+    final response = await http.get(uri, headers: {'Authorization': 'Bearer $token'});
+    if (response.statusCode == 200) {
+      return ReceiptPage.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Fişler yüklenemedi: ${response.statusCode}');
     }
   }
 

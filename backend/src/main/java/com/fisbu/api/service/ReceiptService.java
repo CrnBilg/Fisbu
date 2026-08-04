@@ -6,6 +6,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -18,6 +23,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fisbu.api.dto.BulkImportError;
 import com.fisbu.api.dto.BulkReceiptImportResponse;
+import com.fisbu.api.dto.PageResponse;
 import com.fisbu.api.dto.ReceiptItemRequest;
 import com.fisbu.api.dto.ReceiptItemResponse;
 import com.fisbu.api.dto.ReceiptRequest;
@@ -30,6 +36,7 @@ import com.fisbu.api.entity.ReceiptItem;
 import com.fisbu.api.entity.User;
 import com.fisbu.api.repository.CategoryRepository;
 import com.fisbu.api.repository.ReceiptRepository;
+import com.fisbu.api.repository.ReceiptSpecifications;
 import com.fisbu.api.repository.UserRepository;
 
 @Service
@@ -63,6 +70,29 @@ public class ReceiptService {
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    // Fiş listesini mağaza adına/kategoriye göre filtreleyip sayfalı döner (fiş listesi ekranı)
+    public PageResponse<ReceiptResponse> searchReceipts(String email, String query, Long categoryId,
+                                                          boolean uncategorized, int page, int size) {
+        User user = getUserByEmail(email);
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        Pageable pageable = PageRequest.of(safePage, safeSize,
+                Sort.by(Sort.Direction.DESC, "receiptDate").and(Sort.by(Sort.Direction.DESC, "id")));
+
+        Specification<Receipt> spec = ReceiptSpecifications.hasUser(user);
+        if (query != null && !query.isBlank()) {
+            spec = spec.and(ReceiptSpecifications.storeNameContains(query.trim()));
+        }
+        if (uncategorized) {
+            spec = spec.and(ReceiptSpecifications.isUncategorized());
+        } else if (categoryId != null) {
+            spec = spec.and(ReceiptSpecifications.hasCategoryId(categoryId));
+        }
+
+        Page<Receipt> result = receiptRepository.findAll(spec, pageable);
+        return PageResponse.from(result, this::toResponse);
     }
 
     // Yeni fiş ekler

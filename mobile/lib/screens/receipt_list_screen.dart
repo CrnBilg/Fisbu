@@ -1,13 +1,17 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'add_receipt_screen.dart';
 import 'receipt_detail_screen.dart';
 import '../models/receipt.dart';
+import '../models/category.dart' as model;
 import '../services/receipt_service.dart';
 import 'package:intl/intl.dart';
 import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
 import '../core/theme/app_colors.dart';
 import '../core/widgets/offline_banner.dart';
+
+const String _uncategorizedLabel = 'Kategorisiz';
 
 class ReceiptListScreen extends StatefulWidget {
   const ReceiptListScreen({super.key});
@@ -17,54 +21,110 @@ class ReceiptListScreen extends StatefulWidget {
 }
 
 class _ReceiptListScreenState extends State<ReceiptListScreen> {
+  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
+
   List<Receipt> _receipts = [];
+  List<model.Category> _categories = [];
+  int _page = 0;
+  bool _hasNext = false;
   bool _isLoading = true;
+  bool _isLoadingMore = false;
   String _searchQuery = '';
-  String? _selectedCategory;
-  List<String> _categories = [];
+  String? _selectedCategoryLabel;
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _loadReceipts();
+    _scrollController.addListener(_onScroll);
+    _loadCategories();
+    _loadReceipts(reset: true);
   }
 
-  Future<void> _loadReceipts() async {
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_hasNext || _isLoadingMore || _isLoading) return;
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 300) {
+      _loadReceipts();
+    }
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final categories = await ReceiptService.getCategories();
+      if (mounted) setState(() => _categories = categories);
+    } catch (_) {
+      // Filtre çipleri için ikincil veri — sessizce yok say
+    }
+  }
+
+  int? get _selectedCategoryId {
+    if (_selectedCategoryLabel == null || _selectedCategoryLabel == _uncategorizedLabel) {
+      return null;
+    }
+    return _categories
+        .firstWhere((c) => c.name == _selectedCategoryLabel,
+            orElse: () => model.Category(id: -1, name: ''))
+        .id;
+  }
+
+  bool get _selectedUncategorized => _selectedCategoryLabel == _uncategorizedLabel;
+
+  Future<void> _loadReceipts({bool reset = false}) async {
+    final nextPage = reset ? 0 : _page + 1;
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      if (reset) {
+        _isLoading = true;
+        _errorMessage = null;
+      } else {
+        _isLoadingMore = true;
+      }
     });
 
     try {
-      final receipts = await ReceiptService.getReceipts();
-      receipts.sort((a, b) => (b.createdAt ?? '').compareTo(a.createdAt ?? ''));
-      final categories = receipts
-          .map((r) => r.categoryName ?? 'Kategorisiz')
-          .toSet()
-          .toList()
-        ..sort();
+      final result = await ReceiptService.searchReceipts(
+        query: _searchQuery,
+        categoryId: _selectedCategoryId,
+        uncategorized: _selectedUncategorized,
+        page: nextPage,
+      );
       setState(() {
-        _receipts = receipts;
-        _categories = categories;
+        _receipts = reset ? result.content : [..._receipts, ...result.content];
+        _page = result.page;
+        _hasNext = result.hasNext;
         _isLoading = false;
+        _isLoadingMore = false;
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Fişler yüklenemedi: $e';
         _isLoading = false;
+        _isLoadingMore = false;
+        if (reset) _errorMessage = 'Fişler yüklenemedi: $e';
       });
     }
   }
 
-  List<Receipt> get _filteredReceipts {
-    return _receipts.where((r) {
-      final matchesSearch = _searchQuery.isEmpty ||
-          r.storeName.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesCategory = _selectedCategory == null ||
-          (r.categoryName ?? 'Kategorisiz') == _selectedCategory;
-      return matchesSearch && matchesCategory;
-    }).toList();
+  void _onSearchChanged(String value) {
+    setState(() => _searchQuery = value);
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      _loadReceipts(reset: true);
+    });
+  }
+
+  void _onCategorySelected(String? label) {
+    setState(() => _selectedCategoryLabel = label);
+    _loadReceipts(reset: true);
   }
 
   Future<void> _goToAddReceipt() async {
@@ -72,7 +132,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
       context,
       MaterialPageRoute(builder: (context) => const AddReceiptScreen()),
     );
-    if (result == true) _loadReceipts();
+    if (result == true) _loadReceipts(reset: true);
   }
 
   Future<void> _goToDetail(Receipt receipt) async {
@@ -82,16 +142,16 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
         builder: (context) => ReceiptDetailScreen(receipt: receipt),
       ),
     );
-    if (result == true) _loadReceipts();
+    if (result == true) _loadReceipts(reset: true);
   }
 
   Widget _buildFilterChip(String label, String? value) {
-    final isSelected = _selectedCategory == value;
+    final isSelected = _selectedCategoryLabel == value;
     final color = value != null
         ? CategoryHelper.getColor(value)
         : AppColors.primary;
     return GestureDetector(
-      onTap: () => setState(() => _selectedCategory = value),
+      onTap: () => _onCategorySelected(value),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(right: 8),
@@ -128,15 +188,18 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
             child: Column(
               children: [
                 TextField(
-                  onChanged: (value) => setState(() => _searchQuery = value),
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
                   decoration: InputDecoration(
                     hintText: 'Mağaza ara...',
                     prefixIcon: const Icon(Icons.search, size: 20),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.clear, size: 18),
-                            onPressed: () =>
-                                setState(() => _searchQuery = ''),
+                            onPressed: () {
+                              _searchController.clear();
+                              _onSearchChanged('');
+                            },
                           )
                         : null,
                     filled: true,
@@ -156,7 +219,8 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
                     scrollDirection: Axis.horizontal,
                     children: [
                       _buildFilterChip('Tümü', null),
-                      ..._categories.map((c) => _buildFilterChip(c, c)),
+                      ..._categories.map((c) => _buildFilterChip(c.name, c.name)),
+                      _buildFilterChip(_uncategorizedLabel, _uncategorizedLabel),
                     ],
                   ),
                 ),
@@ -207,7 +271,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _loadReceipts,
+              onPressed: () => _loadReceipts(reset: true),
               child: Text('Tekrar Dene'),
             ),
           ],
@@ -244,13 +308,27 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: _loadReceipts,
+      onRefresh: () => _loadReceipts(reset: true),
       color: AppColors.primary,
       child: ListView.builder(
+        controller: _scrollController,
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-        itemCount: _filteredReceipts.length,
+        itemCount: _receipts.length + (_hasNext ? 1 : 0),
         itemBuilder: (context, index) {
-          final receipt = _filteredReceipts[index];
+          if (index >= _receipts.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: AppColors.primary),
+                ),
+              ),
+            );
+          }
+          final receipt = _receipts[index];
           return Dismissible(
             key: Key('receipt_${receipt.id}'),
             direction: DismissDirection.endToStart,
