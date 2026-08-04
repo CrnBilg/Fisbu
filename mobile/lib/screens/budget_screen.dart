@@ -175,9 +175,12 @@ class _BudgetScreenState extends State<BudgetScreen> {
       ),
     );
 
+    final limitText = limitController.text.trim();
+    limitController.dispose();
+
     if (result != true) return;
 
-    final limit = double.tryParse(limitController.text.trim().replaceAll(',', '.'));
+    final limit = double.tryParse(limitText.replaceAll(',', '.'));
     if (limit == null || limit <= 0) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

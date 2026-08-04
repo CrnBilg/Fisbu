@@ -21,14 +21,43 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   }
 
   Future<void> _loadPrefs() async {
-    final warning = await NotificationPrefsService.isBudgetWarningEnabled();
-    final overspend = await NotificationPrefsService.isBudgetOverspendEnabled();
+    final result = await NotificationPrefsService.fetchPrefs();
     if (!mounted) return;
     setState(() {
-      _budgetWarningEnabled = warning;
-      _budgetOverspendEnabled = overspend;
+      _budgetWarningEnabled = result.warning;
+      _budgetOverspendEnabled = result.overspend;
       _isLoading = false;
     });
+  }
+
+  Future<void> _handleToggle(bool value, {required bool isWarning}) async {
+    final previous = isWarning ? _budgetWarningEnabled : _budgetOverspendEnabled;
+    setState(() {
+      if (isWarning) {
+        _budgetWarningEnabled = value;
+      } else {
+        _budgetOverspendEnabled = value;
+      }
+    });
+    try {
+      if (isWarning) {
+        await NotificationPrefsService.setBudgetWarningEnabled(value);
+      } else {
+        await NotificationPrefsService.setBudgetOverspendEnabled(value);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        if (isWarning) {
+          _budgetWarningEnabled = previous;
+        } else {
+          _budgetOverspendEnabled = previous;
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tercih kaydedilemedi, tekrar dene')),
+      );
+    }
   }
 
   @override
@@ -65,10 +94,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                           label: 'Bütçe %80 Uyarısı',
                           value: _budgetWarningEnabled,
                           isFirst: true,
-                          onChanged: (value) async {
-                            await NotificationPrefsService.setBudgetWarningEnabled(value);
-                            setState(() => _budgetWarningEnabled = value);
-                          },
+                          onChanged: (value) => _handleToggle(value, isWarning: true),
                         ),
                         _buildToggleRow(
                           icon: Icons.error_outline,
@@ -76,10 +102,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                           label: 'Bütçe Aşım Uyarısı',
                           value: _budgetOverspendEnabled,
                           isLast: true,
-                          onChanged: (value) async {
-                            await NotificationPrefsService.setBudgetOverspendEnabled(value);
-                            setState(() => _budgetOverspendEnabled = value);
-                          },
+                          onChanged: (value) => _handleToggle(value, isWarning: false),
                         ),
                       ],
                     ),

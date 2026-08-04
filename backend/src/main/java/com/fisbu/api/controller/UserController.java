@@ -5,12 +5,15 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fisbu.api.dto.FcmTokenRequest;
+import com.fisbu.api.dto.NotificationPrefsRequest;
+import com.fisbu.api.dto.NotificationPrefsResponse;
 import com.fisbu.api.dto.UserDataExportResponse;
 import com.fisbu.api.service.UserService;
 
@@ -38,5 +41,16 @@ public class UserController {
     @GetMapping("/me/export")
     public UserDataExportResponse exportMyData(@AuthenticationPrincipal UserDetails userDetails) {
         return userService.exportMyData(userDetails.getUsername());
+    }
+
+    @GetMapping("/notification-prefs")
+    public NotificationPrefsResponse getNotificationPrefs(@AuthenticationPrincipal UserDetails userDetails) {
+        return userService.getNotificationPrefs(userDetails.getUsername());
+    }
+
+    @PutMapping("/notification-prefs")
+    public NotificationPrefsResponse updateNotificationPrefs(@AuthenticationPrincipal UserDetails userDetails,
+                                                               @RequestBody @Valid NotificationPrefsRequest request) {
+        return userService.updateNotificationPrefs(userDetails.getUsername(), request);
     }
 }

@@ -134,16 +134,20 @@ public class BudgetService {
 
         if (pct >= 100.0) {
             if (!Boolean.TRUE.equals(budget.getOverspendNotified())) {
-                pushService.send(fcmToken, "Bütçe Aşıldı",
-                        category.getName() + " bütçeni aştın! (şu an %" + pctRounded + " kullanıldı)");
+                if (Boolean.TRUE.equals(user.getNotifyBudgetOverspend())) {
+                    pushService.send(fcmToken, "Bütçe Aşıldı",
+                            category.getName() + " bütçeni aştın! (şu an %" + pctRounded + " kullanıldı)");
+                }
                 budget.setOverspendNotified(true);
                 budget.setWarningNotified(true);
                 changed = true;
             }
         } else if (pct >= 80.0) {
             if (!Boolean.TRUE.equals(budget.getWarningNotified())) {
-                pushService.send(fcmToken, "Bütçe Uyarısı",
-                        category.getName() + " bütçenin %80'ine ulaştın (şu an %" + pctRounded + ")");
+                if (Boolean.TRUE.equals(user.getNotifyBudgetWarning())) {
+                    pushService.send(fcmToken, "Bütçe Uyarısı",
+                            category.getName() + " bütçenin %80'ine ulaştın (şu an %" + pctRounded + ")");
+                }
                 budget.setWarningNotified(true);
                 changed = true;
             }

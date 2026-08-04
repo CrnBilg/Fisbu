@@ -140,6 +140,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     if (result == true && nameController.text.trim().isNotEmpty) {
       _createCategory(nameController.text.trim(), selectedColor);
     }
+    nameController.dispose();
   }
 
   Future<void> _createCategory(String name, Color color) async {
@@ -270,6 +271,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         }
       }
     }
+    nameController.dispose();
   }
 
 

@@ -69,4 +69,12 @@ public class User {
     // eski token'lar JwtAuthFilter tarafından reddedilir (oturum iptali/revocation)
     @Column(name = "token_version", nullable = false, columnDefinition = "integer default 0")
     private Integer tokenVersion = 0;
+
+    // Bütçe push bildirim tercihleri — BudgetService.checkBudgetAndNotify bunlara bakarak
+    // kapatılmış bildirim türünü göndermez (bkz. NotificationSettingsScreen)
+    @Column(name = "notify_budget_warning", nullable = false, columnDefinition = "boolean default true")
+    private Boolean notifyBudgetWarning = true;
+
+    @Column(name = "notify_budget_overspend", nullable = false, columnDefinition = "boolean default true")
+    private Boolean notifyBudgetOverspend = true;
 }

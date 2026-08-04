@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +43,8 @@ import com.fisbu.api.repository.UserRepository;
 
 @Service
 public class ReceiptService {
+
+    private static final Logger log = LoggerFactory.getLogger(ReceiptService.class);
 
     private final ReceiptRepository receiptRepository;
     private final UserRepository userRepository;
@@ -310,6 +314,7 @@ public class ReceiptService {
                 response.setSplitParticipants(objectMapper.readValue(
                         receipt.getSplitDetailsJson(), new TypeReference<List<SplitParticipantDto>>() {}));
             } catch (Exception e) {
+                log.error("Fiş #{} için splitDetailsJson ayrıştırılamadı: {}", receipt.getId(), e.getMessage());
                 response.setSplitParticipants(null);
             }
         }

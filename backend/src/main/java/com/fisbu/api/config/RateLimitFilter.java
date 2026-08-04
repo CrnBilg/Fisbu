@@ -93,9 +93,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private String clientIp(HttpServletRequest request) {
+        // Railway tek reverse-proxy hop'u olarak konumlandığından zincirdeki SON değer
+        // Railway'in eklediği gerçek istemci IP'sidir — İLK değer istemci tarafından
+        // serbestçe ayarlanabildiği için güvenilmez (rate limit atlatma riski)
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
+            String[] parts = forwarded.split(",");
+            return parts[parts.length - 1].trim();
         }
         return request.getRemoteAddr();
     }
