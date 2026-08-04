@@ -7,6 +7,8 @@ import 'package:share_plus/share_plus.dart';
 import '../services/receipt_service.dart';
 import '../services/auth_service.dart';
 import '../services/biometric_service.dart';
+import '../services/pin_service.dart';
+import 'pin_entry_screen.dart';
 import 'auth_wrapper.dart';
 import 'categories_screen.dart';
 import 'household_screen.dart';
@@ -38,6 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isExportingData = false;
   bool _biometricSupported = false;
   bool _biometricEnabled = false;
+  bool _pinSet = false;
 
   @override
   void initState() {
@@ -49,11 +52,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadBiometricState() async {
     final supported = await BiometricService.isDeviceSupported();
     final enabled = await BiometricService.isEnabled();
+    final pinSet = await PinService.isPinSet();
     if (!mounted) return;
     setState(() {
       _biometricSupported = supported;
       _biometricEnabled = enabled;
+      _pinSet = pinSet;
     });
+  }
+
+  Future<void> _managePin() async {
+    if (!_pinSet) {
+      final result = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(builder: (context) => const PinEntryScreen(mode: PinEntryMode.set)),
+      );
+      if (result == true && mounted) setState(() => _pinSet = true);
+      return;
+    }
+
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('PIN\'i Değiştir'),
+              onTap: () => Navigator.pop(ctx, 'change'),
+            ),
+            ListTile(
+              leading: Icon(Icons.delete_outline, color: AppColors.error),
+              title: Text('PIN\'i Kaldır', style: TextStyle(color: AppColors.error)),
+              onTap: () => Navigator.pop(ctx, 'remove'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (action == 'change') {
+      final result = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(builder: (context) => const PinEntryScreen(mode: PinEntryMode.set)),
+      );
+      if (result == true && mounted) setState(() => _pinSet = true);
+    } else if (action == 'remove') {
+      await PinService.clearPin();
+      if (mounted) setState(() => _pinSet = false);
+    }
   }
 
   Future<void> _toggleBiometric(bool value) async {
@@ -717,6 +768,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               value: _biometricEnabled,
                               onChanged: _toggleBiometric,
                             ),
+                          ),
+                        if (_biometricSupported && _biometricEnabled)
+                          _buildMenuItem(
+                            icon: Icons.pin_outlined,
+                            label: _pinSet ? 'Yedek PIN Kodu (Belirlendi)' : 'Yedek PIN Kodu Belirle',
+                            onTap: _managePin,
                           ),
                         _buildMenuItemWithTrailing(
                           icon: Icons.dark_mode_outlined,

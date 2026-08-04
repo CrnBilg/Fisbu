@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/biometric_service.dart';
+import '../services/pin_service.dart';
 import '../services/push_notification_service.dart';
 import '../core/theme/app_colors.dart';
 import 'dashboard_screen.dart';
 import 'login_screen.dart';
+import 'pin_entry_screen.dart';
 
 enum _GateStatus { checking, passed, failed }
 
@@ -18,6 +20,7 @@ class AuthWrapper extends StatefulWidget {
 class _AuthWrapperState extends State<AuthWrapper> {
   bool? _isLoggedIn;
   _GateStatus _gateStatus = _GateStatus.checking;
+  bool _pinAvailable = false;
 
   @override
   void initState() {
@@ -46,9 +49,23 @@ class _AuthWrapperState extends State<AuthWrapper> {
     }
     final success = await BiometricService.authenticate();
     if (!mounted) return;
+    if (!success) {
+      _pinAvailable = await PinService.isPinSet();
+      if (!mounted) return;
+    }
     setState(
       () => _gateStatus = success ? _GateStatus.passed : _GateStatus.failed,
     );
+  }
+
+  Future<void> _unlockWithPin() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (context) => const PinEntryScreen(mode: PinEntryMode.verify)),
+    );
+    if (result == true && mounted) {
+      setState(() => _gateStatus = _GateStatus.passed);
+    }
   }
 
   @override
@@ -104,6 +121,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
                 ),
                 child: const Text('Tekrar Dene'),
               ),
+              if (_pinAvailable) ...[
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: _unlockWithPin,
+                  child: const Text('PIN ile Aç'),
+                ),
+              ],
             ],
           ),
         ),
