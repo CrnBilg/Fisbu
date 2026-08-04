@@ -116,6 +116,22 @@ class AuthService {
     return null;
   }
 
+  /// KVKK "verilerimi indir" — profil/kategori/bütçe/fiş verilerinin tamamını
+  /// biçimlendirilmiş JSON metni olarak döner (dosyaya yazıp paylaşmak için).
+  static Future<String> downloadMyData() async {
+    final token = await getToken();
+    final response = await http.get(
+      Uri.parse('$_baseUrl/users/me/export'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      return const JsonEncoder.withIndent('  ').convert(decoded);
+    } else {
+      throw Exception('Verileriniz indirilemedi: ${response.statusCode}');
+    }
+  }
+
   static Future<bool> updateProfile({String? name, String? profileImageUrl}) async {
     final token = await getToken();
     if (token == null) return false;

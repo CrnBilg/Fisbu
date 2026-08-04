@@ -60,6 +60,15 @@ public class BudgetService {
                 .collect(Collectors.toList());
     }
 
+    // KVKK veri indirme (data export) için — ay filtresi olmadan kullanıcının tüm bütçe geçmişi
+    public List<BudgetResponse> getAllBudgets(String email) {
+        User user = getUserByEmail(email);
+        return budgetRepository.findByUser(user)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
     public BudgetResponse createBudget(String email, BudgetRequest request) {
         User user = getUserByEmail(email);
         Category category = getOwnedCategory(user, request.getCategoryId());

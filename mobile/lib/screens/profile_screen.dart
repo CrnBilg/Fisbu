@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../services/receipt_service.dart';
 import '../services/auth_service.dart';
 import '../services/biometric_service.dart';
@@ -32,6 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _confirmPasswordVisible = false;
   bool _isChangingPassword = false;
   bool _isDeletingAccount = false;
+  bool _isExportingData = false;
   bool _biometricSupported = false;
   bool _biometricEnabled = false;
 
@@ -529,6 +532,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _handleDownloadData() async {
+    if (_isExportingData) return;
+    setState(() => _isExportingData = true);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Verileriniz hazırlanıyor...'), duration: Duration(seconds: 2)),
+    );
+    try {
+      final json = await AuthService.downloadMyData();
+      final dir = await getTemporaryDirectory();
+      final filename =
+          'fisbu_verilerim_${DateTime.now().millisecondsSinceEpoch}.json';
+      final file = File('${dir.path}/$filename');
+      await file.writeAsString(json);
+
+      if (!mounted) return;
+      await SharePlus.instance.share(
+        ShareParams(files: [XFile(file.path)], text: 'FişBu - Verilerim (KVKK)'),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Verileriniz indirilemedi: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExportingData = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -683,6 +715,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               setState(() {});
                             },
                           ),
+                        ),
+                        _buildMenuItem(
+                          icon: Icons.download_outlined,
+                          label: 'Verilerimi İndir (KVKK)',
+                          onTap: _handleDownloadData,
                         ),
                         _buildMenuItem(
                           icon: Icons.info_outline,
