@@ -1,6 +1,7 @@
 import 'dart:io';
 import '../services/ocr_parser.dart';
 import '../services/receipt_service.dart';
+import '../services/image_quality_service.dart';
 import '../models/restore_receipt_result.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -36,6 +37,37 @@ class _OcrScreenState extends State<OcrScreen> {
     final picker = ImagePicker();
     final image = await picker.pickImage(source: source, imageQuality: 90);
     if (image == null) return;
+
+    if (!kIsWeb) {
+      final blurry = await ImageQualityService.isBlurry(image.path);
+      if (blurry && mounted) {
+        final retake = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text('Fotoğraf Bulanık Görünüyor'),
+            content: const Text(
+              'Bu fotoğrafla OCR doğruluğu düşük olabilir. Daha net bir fotoğraf denemek ister misin?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Yine de Kullan'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+                child: Text(source == ImageSource.camera ? 'Tekrar Çek' : 'Farklı Seç'),
+              ),
+            ],
+          ),
+        );
+        if (retake == true) {
+          _pickAndRecognize(source);
+          return;
+        }
+      }
+    }
 
     setState(() {
       _selectedImage = image;

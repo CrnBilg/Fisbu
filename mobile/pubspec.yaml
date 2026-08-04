@@ -54,6 +54,7 @@ dependencies:
   connectivity_plus: ^6.1.0
   crypto: ^3.0.3
   table_calendar: ^3.1.2
+  image: ^4.5.4
 dev_dependencies:
   flutter_test:
     sdk: flutter
