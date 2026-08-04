@@ -11,6 +11,7 @@ import java.util.List;
 
 import com.fisbu.api.dto.MonthlyStatisticsResponse;
 import com.fisbu.api.dto.StoreStatResponse;
+import com.fisbu.api.dto.SubscriptionCandidateResponse;
 import com.fisbu.api.dto.TopProductResponse;
 import com.fisbu.api.service.StatisticsService;
 
@@ -40,5 +41,10 @@ public class StatisticsController {
     public List<TopProductResponse> getTopProducts(@AuthenticationPrincipal UserDetails userDetails,
                                                      @RequestParam(required = false) Integer limit) {
         return statisticsService.getTopProducts(userDetails.getUsername(), limit);
+    }
+
+    @GetMapping("/subscriptions")
+    public List<SubscriptionCandidateResponse> getPotentialSubscriptions(@AuthenticationPrincipal UserDetails userDetails) {
+        return statisticsService.getPotentialSubscriptions(userDetails.getUsername());
     }
 }

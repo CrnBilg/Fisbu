@@ -14,6 +14,7 @@ import '../models/personal_inflation_summary.dart';
 import '../models/product_price_history.dart';
 import '../models/store_stat.dart';
 import '../models/top_product.dart';
+import '../models/subscription_candidate.dart';
 import '../models/imported_transaction.dart';
 import '../models/parsed_statement_result.dart';
 import '../models/bulk_import_result.dart';
@@ -391,6 +392,20 @@ class ReceiptService {
       return data.map((json) => TopProduct.fromJson(json)).toList();
     } else {
       throw Exception('En çok alınan ürünler alınamadı: ${response.statusCode}');
+    }
+  }
+
+  static Future<List<SubscriptionCandidate>> getPotentialSubscriptions() async {
+    final token = await AuthService.getToken();
+    final response = await http.get(
+      Uri.parse('$_baseUrl/statistics/subscriptions'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => SubscriptionCandidate.fromJson(json)).toList();
+    } else {
+      throw Exception('Olası abonelikler alınamadı: ${response.statusCode}');
     }
   }
 

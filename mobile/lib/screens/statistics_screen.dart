@@ -6,6 +6,7 @@ import '../models/spending_analysis_result.dart';
 import '../models/personal_inflation_summary.dart';
 import '../models/store_stat.dart';
 import '../models/top_product.dart';
+import '../models/subscription_candidate.dart';
 import '../core/widgets/offline_banner.dart';
 
 class StatisticsScreen extends StatefulWidget {
@@ -44,6 +45,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   List<TopProduct> _topProducts = [];
   String? _topProductsError;
 
+  // Olası abonelikler
+  bool _isLoadingSubscriptions = true;
+  List<SubscriptionCandidate> _subscriptions = [];
+  String? _subscriptionsError;
+
   @override
   void initState() {
     super.initState();
@@ -53,6 +59,22 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     _loadInflationSummary();
     _loadStoreStats();
     _loadTopProducts();
+    _loadSubscriptions();
+  }
+
+  Future<void> _loadSubscriptions() async {
+    setState(() {
+      _isLoadingSubscriptions = true;
+      _subscriptionsError = null;
+    });
+    try {
+      final subscriptions = await ReceiptService.getPotentialSubscriptions();
+      setState(() => _subscriptions = subscriptions);
+    } catch (e) {
+      setState(() => _subscriptionsError = 'Olası abonelikler alınamadı: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingSubscriptions = false);
+    }
   }
 
   Future<void> _loadStoreStats() async {
@@ -404,7 +426,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: () => Future.wait([_loadReceipts(), _loadStoreStats(), _loadTopProducts()]),
+      onRefresh: () => Future.wait(
+          [_loadReceipts(), _loadStoreStats(), _loadTopProducts(), _loadSubscriptions()]),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(20),
@@ -729,9 +752,110 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             ),
             const SizedBox(height: 12),
             _buildTopProductsSection(isDark, surfaceColor, titleColor),
+            const SizedBox(height: 24),
+            Text(
+              'Olası Abonelikler',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: titleColor,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildSubscriptionsSection(isDark, surfaceColor, titleColor),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSubscriptionsSection(bool isDark, Color surfaceColor, Color titleColor) {
+    if (_isLoadingSubscriptions) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+        ),
+      );
+    }
+    if (_subscriptionsError != null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+        ),
+        child: Text(_subscriptionsError!, style: const TextStyle(color: Color(0xFF9E9EBF))),
+      );
+    }
+    if (_subscriptions.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+        ),
+        child: const Center(
+          child: Text(
+            'Henüz tekrarlayan bir ödeme tespit edilmedi.\nAynı mağazadan aylık düzenli alışveriş yaptıkça burası dolacak.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Color(0xFF9E9EBF)),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: _subscriptions.map((sub) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCC5DE8).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.autorenew, color: Color(0xFFCC5DE8), size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      sub.storeName,
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: titleColor),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${sub.occurrenceCount} kez · ~${sub.averageIntervalDays} günde bir · tahmini sıradaki: ${sub.estimatedNextDate}',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF9E9EBF)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${sub.averageAmount.toStringAsFixed(2)} TL',
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFFCC5DE8)),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 
