@@ -11,9 +11,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fisbu.api.dto.ChatRequest;
+import com.fisbu.api.dto.ChatResponse;
 import com.fisbu.api.dto.RestoreReceiptRequest;
 import com.fisbu.api.dto.RestoreReceiptResponse;
 import com.fisbu.api.dto.SpendingAnalysisResponse;
+import com.fisbu.api.service.FinancialChatService;
 import com.fisbu.api.service.ReceiptAiService;
 
 @RestController
@@ -21,9 +24,11 @@ import com.fisbu.api.service.ReceiptAiService;
 public class AiController {
 
     private final ReceiptAiService receiptAiService;
+    private final FinancialChatService financialChatService;
 
-    public AiController(ReceiptAiService receiptAiService) {
+    public AiController(ReceiptAiService receiptAiService, FinancialChatService financialChatService) {
         this.receiptAiService = receiptAiService;
+        this.financialChatService = financialChatService;
     }
 
     @PostMapping("/restore-receipt")
@@ -37,5 +42,12 @@ public class AiController {
                                                        @RequestParam(required = false) Integer year,
                                                        @RequestParam(required = false) Integer month) {
         return receiptAiService.getSpendingAnalysis(userDetails.getUsername(), year, month);
+    }
+
+    // Serbest metinli finansal asistan — "bu ay ne kadar tasarruf edebilirim" tarzı sorular
+    @PostMapping("/chat")
+    public ChatResponse chat(@AuthenticationPrincipal UserDetails userDetails,
+                              @RequestBody @Valid ChatRequest request) {
+        return financialChatService.sendMessage(userDetails.getUsername(), request);
     }
 }

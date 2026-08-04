@@ -15,6 +15,7 @@ import 'household_screen.dart';
 import 'savings_goals_screen.dart';
 import 'spending_calendar_screen.dart';
 import 'spending_personality_screen.dart';
+import 'financial_chat_screen.dart';
 import 'notification_settings_screen.dart';
 import '../core/theme/app_colors.dart';
 import '../main.dart';
@@ -754,6 +755,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const SpendingCalendarScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildMenuItem(
+                          icon: Icons.chat_bubble_outline,
+                          label: 'Finansal Asistan',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const FinancialChatScreen(),
                               ),
                             );
                           },

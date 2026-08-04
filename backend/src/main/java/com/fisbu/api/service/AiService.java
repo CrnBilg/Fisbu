@@ -54,6 +54,11 @@ public class AiService {
         return chat(List.of(Map.of("role", "user", "content", prompt)), model, true);
     }
 
+    /** Sistem promptu + çok turlu konuşma geçmişiyle sohbet (finansal asistan gibi akışlar için). */
+    public String chatConversation(List<Map<String, Object>> messages) {
+        return chat(messages, model, false);
+    }
+
     private String chat(List<Map<String, Object>> messages, String modelName, boolean jsonMode) {
         if (!isConfigured()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
