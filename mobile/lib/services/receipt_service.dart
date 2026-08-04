@@ -15,6 +15,7 @@ import '../models/product_price_history.dart';
 import '../models/store_stat.dart';
 import '../models/top_product.dart';
 import '../models/subscription_candidate.dart';
+import '../models/spending_personality.dart';
 import '../models/imported_transaction.dart';
 import '../models/parsed_statement_result.dart';
 import '../models/bulk_import_result.dart';
@@ -450,6 +451,19 @@ class ReceiptService {
       return data.map((json) => SubscriptionCandidate.fromJson(json)).toList();
     } else {
       throw Exception('Olası abonelikler alınamadı: ${response.statusCode}');
+    }
+  }
+
+  static Future<SpendingPersonality> getSpendingPersonality() async {
+    final token = await AuthService.getToken();
+    final response = await http.get(
+      Uri.parse('$_baseUrl/statistics/spending-personality'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      return SpendingPersonality.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Harcama kişiliği alınamadı: ${response.statusCode}');
     }
   }
 

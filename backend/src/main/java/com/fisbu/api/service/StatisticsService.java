@@ -16,17 +16,22 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fisbu.api.dto.BadgeResponse;
 import com.fisbu.api.dto.CategoryTotalResponse;
 import com.fisbu.api.dto.MonthlyStatisticsResponse;
+import com.fisbu.api.dto.SpendingPersonaResponse;
+import com.fisbu.api.dto.SpendingPersonalityResponse;
 import com.fisbu.api.dto.StoreStatResponse;
 import com.fisbu.api.dto.SubscriptionCandidateResponse;
 import com.fisbu.api.dto.TopProductResponse;
 import com.fisbu.api.entity.Category;
 import com.fisbu.api.entity.Receipt;
 import com.fisbu.api.entity.ReceiptItem;
+import com.fisbu.api.entity.SavingsGoal;
 import com.fisbu.api.entity.User;
 import com.fisbu.api.repository.ReceiptItemRepository;
 import com.fisbu.api.repository.ReceiptRepository;
+import com.fisbu.api.repository.SavingsGoalRepository;
 import com.fisbu.api.repository.UserRepository;
 
 @Service
@@ -44,13 +49,16 @@ public class StatisticsService {
     private final ReceiptRepository receiptRepository;
     private final ReceiptItemRepository receiptItemRepository;
     private final UserRepository userRepository;
+    private final SavingsGoalRepository savingsGoalRepository;
 
     public StatisticsService(ReceiptRepository receiptRepository,
                               ReceiptItemRepository receiptItemRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository,
+                              SavingsGoalRepository savingsGoalRepository) {
         this.receiptRepository = receiptRepository;
         this.receiptItemRepository = receiptItemRepository;
         this.userRepository = userRepository;
+        this.savingsGoalRepository = savingsGoalRepository;
     }
 
     public MonthlyStatisticsResponse getMonthlyStatistics(String email, Integer year, Integer month) {
@@ -234,6 +242,118 @@ public class StatisticsService {
 
         candidates.sort(Comparator.comparing(SubscriptionCandidateResponse::getLastDate).reversed());
         return candidates;
+    }
+
+    // Harcama kişiliği + rozetler — mevcut veriden hesaplanır, ayrıca saklanmaz
+    public SpendingPersonalityResponse getSpendingPersonality(String email) {
+        User user = getUserByEmail(email);
+        List<Receipt> receipts = receiptRepository.findByUser(user);
+
+        SpendingPersonaResponse persona = computePersona(receipts);
+        List<BadgeResponse> badges = computeBadges(email, user, receipts);
+        return new SpendingPersonalityResponse(persona, badges);
+    }
+
+    private SpendingPersonaResponse computePersona(List<Receipt> receipts) {
+        if (receipts.size() < 5) {
+            return new SpendingPersonaResponse("Yeni Başlayan",
+                    "Kişiliğini belirlemek için birkaç fiş daha ekle");
+        }
+
+        BigDecimal totalSpend = BigDecimal.ZERO;
+        Map<String, BigDecimal> categoryTotals = new LinkedHashMap<>();
+        Map<String, Integer> storeCounts = new LinkedHashMap<>();
+        int weekendCount = 0;
+
+        for (Receipt r : receipts) {
+            BigDecimal amount = r.getTotalAmount() != null ? r.getTotalAmount() : BigDecimal.ZERO;
+            totalSpend = totalSpend.add(amount);
+
+            if (r.getCategory() != null) {
+                categoryTotals.merge(r.getCategory().getName(), amount, BigDecimal::add);
+            }
+            if (r.getStoreName() != null) {
+                storeCounts.merge(r.getStoreName().trim(), 1, Integer::sum);
+            }
+            if (r.getReceiptDate() != null) {
+                var day = r.getReceiptDate().getDayOfWeek();
+                if (day == java.time.DayOfWeek.SATURDAY || day == java.time.DayOfWeek.SUNDAY) {
+                    weekendCount++;
+                }
+            }
+        }
+
+        if (totalSpend.signum() > 0) {
+            var topCategory = categoryTotals.entrySet().stream()
+                    .max(Map.Entry.comparingByValue()).orElse(null);
+            if (topCategory != null) {
+                double share = topCategory.getValue().divide(totalSpend, 4, RoundingMode.HALF_UP).doubleValue();
+                if (share > 0.5) {
+                    return new SpendingPersonaResponse(topCategory.getKey() + " Aşığı",
+                            "Harcamalarının %" + Math.round(share * 100) + "'i " + topCategory.getKey()
+                                    + " kategorisinde");
+                }
+            }
+        }
+
+        var topStore = storeCounts.entrySet().stream().max(Map.Entry.comparingByValue()).orElse(null);
+        if (topStore != null) {
+            double share = (double) topStore.getValue() / receipts.size();
+            if (share > 0.4 && topStore.getValue() >= 5) {
+                return new SpendingPersonaResponse(topStore.getKey() + " Sadığı",
+                        "Fişlerinin %" + Math.round(share * 100) + "'i " + topStore.getKey() + "'den");
+            }
+        }
+
+        double weekendShare = (double) weekendCount / receipts.size();
+        if (weekendShare >= 0.6) {
+            return new SpendingPersonaResponse("Hafta Sonu Harcayıcısı",
+                    "Fişlerinin çoğu hafta sonuna ait");
+        }
+
+        BigDecimal averageAmount = totalSpend.divide(BigDecimal.valueOf(receipts.size()), 2, RoundingMode.HALF_UP);
+        if (averageAmount.compareTo(BigDecimal.valueOf(500)) > 0) {
+            return new SpendingPersonaResponse("Büyük Alışverişçi",
+                    "Ortalama fiş tutarın " + averageAmount + " TL — az ama öz alışveriş yapıyorsun");
+        }
+        if (receipts.size() >= 15 && averageAmount.compareTo(BigDecimal.valueOf(100)) < 0) {
+            return new SpendingPersonaResponse("Sık Alışverişçi",
+                    "Küçük tutarlarla sık sık alışveriş yapıyorsun");
+        }
+
+        return new SpendingPersonaResponse("Dengeli Harcayıcı",
+                "Harcamaların kategoriler arasında dengeli dağılıyor");
+    }
+
+    private List<BadgeResponse> computeBadges(String email, User user, List<Receipt> receipts) {
+        int receiptCount = receipts.size();
+        long distinctCategories = receipts.stream()
+                .map(Receipt::getCategory).filter(java.util.Objects::nonNull)
+                .map(Category::getId).distinct().count();
+        Map<String, Long> storeCounts = receipts.stream()
+                .filter(r -> r.getStoreName() != null)
+                .collect(Collectors.groupingBy(r -> r.getStoreName().trim(), Collectors.counting()));
+        boolean hasLoyalStore = storeCounts.values().stream().anyMatch(c -> c >= 10);
+        boolean hasSplitReceipt = receipts.stream().anyMatch(r -> r.getSplitDetailsJson() != null);
+        boolean hasSubscription = !getPotentialSubscriptions(email).isEmpty();
+        boolean hasAchievedSavingsGoal = savingsGoalRepository.findByUser(user).stream()
+                .anyMatch(g -> g.getCurrentAmount().compareTo(g.getTargetAmount()) >= 0);
+
+        List<BadgeResponse> badges = new ArrayList<>();
+        badges.add(new BadgeResponse("first_receipt", "İlk Adım", "İlk fişini ekle", receiptCount >= 1));
+        badges.add(new BadgeResponse("receipts_10", "10 Fiş Kulübü", "10 fiş ekle", receiptCount >= 10));
+        badges.add(new BadgeResponse("receipts_50", "50 Fiş Kulübü", "50 fiş ekle", receiptCount >= 50));
+        badges.add(new BadgeResponse("receipts_100", "100 Fiş Kulübü", "100 fiş ekle", receiptCount >= 100));
+        badges.add(new BadgeResponse("category_explorer", "Kategori Kaşifi",
+                "5 farklı kategoride fiş ekle", distinctCategories >= 5));
+        badges.add(new BadgeResponse("loyal_customer", "Sadık Müşteri",
+                "Aynı mağazadan 10 kez fiş ekle", hasLoyalStore));
+        badges.add(new BadgeResponse("subscription_hunter", "Abone Avcısı",
+                "Bir abonelik/tekrarlayan ödeme tespit edilsin", hasSubscription));
+        badges.add(new BadgeResponse("savings_champion", "Tasarruf Şampiyonu",
+                "Bir tasarruf hedefine ulaş", hasAchievedSavingsGoal));
+        badges.add(new BadgeResponse("bill_splitter", "Bölüşen", "Bir fişi böl/paylaştır", hasSplitReceipt));
+        return badges;
     }
 
     private User getUserByEmail(String email) {

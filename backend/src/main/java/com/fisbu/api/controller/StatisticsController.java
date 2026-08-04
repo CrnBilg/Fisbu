@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 import com.fisbu.api.dto.MonthlyStatisticsResponse;
+import com.fisbu.api.dto.SpendingPersonalityResponse;
 import com.fisbu.api.dto.StoreStatResponse;
 import com.fisbu.api.dto.SubscriptionCandidateResponse;
 import com.fisbu.api.dto.TopProductResponse;
@@ -46,5 +47,10 @@ public class StatisticsController {
     @GetMapping("/subscriptions")
     public List<SubscriptionCandidateResponse> getPotentialSubscriptions(@AuthenticationPrincipal UserDetails userDetails) {
         return statisticsService.getPotentialSubscriptions(userDetails.getUsername());
+    }
+
+    @GetMapping("/spending-personality")
+    public SpendingPersonalityResponse getSpendingPersonality(@AuthenticationPrincipal UserDetails userDetails) {
+        return statisticsService.getSpendingPersonality(userDetails.getUsername());
     }
 }
