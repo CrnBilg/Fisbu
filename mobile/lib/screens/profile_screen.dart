@@ -12,6 +12,7 @@ import 'pin_entry_screen.dart';
 import 'auth_wrapper.dart';
 import 'categories_screen.dart';
 import 'household_screen.dart';
+import 'savings_goals_screen.dart';
 import 'notification_settings_screen.dart';
 import '../core/theme/app_colors.dart';
 import '../main.dart';
@@ -739,6 +740,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const HouseholdScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildMenuItem(
+                          icon: Icons.savings_outlined,
+                          label: 'Tasarruf Hedeflerim',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SavingsGoalsScreen(),
                               ),
                             );
                           },
