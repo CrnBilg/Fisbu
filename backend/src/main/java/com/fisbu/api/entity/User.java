@@ -4,9 +4,12 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
@@ -77,4 +80,10 @@ public class User {
 
     @Column(name = "notify_budget_overspend", nullable = false, columnDefinition = "boolean default true")
     private Boolean notifyBudgetOverspend = true;
+
+    // Aile bütçe modu — kullanıcı en fazla bir Household'a üye olabilir; Category/Budget/Receipt
+    // ownership'i etkilemez, sadece toplu istatistik görünümü için kullanılır
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "household_id")
+    private Household household;
 }

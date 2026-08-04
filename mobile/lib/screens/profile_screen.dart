@@ -9,6 +9,7 @@ import '../services/auth_service.dart';
 import '../services/biometric_service.dart';
 import 'auth_wrapper.dart';
 import 'categories_screen.dart';
+import 'household_screen.dart';
 import 'notification_settings_screen.dart';
 import '../core/theme/app_colors.dart';
 import '../main.dart';
@@ -675,6 +676,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const CategoriesScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildMenuItem(
+                          icon: Icons.family_restroom,
+                          label: 'Aile Bütçesi',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const HouseholdScreen(),
                               ),
                             );
                           },

@@ -18,4 +18,7 @@ public interface ReceiptRepository extends JpaRepository<Receipt, Long>, JpaSpec
     List<Receipt> findByUserAndCategoryAndReceiptDateBetween(User user, Category category, LocalDate start, LocalDate end);
     List<Receipt> findByUserAndStoreNameIgnoreCaseAndTotalAmountAndReceiptDate(
             User user, String storeName, BigDecimal totalAmount, LocalDate receiptDate);
+
+    // Aile bütçe modu — household üyelerinin fişlerini tek sorguda toplamak için
+    List<Receipt> findByUserInAndReceiptDateBetween(List<User> users, LocalDate start, LocalDate end);
 }

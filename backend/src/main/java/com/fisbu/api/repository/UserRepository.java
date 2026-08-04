@@ -1,5 +1,6 @@
 package com.fisbu.api.repository;
 
+import com.fisbu.api.entity.Household;
 import com.fisbu.api.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
@@ -16,4 +17,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Haftalık özet bildirimi gibi toplu push gönderimlerinde token'ı olmayanları elemek için
     List<User> findByFcmTokenIsNotNull();
+
+    // Aile bütçe modu — bir household'ın üyelerini listelemek için
+    List<User> findByHousehold(Household household);
 }
