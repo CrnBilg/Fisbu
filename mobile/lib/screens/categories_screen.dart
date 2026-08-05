@@ -3,6 +3,28 @@ import '../models/category.dart';
 import '../services/receipt_service.dart';
 import '../core/theme/app_colors.dart';
 
+const _categoryColorOptions = [
+  AppColors.primary,
+  AppColors.error,
+  AppColors.secondary,
+  AppColors.warning,
+  AppColors.categoryElektronik,
+  AppColors.success,
+  Color(0xFFE91E63),
+  AppColors.categoryUlasim,
+  Color(0xFFFF5722),
+  AppColors.textSecondary,
+];
+
+Color _parseCategoryColor(String? hex) {
+  if (hex == null) return AppColors.primary;
+  try {
+    return Color(int.parse(hex.replaceFirst('#', '0xFF')));
+  } catch (e) {
+    return AppColors.primary;
+  }
+}
+
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
 
@@ -44,110 +66,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   Future<void> _showAddCategoryDialog() async {
     // Hızlı çift dokunmada FAB iki kez tetiklenip aynı anda iki dialog açılmasın
-    // (bağımsız iki TextEditingController + çakışan Navigator.pop yığını riski)
     if (_isDialogOpen) return;
     _isDialogOpen = true;
 
-    final nameController = TextEditingController();
-    Color selectedColor = AppColors.primary;
-
-    final result = await showDialog<bool>(
+    final result = await showDialog<({String name, Color color})>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Text(
-            'Yeni Kategori',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: nameController,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Kategori adı',
-                  hintText: 'örn. Spor, Eğlence...',
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Renk seç',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: _colorOptions.map((color) {
-                  final isSelected =
-                      color.toARGB32() == selectedColor.toARGB32();
-                  return GestureDetector(
-                    onTap: () =>
-                        setDialogState(() => selectedColor = color),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      width: isSelected ? 36 : 32,
-                      height: isSelected ? 36 : 32,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: isSelected
-                            ? Border.all(color: Colors.white, width: 3)
-                            : null,
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: color.withOpacity(0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                )
-                              ]
-                            : null,
-                      ),
-                      child: isSelected
-                          ? const Icon(Icons.check,
-                              color: Colors.white, size: 16)
-                          : null,
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text('Vazgeç'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 10),
-              ),
-              child: Text('Ekle'),
-            ),
-          ],
-        ),
-      ),
+      builder: (context) => const _CategoryDialog(),
     );
-
-    if (result == true && nameController.text.trim().isNotEmpty) {
-      _createCategory(nameController.text.trim(), selectedColor);
-    }
-    nameController.dispose();
     _isDialogOpen = false;
+
+    if (result != null && result.name.isNotEmpty) {
+      _createCategory(result.name, result.color);
+    }
   }
 
   Future<void> _createCategory(String name, Color color) async {
@@ -169,107 +99,19 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     if (_isDialogOpen) return;
     _isDialogOpen = true;
 
-    final nameController = TextEditingController(text: category.name);
-    Color selectedColor = _parseColor(category.color);
-
-    final result = await showDialog<bool>(
+    final result = await showDialog<({String name, Color color})>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text(
-            'Kategoriyi Düzenle',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: nameController,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Kategori adı',
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Renk seç',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: _colorOptions.map((color) {
-                  final isSelected =
-                      color.toARGB32() == selectedColor.toARGB32();
-                  return GestureDetector(
-                    onTap: () =>
-                        setDialogState(() => selectedColor = color),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      width: isSelected ? 36 : 32,
-                      height: isSelected ? 36 : 32,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: isSelected
-                            ? Border.all(color: Colors.white, width: 3)
-                            : null,
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: color.withOpacity(0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                )
-                              ]
-                            : null,
-                      ),
-                      child: isSelected
-                          ? const Icon(Icons.check,
-                              color: Colors.white, size: 16)
-                          : null,
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Vazgeç'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 10),
-              ),
-              child: const Text('Kaydet'),
-            ),
-          ],
-        ),
-      ),
+      builder: (context) => _CategoryDialog(existing: category),
     );
+    _isDialogOpen = false;
 
-    if (result == true && nameController.text.trim().isNotEmpty) {
+    if (result != null && result.name.isNotEmpty) {
       final hexColor =
-          '#${selectedColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
+          '#${result.color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
       try {
         await ReceiptService.updateCategory(
           id: category.id,
-          name: nameController.text.trim(),
+          name: result.name,
           color: hexColor,
         );
         _loadCategories();
@@ -280,31 +122,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           );
         }
       }
-    }
-    nameController.dispose();
-    _isDialogOpen = false;
-  }
-
-
-  static const _colorOptions = [
-    AppColors.primary,
-    AppColors.error,
-    AppColors.secondary,
-    AppColors.warning,
-    AppColors.categoryElektronik,
-    AppColors.success,
-    Color(0xFFE91E63),
-    AppColors.categoryUlasim,
-    Color(0xFFFF5722),
-    AppColors.textSecondary,
-  ];
-
-  Color _parseColor(String? hex) {
-    if (hex == null) return AppColors.primary;
-    try {
-      return Color(int.parse(hex.replaceFirst('#', '0xFF')));
-    } catch (e) {
-      return AppColors.primary;
     }
   }
 
@@ -390,7 +207,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       itemCount: _categories.length,
       itemBuilder: (context, index) {
         final category = _categories[index];
-        final color = _parseColor(category.color);
+        final color = _parseCategoryColor(category.color);
 
         return Dismissible(
           key: Key('category_${category.id}'),
@@ -522,6 +339,123 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _CategoryDialog extends StatefulWidget {
+  final Category? existing;
+
+  const _CategoryDialog({this.existing});
+
+  @override
+  State<_CategoryDialog> createState() => _CategoryDialogState();
+}
+
+class _CategoryDialogState extends State<_CategoryDialog> {
+  late final TextEditingController _nameController;
+  late Color _selectedColor;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.existing?.name ?? '');
+    _selectedColor = _parseCategoryColor(widget.existing?.color);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEdit = widget.existing != null;
+    return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      title: Text(
+        isEdit ? 'Kategoriyi Düzenle' : 'Yeni Kategori',
+        style: const TextStyle(fontWeight: FontWeight.w700),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _nameController,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: 'Kategori adı',
+              hintText: isEdit ? null : 'örn. Spor, Eğlence...',
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Renk seç',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: _categoryColorOptions.map((color) {
+              final isSelected = color.toARGB32() == _selectedColor.toARGB32();
+              return GestureDetector(
+                onTap: () => setState(() => _selectedColor = color),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  width: isSelected ? 36 : 32,
+                  height: isSelected ? 36 : 32,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: isSelected
+                        ? Border.all(color: Colors.white, width: 3)
+                        : null,
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: color.withOpacity(0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            )
+                          ]
+                        : null,
+                  ),
+                  child: isSelected
+                      ? const Icon(Icons.check, color: Colors.white, size: 16)
+                      : null,
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Vazgeç'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(
+            context,
+            (name: _nameController.text.trim(), color: _selectedColor),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          ),
+          child: Text(isEdit ? 'Kaydet' : 'Ekle'),
+        ),
+      ],
     );
   }
 }

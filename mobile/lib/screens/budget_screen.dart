@@ -66,119 +66,12 @@ class _BudgetScreenState extends State<BudgetScreen> {
   }
 
   Future<void> _showSetBudgetDialog(Category category, {Budget? existing}) async {
-    final limitController = TextEditingController(
-      text: existing != null ? existing.monthlyLimit.toStringAsFixed(0) : '',
-    );
-    bool isLoadingSuggestion = false;
-    String? suggestionComment;
-
-    final result = await showDialog<bool>(
+    final limitText = await showDialog<String>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            existing == null ? 'Bütçe Belirle' : 'Bütçeyi Düzenle',
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                category.name,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: limitController,
-                autofocus: true,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Aylık limit (TL)',
-                  hintText: 'örn. 10000',
-                ),
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: isLoadingSuggestion
-                      ? null
-                      : () async {
-                          setDialogState(() {
-                            isLoadingSuggestion = true;
-                            suggestionComment = null;
-                          });
-                          try {
-                            final now = DateTime.now();
-                            final suggestion = await BudgetService.getBudgetSuggestion(
-                              categoryId: category.id,
-                              year: now.year,
-                              month: now.month,
-                            );
-                            if (suggestion.suggestedLimit != null) {
-                              limitController.text = suggestion.suggestedLimit!.toStringAsFixed(0);
-                            }
-                            setDialogState(() {
-                              suggestionComment = suggestion.comment;
-                            });
-                          } catch (e) {
-                            setDialogState(() {
-                              suggestionComment = 'Öneri alınamadı: $e';
-                            });
-                          } finally {
-                            setDialogState(() => isLoadingSuggestion = false);
-                          }
-                        },
-                  icon: isLoadingSuggestion
-                      ? const SizedBox(
-                          height: 14,
-                          width: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.auto_awesome, size: 16),
-                  label: Text(isLoadingSuggestion ? 'Hesaplanıyor...' : 'AI ile Öner'),
-                  style: TextButton.styleFrom(foregroundColor: AppColors.primary),
-                ),
-              ),
-              if (suggestionComment != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    suggestionComment!,
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                  ),
-                ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Vazgeç'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              ),
-              child: const Text('Kaydet'),
-            ),
-          ],
-        ),
-      ),
+      builder: (context) => _SetBudgetDialog(category: category, existing: existing),
     );
 
-    final limitText = limitController.text.trim();
-    limitController.dispose();
-
-    if (result != true) return;
+    if (limitText == null) return;
 
     final limit = double.tryParse(limitText.replaceAll(',', '.'));
     if (limit == null || limit <= 0) {
@@ -426,6 +319,136 @@ class _BudgetScreenState extends State<BudgetScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _SetBudgetDialog extends StatefulWidget {
+  final Category category;
+  final Budget? existing;
+
+  const _SetBudgetDialog({required this.category, this.existing});
+
+  @override
+  State<_SetBudgetDialog> createState() => _SetBudgetDialogState();
+}
+
+class _SetBudgetDialogState extends State<_SetBudgetDialog> {
+  late final TextEditingController _limitController;
+  bool _isLoadingSuggestion = false;
+  String? _suggestionComment;
+
+  @override
+  void initState() {
+    super.initState();
+    _limitController = TextEditingController(
+      text: widget.existing != null ? widget.existing!.monthlyLimit.toStringAsFixed(0) : '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _limitController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchSuggestion() async {
+    setState(() {
+      _isLoadingSuggestion = true;
+      _suggestionComment = null;
+    });
+    try {
+      final now = DateTime.now();
+      final suggestion = await BudgetService.getBudgetSuggestion(
+        categoryId: widget.category.id,
+        year: now.year,
+        month: now.month,
+      );
+      if (suggestion.suggestedLimit != null) {
+        _limitController.text = suggestion.suggestedLimit!.toStringAsFixed(0);
+      }
+      if (!mounted) return;
+      setState(() => _suggestionComment = suggestion.comment);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _suggestionComment = 'Öneri alınamadı: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingSuggestion = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final existing = widget.existing;
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Text(
+        existing == null ? 'Bütçe Belirle' : 'Bütçeyi Düzenle',
+        style: const TextStyle(fontWeight: FontWeight.w700),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.category.name,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _limitController,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              labelText: 'Aylık limit (TL)',
+              hintText: 'örn. 10000',
+            ),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: _isLoadingSuggestion ? null : _fetchSuggestion,
+              icon: _isLoadingSuggestion
+                  ? const SizedBox(
+                      height: 14,
+                      width: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.auto_awesome, size: 16),
+              label: Text(_isLoadingSuggestion ? 'Hesaplanıyor...' : 'AI ile Öner'),
+              style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+            ),
+          ),
+          if (_suggestionComment != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                _suggestionComment!,
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Vazgeç'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, _limitController.text.trim()),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          ),
+          child: const Text('Kaydet'),
+        ),
+      ],
     );
   }
 }
