@@ -239,7 +239,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showAboutSheet() {
-    const supportEmail = 'baris.hansu57@outlook.com';
+    const supportEmail = 'fisbudestek@hotmail.com';
     const privacyText =
         '6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında, '
         'FişBu uygulamasına kaydolurken e-posta adresin ve şifren şifreli olarak saklanır. '
