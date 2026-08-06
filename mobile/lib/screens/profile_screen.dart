@@ -40,6 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _newPasswordVisible = false;
   bool _confirmPasswordVisible = false;
   bool _isChangingPassword = false;
+  String? _changePasswordError;
   bool _isDeletingAccount = false;
   bool _isExportingData = false;
   bool _biometricSupported = false;
@@ -332,6 +333,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _currentPasswordVisible = false;
     _newPasswordVisible = false;
     _confirmPasswordVisible = false;
+    _changePasswordError = null;
 
     showModalBottomSheet(
       context: context,
@@ -452,6 +454,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
+                if (_changePasswordError != null) ...[
+                  const SizedBox(height: 14),
+                  Text(
+                    _changePasswordError!,
+                    style: const TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: _isChangingPassword
@@ -498,37 +511,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final confirm = _confirmPasswordController.text.trim();
 
     if (current.isEmpty || newPass.isEmpty || confirm.isEmpty) {
-      ScaffoldMessenger.of(
-        sheetContext,
-      ).showSnackBar(const SnackBar(content: Text('Tüm alanları doldur')));
+      setSheetState(() => _changePasswordError = 'Tüm alanları doldur');
       return;
     }
     if (newPass != confirm) {
-      ScaffoldMessenger.of(
-        sheetContext,
-      ).showSnackBar(const SnackBar(content: Text('Yeni şifreler eşleşmiyor')));
+      setSheetState(() => _changePasswordError = 'Yeni şifreler eşleşmiyor');
       return;
     }
     if (newPass.length < 8) {
-      ScaffoldMessenger.of(sheetContext).showSnackBar(
-        const SnackBar(content: Text('Yeni şifre en az 8 karakter olmalı')),
+      setSheetState(
+        () => _changePasswordError = 'Yeni şifre en az 8 karakter olmalı',
       );
       return;
     }
     if (!newPass.contains(RegExp(r'\d'))) {
-      ScaffoldMessenger.of(sheetContext).showSnackBar(
-        const SnackBar(content: Text('Yeni şifre en az bir rakam içermeli')),
+      setSheetState(
+        () => _changePasswordError = 'Yeni şifre en az bir rakam içermeli',
       );
       return;
     }
 
-    setSheetState(() => _isChangingPassword = true);
+    setSheetState(() {
+      _isChangingPassword = true;
+      _changePasswordError = null;
+    });
     final result = await AuthService.changePassword(current, newPass);
-    setSheetState(() => _isChangingPassword = false);
 
     if (!sheetContext.mounted) return;
 
     if (result.success) {
+      setSheetState(() => _isChangingPassword = false);
       Navigator.pop(sheetContext);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -536,9 +548,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       }
     } else {
-      ScaffoldMessenger.of(sheetContext).showSnackBar(
-        SnackBar(content: Text(result.errorMessage ?? 'Bir hata oluştu')),
-      );
+      setSheetState(() {
+        _isChangingPassword = false;
+        _changePasswordError = result.errorMessage ?? 'Bir hata oluştu';
+      });
     }
   }
 
