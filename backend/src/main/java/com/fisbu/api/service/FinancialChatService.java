@@ -104,6 +104,10 @@ public class FinancialChatService {
 
                 Son %d aydaki toplam harcama geçmişi (kullanıcı belirli bir ayı sorarsa buradan yanıtla):
                 %s
+                Bu liste TAM ve KESİNDİR: bir ay 0 TL gösteriyorsa veri eksik değildir, o ay hiç \
+                harcama yapılmamış demektir. Listedeki 6 aydan herhangi biri sorulduğunda "veri yok" \
+                deme, doğrudan listedeki tutarla yanıtla. Sadece bu listenin DIŞINDAKİ bir ay sorulursa \
+                o aya ait verin olmadığını söyle.
 
                 Bütçeler:
                 %s
@@ -114,7 +118,8 @@ public class FinancialChatService {
                 Kullanıcının sorularını bu gerçek verilere dayanarak yanıtla. Samimi, kısa (en fazla \
                 3-4 cümle) ve pratik ol. Kesin yatırım/vergi/hukuki tavsiye verme — bunun yerine genel \
                 gözlem ve öneri sun. Elindeki veriyle cevap veremiyorsan bunu açıkça söyle, uydurma. \
-                Yanıtın SADECE Türkçe olmalı, başka dilden tek kelime bile kullanma.
+                Yanıtın SADECE Türkçe olmalı, başka dilden tek kelime bile kullanma, sadece Türk \
+                alfabesindeki harfleri kullan (başka hiçbir yazı sistemi/alfabe kullanma).
                 """.formatted(today.getYear(), today.getMonthValue(), stats.getTotalAmount(),
                 categoryBreakdown, MONTHLY_HISTORY_SPAN, monthlyHistory, budgetSummary, goalsSummary);
     }
