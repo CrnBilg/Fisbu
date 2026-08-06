@@ -29,7 +29,16 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   Future<void> _init() async {
-    final loggedIn = await AuthService.isLoggedIn();
+    var loggedIn = await AuthService.isLoggedIn();
+    if (loggedIn) {
+      // Cihazda token var ama süresi dolmuş/geçersiz olabilir (24 saatlik ömür) —
+      // sunucuya doğrulatmadan dashboard'a atarsak her istek sessizce 403 döner.
+      final valid = await AuthService.validateSession();
+      if (valid == false) {
+        await AuthService.logout();
+        loggedIn = false;
+      }
+    }
     if (!mounted) return;
     setState(() => _isLoggedIn = loggedIn);
     if (loggedIn) {

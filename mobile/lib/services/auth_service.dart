@@ -69,6 +69,25 @@ class AuthService {
 
   static Future<bool> isLoggedIn() async => await getToken() != null;
 
+  /// Cihazda saklanan token'ın hâlâ sunucu tarafında geçerli olup olmadığını kontrol eder.
+  /// true: geçerli, false: süresi dolmuş/geçersiz (401/403 — çıkış yapılmalı),
+  /// null: sunucuya ulaşılamadı (ağ hatası — token hakkında karar verilemez, olduğu gibi bırak)
+  static Future<bool?> validateSession() async {
+    final token = await getToken();
+    if (token == null) return false;
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/auth/profile'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) return true;
+      if (response.statusCode == 401 || response.statusCode == 403) return false;
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   static Future<AuthResult> changePassword(
     String currentPassword,
     String newPassword,
