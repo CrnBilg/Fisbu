@@ -39,8 +39,20 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
   @override
   void initState() {
     super.initState();
-    _participants.add(_Participant(name: 'Ben'));
-    _participants.add(_Participant());
+    final existing = widget.receipt.splitParticipants;
+    if (existing != null && existing.isNotEmpty) {
+      // Daha önce kaydedilmiş bir bölüşüm var — düzenlemek için mevcut
+      // kişi/tutarlarla doldur (tutarlar eşit olmayabileceğinden özel tutar modu).
+      _equalSplit = false;
+      for (final p in existing) {
+        final participant = _Participant(name: p.name);
+        participant.amountController.text = p.amount.toStringAsFixed(2);
+        _participants.add(participant);
+      }
+    } else {
+      _participants.add(_Participant(name: 'Ben'));
+      _participants.add(_Participant());
+    }
   }
 
   @override
@@ -109,16 +121,20 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
         SplitParticipant(name: _participantName(i), amount: shares[i]),
     ];
 
-    Receipt? updatedReceipt;
+    Receipt updatedReceipt;
     setState(() => _isSaving = true);
     try {
       updatedReceipt = await ReceiptService.saveSplit(widget.receipt.id, participants);
     } catch (e) {
-      // Kaydetme başarısız olsa bile (ör. çevrimdışı) paylaşma akışı engellenmez —
-      // bölüştürme zaten aşağıdaki metin olarak paylaşılıyor.
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bölüşüm kaydedilemedi, lütfen tekrar deneyin')),
+        );
+      }
+      return;
     }
+    if (mounted) setState(() => _isSaving = false);
 
     final buffer = StringBuffer();
     buffer.writeln('🧾 ${widget.receipt.storeName} - ${_currencyFormat.format(widget.receipt.totalAmount)} TL');
@@ -132,7 +148,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
 
     await SharePlus.instance.share(ShareParams(text: buffer.toString()));
 
-    if (mounted && updatedReceipt != null) {
+    if (mounted) {
       Navigator.pop(context, updatedReceipt);
     }
   }
@@ -278,7 +294,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                                   ),
                                 ),
                         ),
-                        if (_participants.length > 2)
+                        if (_participants.length > 1)
                           IconButton(
                             onPressed: () => _removeParticipant(index),
                             icon: const Icon(Icons.close, size: 18),
@@ -332,21 +348,24 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
             top: false,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-              child: ElevatedButton.icon(
-                onPressed: _canShare && !_isSaving ? _share : null,
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Icon(Icons.ios_share),
-                label: const Text('Paylaş'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _canShare && !_isSaving ? _share : null,
+                  icon: _isSaving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.ios_share),
+                  label: const Text('Paylaş'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
               ),
             ),
