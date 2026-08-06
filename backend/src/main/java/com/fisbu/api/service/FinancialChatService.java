@@ -24,6 +24,11 @@ import com.fisbu.api.dto.SavingsGoalResponse;
 public class FinancialChatService {
 
     private static final int MAX_HISTORY_MESSAGES = 10;
+    private static final int MONTHLY_HISTORY_SPAN = 6;
+    private static final String[] TURKISH_MONTHS = {
+            "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+            "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+    };
 
     private final AiService aiService;
     private final StatisticsService statisticsService;
@@ -87,12 +92,17 @@ public class FinancialChatService {
                                 + " TL (%" + Math.round(g.getProgressPercent()) + ")")
                         .collect(Collectors.joining("\n"));
 
+        String monthlyHistory = buildMonthlyHistory(email, today);
+
         return """
                 Sen FişBu uygulamasında kullanıcının kişisel finansal asistanısın. Kullanıcının %d yılı \
                 %d ayı harcama durumu:
 
                 Toplam harcama: %s TL
                 Kategori bazında:
+                %s
+
+                Son %d aydaki toplam harcama geçmişi (kullanıcı belirli bir ayı sorarsa buradan yanıtla):
                 %s
 
                 Bütçeler:
@@ -106,6 +116,18 @@ public class FinancialChatService {
                 gözlem ve öneri sun. Elindeki veriyle cevap veremiyorsan bunu açıkça söyle, uydurma. \
                 Yanıtın SADECE Türkçe olmalı, başka dilden tek kelime bile kullanma.
                 """.formatted(today.getYear(), today.getMonthValue(), stats.getTotalAmount(),
-                categoryBreakdown, budgetSummary, goalsSummary);
+                categoryBreakdown, MONTHLY_HISTORY_SPAN, monthlyHistory, budgetSummary, goalsSummary);
+    }
+
+    private String buildMonthlyHistory(String email, LocalDate today) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = MONTHLY_HISTORY_SPAN - 1; i >= 0; i--) {
+            LocalDate month = today.minusMonths(i);
+            MonthlyStatisticsResponse monthStats = statisticsService.getMonthlyStatistics(
+                    email, month.getYear(), month.getMonthValue());
+            sb.append("- ").append(TURKISH_MONTHS[month.getMonthValue() - 1]).append(" ")
+                    .append(month.getYear()).append(": ").append(monthStats.getTotalAmount()).append(" TL\n");
+        }
+        return sb.toString();
     }
 }
