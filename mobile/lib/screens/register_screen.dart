@@ -154,6 +154,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    if (!password.contains(RegExp(r'[^a-zA-Z0-9]'))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Şifre en az bir özel karakter içermeli')),
+      );
+      return;
+    }
+
     if (password != passwordAgain) {
       ScaffoldMessenger.of(
         context,

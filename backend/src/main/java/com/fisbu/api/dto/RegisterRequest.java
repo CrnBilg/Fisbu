@@ -18,6 +18,7 @@ public class RegisterRequest {
     @NotBlank(message = "Şifre boş olamaz")
     @Size(min = 8, message = "Şifre en az 8 karakter olmalıdır")
     @Pattern(regexp = ".*\\d.*", message = "Şifre en az bir rakam içermelidir")
+    @Pattern(regexp = ".*[^a-zA-Z0-9].*", message = "Şifre en az bir özel karakter içermelidir")
     private String password;
 
     @NotBlank(message = "Ad Soyad boş olamaz")

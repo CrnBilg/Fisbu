@@ -71,6 +71,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       return;
     }
 
+    if (!newPassword.contains(RegExp(r'[^a-zA-Z0-9]'))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Şifre en az bir özel karakter içermeli')),
+      );
+      return;
+    }
+
     if (newPassword != confirmPassword) {
       ScaffoldMessenger.of(
         context,

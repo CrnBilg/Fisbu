@@ -521,6 +521,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       return;
     }
+    if (!newPass.contains(RegExp(r'[^a-zA-Z0-9]'))) {
+      ScaffoldMessenger.of(sheetContext).showSnackBar(
+        const SnackBar(content: Text('Yeni şifre en az bir özel karakter içermeli')),
+      );
+      return;
+    }
 
     setSheetState(() => _isChangingPassword = true);
     final result = await AuthService.changePassword(current, newPass);
