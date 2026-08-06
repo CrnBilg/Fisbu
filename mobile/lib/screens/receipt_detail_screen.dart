@@ -615,12 +615,16 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                   fontSize: 14,
                   color: AppColors.txtSecondary(context),
                   fontWeight: FontWeight.w500)),
-          const Spacer(),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.txt(context))),
+          Expanded(
+            child: Text(value,
+                textAlign: TextAlign.right,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.txt(context))),
+          ),
         ],
       ),
     );
