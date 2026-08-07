@@ -197,7 +197,11 @@ class ReceiptService {
       } catch (_) {}
       throw DuplicateReceiptException(message);
     } else {
-      throw Exception('Fiş eklenemedi: ${response.statusCode}');
+      String message = 'Fiş eklenemedi (${response.statusCode})';
+      try {
+        message = jsonDecode(response.body)['error'] as String? ?? message;
+      } catch (_) {}
+      throw Exception(message);
     }
   }
 

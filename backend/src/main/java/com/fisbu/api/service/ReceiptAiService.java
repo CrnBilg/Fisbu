@@ -211,8 +211,11 @@ public class ReceiptAiService {
             LineItemDto item = new LineItemDto();
             item.setProductName(productName);
             item.setUnitPrice(unitPrice);
+            // Model bazen quantity için null yerine anlamsız 0 döndürebiliyor — receipt
+            // kaydetme uçu adet için >0 şartı koyduğundan (0 gelirse 400), null ile aynı
+            // şekilde 1'e varsayılan yapılır
             BigDecimal quantity = decimalOrNull(itemNode.get("quantity"));
-            item.setQuantity(quantity != null ? quantity : BigDecimal.ONE);
+            item.setQuantity(quantity != null && quantity.compareTo(BigDecimal.ZERO) > 0 ? quantity : BigDecimal.ONE);
             items.add(item);
         }
         return items;
