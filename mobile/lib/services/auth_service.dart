@@ -139,6 +139,9 @@ class AuthService {
   /// biçimlendirilmiş JSON metni olarak döner (dosyaya yazıp paylaşmak için).
   static Future<String> downloadMyData() async {
     final token = await getToken();
+    if (token == null) {
+      throw Exception('Oturum süresi doldu, lütfen tekrar giriş yapın');
+    }
     final response = await http.get(
       Uri.parse('$_baseUrl/users/me/export'),
       headers: {'Authorization': 'Bearer $token'},
@@ -146,6 +149,8 @@ class AuthService {
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       return const JsonEncoder.withIndent('  ').convert(decoded);
+    } else if (response.statusCode == 401 || response.statusCode == 403) {
+      throw Exception('Oturum süresi doldu, lütfen tekrar giriş yapın');
     } else {
       throw Exception('Verileriniz indirilemedi: ${response.statusCode}');
     }
