@@ -89,7 +89,6 @@ public class ReceiptAiService {
         response.setStoreName(textOrNull(root, "storeName"));
         response.setTotalAmount(decimalOrNull(root.get("totalAmount")));
         response.setReceiptDate(dateOrNull(textOrNull(root, "receiptDate")));
-        response.setConfidenceScore(Math.max(0, Math.min(100, root.path("confidenceScore").asInt(0))));
 
         String suggestedCategoryName = textOrNull(root, "suggestedCategoryName");
         response.setSuggestedCategoryName(suggestedCategoryName);
@@ -97,7 +96,28 @@ public class ReceiptAiService {
 
         response.setItems(parseItems(root.get("items")));
 
+        int modelScore = Math.max(0, Math.min(100, root.path("confidenceScore").asInt(0)));
+        response.setConfidenceScore(capConfidenceByFilledFields(modelScore, response));
+
         return response;
+    }
+
+    /**
+     * Model kendi güven skorunu beyan ediyor ama bunu alanların gerçekten dolu olup
+     * olmadığından bağımsız verebiliyor (ör. tüm alanlar null iken %90 döndürebiliyor).
+     * Güven skorunu, temel alanlardan (mağaza/tutar/tarih/kategori) kaçının dolu
+     * olduğuyla sınırlayarak boş alan + yüksek güven çelişkisini engeller.
+     */
+    private int capConfidenceByFilledFields(int modelScore, RestoreReceiptResponse response) {
+        int totalFields = 4;
+        int filledFields = 0;
+        if (response.getStoreName() != null) filledFields++;
+        if (response.getTotalAmount() != null) filledFields++;
+        if (response.getReceiptDate() != null) filledFields++;
+        if (response.getMatchedCategoryId() != null) filledFields++;
+
+        int fieldRatioScore = Math.round(filledFields * 100f / totalFields);
+        return Math.min(modelScore, fieldRatioScore);
     }
 
     /**
