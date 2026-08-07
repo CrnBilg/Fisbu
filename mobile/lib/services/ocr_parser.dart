@@ -1,6 +1,10 @@
 class OcrParser {
   static double? extractAmount(String text) {
-    final lines = text.split('\n');
+    // "699,90 TL/KG" gibi kilogram/litre başına birim fiyat satırları üç aşamanın
+    // hepsinden önce elenir — bunlar toplam değil, tek bir ürünün birim fiyatı,
+    // toplamdan büyük olabildiklerinden "en büyük rakamı al" mantığını yanıltıyorlar
+    final unitPricePattern = RegExp(r'TL\s*/', caseSensitive: false);
+    final lines = text.split('\n').where((l) => !unitPricePattern.hasMatch(l)).toList();
 
     // TOPLAM/TUTAR içeren satırlarda ara
     final keywordPattern = RegExp(
