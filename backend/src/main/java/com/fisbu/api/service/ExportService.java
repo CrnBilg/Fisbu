@@ -104,8 +104,12 @@ public class ExportService {
             totalLabelCell.setCellStyle(headerStyle);
             totalRow.createCell(1).setCellValue(total.doubleValue());
 
+            // autoSizeColumn() yerine sabit genişlikler kullanılıyor: autoSizeColumn AWT font
+            // metriklerine ihtiyaç duyar ve headless/minimal JRE ortamında (ör. Railway) hata
+            // fırlatıp export'u 500'e düşürebiliyordu.
+            int[] columnWidths = {30 * 256, 14 * 256, 14 * 256, 20 * 256};
             for (int i = 0; i < HEADERS.length; i++) {
-                sheet.autoSizeColumn(i);
+                sheet.setColumnWidth(i, i < columnWidths.length ? columnWidths[i] : 15 * 256);
             }
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
