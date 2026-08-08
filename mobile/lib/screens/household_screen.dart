@@ -5,6 +5,8 @@ import '../models/household.dart';
 import '../models/household_statistics.dart';
 import '../services/household_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/utils/network_error.dart';
+import '../core/widgets/offline_banner.dart';
 
 class HouseholdScreen extends StatefulWidget {
   const HouseholdScreen({super.key});
@@ -58,7 +60,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       if (household != null) _loadStatistics();
     } catch (e) {
       setState(() {
-        _errorMessage = 'Aile bilgisi alınamadı: $e';
+        _errorMessage = NetworkError.friendlyMessage(e, fallback: 'Aile bilgisi alınamadı, lütfen tekrar deneyin.');
         _isLoading = false;
       });
     }
@@ -73,7 +75,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       final stats = await HouseholdService.getStatistics(year: _selectedYear, month: _selectedMonth);
       setState(() => _statistics = stats);
     } catch (e) {
-      setState(() => _statsError = 'İstatistik alınamadı: $e');
+      setState(() => _statsError = NetworkError.friendlyMessage(e, fallback: 'İstatistik alınamadı, lütfen tekrar deneyin.'));
     } finally {
       if (mounted) setState(() => _isLoadingStats = false);
     }
@@ -190,13 +192,20 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Aile Bütçesi')),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _errorMessage != null
-              ? _buildErrorView()
-              : _household == null
-                  ? _buildJoinCreateView()
-                  : _buildHouseholdView(),
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : _errorMessage != null
+                    ? _buildErrorView()
+                    : _household == null
+                        ? _buildJoinCreateView()
+                        : _buildHouseholdView(),
+          ),
+        ],
+      ),
     );
   }
 

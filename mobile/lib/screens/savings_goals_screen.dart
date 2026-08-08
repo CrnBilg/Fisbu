@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../models/savings_goal.dart';
 import '../services/savings_goal_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/utils/network_error.dart';
 
 class SavingsGoalsScreen extends StatefulWidget {
   const SavingsGoalsScreen({super.key});
@@ -32,7 +33,7 @@ class _SavingsGoalsScreenState extends State<SavingsGoalsScreen> {
       final goals = await SavingsGoalService.getGoals();
       setState(() => _goals = goals);
     } catch (e) {
-      setState(() => _errorMessage = 'Hedefler alınamadı: $e');
+      setState(() => _errorMessage = NetworkError.friendlyMessage(e, fallback: 'Hedefler alınamadı, lütfen tekrar deneyin.'));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -355,7 +356,7 @@ class _GoalDetailSheetState extends State<_GoalDetailSheet> {
       final suggestion = await SavingsGoalService.getSuggestion(widget.goal.id);
       setState(() => _suggestionComment = suggestion.comment);
     } catch (e) {
-      setState(() => _suggestionComment = 'Öneri alınamadı: $e');
+      setState(() => _suggestionComment = NetworkError.friendlyMessage(e, fallback: 'Öneri alınamadı, lütfen tekrar deneyin.'));
     } finally {
       if (mounted) setState(() => _isLoadingSuggestion = false);
     }

@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/receipt_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/utils/network_error.dart';
 
 class ExportScreen extends StatefulWidget {
   const ExportScreen({super.key});
@@ -95,7 +96,7 @@ class _ExportScreenState extends State<ExportScreen> {
         ShareParams(files: [XFile(file.path)], text: 'FişBu fiş raporu'),
       );
     } catch (e) {
-      setState(() => _error = 'Dışa aktarma başarısız oldu: $e');
+      setState(() => _error = NetworkError.friendlyMessage(e, fallback: 'Dışa aktarma başarısız oldu, lütfen tekrar deneyin.'));
     } finally {
       if (mounted) setState(() => _isExporting = false);
     }

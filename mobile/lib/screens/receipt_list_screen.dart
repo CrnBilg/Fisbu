@@ -8,6 +8,7 @@ import '../services/receipt_service.dart';
 import 'package:intl/intl.dart';
 import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
+import '../core/utils/network_error.dart';
 import '../core/theme/app_colors.dart';
 import '../core/widgets/offline_banner.dart';
 
@@ -109,7 +110,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
       setState(() {
         _isLoading = false;
         _isLoadingMore = false;
-        if (reset) _errorMessage = 'Fişler yüklenemedi: $e';
+        if (reset) _errorMessage = NetworkError.friendlyMessage(e, fallback: 'Fişler yüklenemedi, lütfen tekrar deneyin.');
       });
     }
   }

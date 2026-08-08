@@ -6,6 +6,7 @@ import '../services/receipt_service.dart';
 import '../services/budget_service.dart';
 import '../core/theme/app_colors.dart';
 import '../core/widgets/offline_banner.dart';
+import '../core/utils/network_error.dart';
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -45,7 +46,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Bütçeler yüklenemedi: $e';
+        _errorMessage = NetworkError.friendlyMessage(e, fallback: 'Bütçeler yüklenemedi, lütfen tekrar deneyin.');
         _isLoading = false;
       });
     }
@@ -371,7 +372,7 @@ class _SetBudgetDialogState extends State<_SetBudgetDialog> {
       setState(() => _suggestionComment = suggestion.comment);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _suggestionComment = 'Öneri alınamadı: $e');
+      setState(() => _suggestionComment = NetworkError.friendlyMessage(e, fallback: 'Öneri alınamadı, lütfen tekrar deneyin.'));
     } finally {
       if (mounted) setState(() => _isLoadingSuggestion = false);
     }
