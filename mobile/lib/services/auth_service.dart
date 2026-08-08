@@ -10,6 +10,20 @@ class AuthService {
   // Bellekte önbelleklenir, ilk okumada secure storage'dan yüklenir
   static String? _token;
 
+  /// Başarısız bir response'un body'sinden hata mesajını çıkarır. Body boş ya
+  /// da JSON olarak ayrıştırılamıyorsa (ör. token mid-session geçersiz kılındığında
+  /// Spring Security'nin döndürdüğü boş 401/403 body'si) ham FormatException
+  /// kullanıcıya sızmaz, [fallback] döner.
+  static String _parseErrorMessage(http.Response response, {String fallback = 'Bilinmeyen hata'}) {
+    if (response.body.isEmpty) return fallback;
+    try {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      return body['error'] as String? ?? fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
   static Future<AuthResult> login(String email, String password) async {
     try {
       final response = await http.post(
@@ -17,14 +31,13 @@ class AuthService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
       if (response.statusCode == 200) {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
         _token = body['token'] as String;
         await _storage.write(key: _tokenKey, value: _token);
         return AuthResult(success: true);
       } else {
-        final error = body['error'] as String? ?? 'Bilinmeyen hata';
-        return AuthResult(success: false, errorMessage: error);
+        return AuthResult(success: false, errorMessage: _parseErrorMessage(response));
       }
     } catch (e) {
       return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
@@ -41,9 +54,7 @@ class AuthService {
       if (response.statusCode == 200) {
         return AuthResult(success: true);
       } else {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
-        final error = body['error'] as String? ?? 'Bilinmeyen hata';
-        return AuthResult(success: false, errorMessage: error);
+        return AuthResult(success: false, errorMessage: _parseErrorMessage(response));
       }
     } catch (e) {
       return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
@@ -111,8 +122,10 @@ class AuthService {
       if (response.statusCode == 200) {
         return AuthResult(success: true);
       } else {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
-        final error = body['error'] as String? ?? 'Bilinmeyen hata';
+        final error = _parseErrorMessage(
+          response,
+          fallback: 'Oturum süresi dolmuş olabilir, lütfen tekrar giriş yap',
+        );
         return AuthResult(success: false, errorMessage: error);
       }
     } catch (e) {
@@ -182,9 +195,7 @@ class AuthService {
       if (response.statusCode == 200) {
         return AuthResult(success: true);
       } else {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
-        final error = body['error'] as String? ?? 'Bilinmeyen hata';
-        return AuthResult(success: false, errorMessage: error);
+        return AuthResult(success: false, errorMessage: _parseErrorMessage(response));
       }
     } catch (e) {
       return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
@@ -209,9 +220,7 @@ class AuthService {
       if (response.statusCode == 200) {
         return AuthResult(success: true);
       } else {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
-        final error = body['error'] as String? ?? 'Bilinmeyen hata';
-        return AuthResult(success: false, errorMessage: error);
+        return AuthResult(success: false, errorMessage: _parseErrorMessage(response));
       }
     } catch (e) {
       return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
@@ -228,9 +237,7 @@ class AuthService {
       if (response.statusCode == 200) {
         return AuthResult(success: true);
       } else {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
-        final error = body['error'] as String? ?? 'Bilinmeyen hata';
-        return AuthResult(success: false, errorMessage: error);
+        return AuthResult(success: false, errorMessage: _parseErrorMessage(response));
       }
     } catch (e) {
       return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
@@ -247,9 +254,7 @@ class AuthService {
       if (response.statusCode == 200) {
         return AuthResult(success: true);
       } else {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
-        final error = body['error'] as String? ?? 'Bilinmeyen hata';
-        return AuthResult(success: false, errorMessage: error);
+        return AuthResult(success: false, errorMessage: _parseErrorMessage(response));
       }
     } catch (e) {
       return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
@@ -273,8 +278,10 @@ class AuthService {
         await logout();
         return AuthResult(success: true);
       } else {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
-        final error = body['error'] as String? ?? 'Bilinmeyen hata';
+        final error = _parseErrorMessage(
+          response,
+          fallback: 'Oturum süresi dolmuş olabilir, lütfen tekrar giriş yap',
+        );
         return AuthResult(success: false, errorMessage: error);
       }
     } catch (e) {
