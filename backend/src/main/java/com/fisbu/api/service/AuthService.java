@@ -161,6 +161,11 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Mevcut şifre hatalı");
         }
 
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Yeni şifre mevcut şifrenizle aynı olamaz");
+        }
+
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         // Şifre değişince eski cihazlardaki/oturumlardaki token'lar anında geçersiz kılınır
         user.setTokenVersion(currentTokenVersion(user) + 1);
@@ -199,6 +204,11 @@ public class AuthService {
                     (user.getResetPasswordAttempts() != null ? user.getResetPasswordAttempts() : 0) + 1);
             userRepository.save(user);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kod geçersiz veya süresi dolmuş");
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Yeni şifre mevcut şifrenizle aynı olamaz");
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));

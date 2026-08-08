@@ -22,5 +22,6 @@ public class ResetPasswordRequest {
     @NotBlank(message = "Yeni şifre boş olamaz")
     @Size(min = 8, message = "Yeni şifre en az 8 karakter olmalıdır")
     @Pattern(regexp = ".*\\d.*", message = "Yeni şifre en az bir rakam içermelidir")
+    @Pattern(regexp = ".*[^a-zA-Z0-9].*", message = "Yeni şifre en az bir özel karakter içermelidir")
     private String newPassword;
 }
