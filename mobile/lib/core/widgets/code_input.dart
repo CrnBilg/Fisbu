@@ -59,6 +59,11 @@ class _CodeInputState extends State<CodeInput> {
               controller: _controllers[index],
               focusNode: _focusNodes[index],
               textAlign: TextAlign.center,
+              // Fiziksel cihazda bazı girilen rakamların bozuk/ters glyph ile render
+              // edildiği gözlemlendi (issue #47) — cihaz bölge/dil ayarı RTL ise BiDi
+              // mirroring bazı karakterleri döndürebiliyor, LTR'yi açıkça zorlamak
+              // buna karşı ucuz bir önlem
+              textDirection: TextDirection.ltr,
               keyboardType: TextInputType.number,
               maxLength: 1,
               autocorrect: false,
@@ -66,9 +71,12 @@ class _CodeInputState extends State<CodeInput> {
               autofillHints: const [AutofillHints.oneTimeCode],
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: const TextStyle(
+                fontFamily: 'Inter',
                 color: Colors.white,
                 fontSize: 20,
-                fontWeight: FontWeight.w700,
+                // w700 yerine w600: issue'nun kendi hipotezi olan bold glyph
+                // distortion'ı düşük riskle test eder, görsel fark ihmal edilebilir
+                fontWeight: FontWeight.w600,
               ),
               decoration: InputDecoration(
                 counterText: '',
