@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/spending_personality.dart';
 import '../services/receipt_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/utils/network_error.dart';
 
 class SpendingPersonalityScreen extends StatefulWidget {
   const SpendingPersonalityScreen({super.key});
@@ -30,7 +31,7 @@ class _SpendingPersonalityScreenState extends State<SpendingPersonalityScreen> {
       final data = await ReceiptService.getSpendingPersonality();
       setState(() => _data = data);
     } catch (e) {
-      setState(() => _errorMessage = 'Alınamadı: $e');
+      setState(() => _errorMessage = NetworkError.friendlyMessage(e, fallback: 'Alınamadı, lütfen tekrar deneyin.'));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

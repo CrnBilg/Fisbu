@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import '../services/receipt_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/utils/network_error.dart';
 import 'import_review_screen.dart';
 
 class ImportStatementScreen extends StatefulWidget {
@@ -51,7 +52,7 @@ class _ImportStatementScreenState extends State<ImportStatementScreen> {
     } catch (e) {
       setState(() {
         _isProcessing = false;
-        _error = 'Hata: $e';
+        _error = NetworkError.friendlyMessage(e, fallback: 'Bir şeyler ters gitti, lütfen tekrar deneyin.');
       });
     }
   }
