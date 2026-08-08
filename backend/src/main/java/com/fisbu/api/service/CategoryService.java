@@ -43,6 +43,7 @@ public class CategoryService {
 
     public CategoryResponse createCategory(String email, CategoryRequest request) {
         User user = getUserByEmail(email);
+        ensureNameNotTaken(user, request.getName(), null);
 
         Category category = new Category();
         category.setUser(user);
@@ -55,11 +56,23 @@ public class CategoryService {
     public CategoryResponse updateCategory(String email, Long categoryId, CategoryRequest request) {
         User user = getUserByEmail(email);
         Category category = getOwnedCategory(user, categoryId);
+        ensureNameNotTaken(user, request.getName(), categoryId);
 
         category.setName(request.getName());
         category.setColor(request.getColor());
 
         return toResponse(categoryRepository.save(category));
+    }
+
+    // Aynı kullanıcı için aynı isimde başka bir kategori var mı kontrol eder (case-insensitive).
+    // DB'deki unique constraint'in son çare olduğu durumlarda da (ör. race condition) ham
+    // DataIntegrityViolationException/500 yerine düzgün bir 409 dönmesini sağlar.
+    private void ensureNameNotTaken(User user, String name, Long excludingCategoryId) {
+        categoryRepository.findByUserAndNameIgnoreCase(user, name).ifPresent(existing -> {
+            if (!existing.getId().equals(excludingCategoryId)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Bu isimde bir kategori zaten var");
+            }
+        });
     }
 
     public void deleteCategory(String email, Long categoryId) {
