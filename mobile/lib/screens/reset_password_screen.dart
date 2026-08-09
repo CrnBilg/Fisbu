@@ -113,7 +113,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    // Bazı fiziksel cihazlarda klavyenin odak kaybında düzgün kapanmadığı
+    // gözlemlendi (issue #48, tekrar üretilemedi) — dışarı dokununca klavyeyi
+    // kapatmak ucuz, zararsız bir sağlamlaştırma
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -295,6 +301,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
