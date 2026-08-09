@@ -61,7 +61,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return AppColors.primary;
   }
 
-  double get _thisMonthTotal {
+  List<Receipt> get _thisMonthReceipts {
     final now = DateTime.now();
     return _receipts.where((r) {
       try {
@@ -70,8 +70,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       } catch (_) {
         return false;
       }
-    }).fold(0.0, (sum, r) => sum + r.totalAmount);
+    }).toList();
   }
+
+  double get _thisMonthTotal =>
+      _thisMonthReceipts.fold(0.0, (sum, r) => sum + r.totalAmount);
 
   List<Receipt> get _recentReceipts {
     final sorted = List<Receipt>.from(_receipts)
@@ -80,9 +83,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   String? get _topCategory {
-    if (_receipts.isEmpty) return null;
+    final receipts = _thisMonthReceipts;
+    if (receipts.isEmpty) return null;
     final Map<String, double> categoryTotals = {};
-    for (final receipt in _receipts) {
+    for (final receipt in receipts) {
       final category = receipt.categoryName ?? 'Kategorisiz';
       categoryTotals[category] = (categoryTotals[category] ?? 0) + receipt.totalAmount;
     }
@@ -92,7 +96,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   double _categoryTotal(String categoryName) {
-    return _receipts
+    return _thisMonthReceipts
         .where((r) => (r.categoryName ?? 'Kategorisiz') == categoryName)
         .fold(0.0, (sum, r) => sum + r.totalAmount);
   }
