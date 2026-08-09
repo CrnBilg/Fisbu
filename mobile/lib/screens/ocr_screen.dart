@@ -27,6 +27,14 @@ class _OcrScreenState extends State<OcrScreen> {
   bool _isProcessing = false;
   bool _hasText = false;
 
+  // Tek başına bulunan bir mağaza adı (ör. OCR gürültüsünden yanlışlıkla
+  // türetilmiş bir kelime) fiş olduğunu kanıtlamaz — en az 2 alan bulunmalı
+  bool get _looksLikeReceipt =>
+      [_extractedStoreName, _extractedAmount, _extractedDate]
+          .where((f) => f != null)
+          .length >=
+      2;
+
   bool _isRestoring = false;
   RestoreReceiptResult? _aiResult;
   String? _aiError;
@@ -283,9 +291,7 @@ class _OcrScreenState extends State<OcrScreen> {
                   ],
                 ),
               ),
-            if (_extractedStoreName != null ||
-                _extractedAmount != null ||
-                _extractedDate != null)
+            if (_looksLikeReceipt)
               Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(16),
@@ -322,6 +328,33 @@ class _OcrScreenState extends State<OcrScreen> {
                       _buildExtractedRow('Tutar', '$_extractedAmount TL'),
                     if (_extractedDate != null)
                       _buildExtractedRow('Tarih', _extractedDate!),
+                  ],
+                ),
+              )
+            else if (!_isProcessing && _hasText)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.warningDim,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+                ),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.receipt_long_outlined, color: AppColors.warning, size: 18),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Bu bir fiş gibi görünmüyor. Fişin tamamının net göründüğü bir fotoğraf çekmeyi dene, ya da bilgileri formdan elle gir.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.warning,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
