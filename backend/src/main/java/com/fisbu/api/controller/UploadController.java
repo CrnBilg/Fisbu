@@ -22,10 +22,6 @@ import com.cloudinary.utils.ObjectUtils;
 @RequestMapping("/receipts")
 public class UploadController {
 
-    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
-            "image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"
-    );
-
     private static final Set<String> HEIC_BRANDS = Set.of(
             "heic", "heix", "hevc", "hevx", "mif1", "msf1", "heim", "heis", "hevm", "hevs"
     );
@@ -52,15 +48,13 @@ public class UploadController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dosya okunamadı");
         }
 
-        // Mobil taraftaki Content-Type tahmini bazı galeri/kamera kaynaklarında
-        // güvenilir olmayabiliyor (ör. eksik uzantılı content-URI'ler yanlışlıkla
-        // image/jpeg olarak gönderilebiliyor ya da hiç tespit edilemeyebiliyor).
-        // Bildirilen tip listede yoksa dosyanın ilk baytlarından (magic number)
-        // gerçek formatı da kontrol ederek gereksiz 400'leri önlüyoruz.
-        String contentType = file.getContentType();
-        boolean declaredTypeAllowed = contentType != null
-                && ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase());
-        if (!declaredTypeAllowed && detectImageContentType(bytes) == null) {
+        // Mobil taraftaki bildirilen Content-Type'a güvenilmiyor: uzantı tabanlı
+        // tahmin (ör. .txt uzantısı .jpg yapılıp yollanabiliyor) ya da tespit
+        // edilemediğinde düşülen sabit varsayılan, bildirilen tipi kolayca
+        // ALLOWED_CONTENT_TYPES'a uydurabiliyor. Bu yüzden gerçek format tek
+        // doğruluk kaynağı olarak dosyanın ilk baytlarından (magic number)
+        // belirleniyor; bildirilen tip ne olursa olsun bu kontrol atlanmıyor.
+        if (detectImageContentType(bytes) == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sadece resim dosyaları yüklenebilir");
         }
 
