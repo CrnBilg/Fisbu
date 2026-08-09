@@ -54,7 +54,7 @@ class _CodeInputState extends State<CodeInput> {
         children: List.generate(widget.length, (index) {
           return SizedBox(
             width: 46,
-            height: 56,
+            height: 52,
             child: TextField(
               controller: _controllers[index],
               focusNode: _focusNodes[index],
@@ -68,34 +68,23 @@ class _CodeInputState extends State<CodeInput> {
               maxLength: 1,
               autocorrect: false,
               enableSuggestions: false,
-              autofillHints: const [AutofillHints.oneTimeCode],
+              // AutofillHints.oneTimeCode kaldırıldı (issue #47 best-effort denemesi) —
+              // bu widget'a özgü, uygulamanın başka hiçbir yerinde olmayan bir mekanizma;
+              // SMS otomatik doldurma regresyon riski var, test planında ayrıca doğrulanmalı
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: const TextStyle(
                 fontFamily: 'Inter',
                 color: Colors.white,
-                fontSize: 20,
-                // w700 yerine w600: issue'nun kendi hipotezi olan bold glyph
-                // distortion'ı düşük riskle test eder, görsel fark ihmal edilebilir
-                fontWeight: FontWeight.w600,
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
               ),
               decoration: InputDecoration(
                 counterText: '',
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.07),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white.withOpacity(0.25), width: 1.5),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: AppColors.primary.withOpacity(0.6),
-                    width: 1.5,
-                  ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: AppColors.primary, width: 2),
                 ),
               ),
               onChanged: (value) => _handleChanged(index, value),
