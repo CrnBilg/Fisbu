@@ -78,10 +78,17 @@ class _CategorySearchSheetState extends State<_CategorySearchSheet> {
             .where((c) => c.name.toLowerCase().contains(_query.toLowerCase()))
             .toList();
 
+    final media = MediaQuery.of(context);
+    // Klavye açıkken (arama kutusu autofocus) sabit %70 yükseklik + klavye
+    // yüksekliği üst üste binip sheet'i ekran dışına taşırabiliyordu — yükseklik
+    // artık klavye sonrası kalan görünür alana göre üst sınırlanıyor.
+    final availableHeight = media.size.height - media.viewInsets.bottom - media.padding.top;
+    final sheetHeight = (media.size.height * 0.7).clamp(0.0, availableHeight * 0.92);
+
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
       child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.7,
+        height: sheetHeight,
         child: Column(
           children: [
             const SizedBox(height: 12),
