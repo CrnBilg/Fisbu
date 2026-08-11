@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/receipt.dart';
+import '../models/receipt_item.dart';
 import '../services/receipt_service.dart';
 import 'package:intl/intl.dart';
 import '../core/utils/date_formatter.dart';
@@ -329,6 +330,12 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                 ],
               ),
             ),
+
+            // Ürünler (opsiyonel eklenmişse)
+            if (receipt.items.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              _buildItemsCard(receipt.items),
+            ],
             const SizedBox(height: 24),
 
             // Fiş fotoğrafı (varsa göster)
@@ -581,6 +588,66 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildItemsCard(List<ReceiptItem> items) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surf(context),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.brd(context)),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: Row(
+              children: [
+                Text('Ürünler',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.txt(context))),
+              ],
+            ),
+          ),
+          for (int i = 0; i < items.length; i++)
+            _buildItemRow(items[i], isLast: i == items.length - 1),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemRow(ReceiptItem item, {bool isLast = false}) {
+    final qty = item.quantity == item.quantity.roundToDouble()
+        ? item.quantity.toStringAsFixed(0)
+        : item.quantity.toStringAsFixed(2);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        border: isLast
+            ? null
+            : Border(bottom: BorderSide(color: AppColors.brd(context))),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text('${item.productName} × $qty',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.txt(context),
+                    fontWeight: FontWeight.w500)),
+          ),
+          Text('${_currencyFormat.format(item.unitPrice * item.quantity)} TL',
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.txt(context))),
+        ],
       ),
     );
   }
