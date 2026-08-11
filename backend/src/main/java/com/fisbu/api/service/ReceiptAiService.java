@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -190,8 +191,20 @@ public class ReceiptAiService {
         if (suggestedCategoryName == null) {
             return null;
         }
+        String needle = suggestedCategoryName.trim();
+
+        Optional<Category> exact = categories.stream()
+                .filter(c -> c.getName().equalsIgnoreCase(needle))
+                .findFirst();
+        if (exact.isPresent()) {
+            return exact.get().getId();
+        }
+
+        // AI'nin önerdiği isim ("Restoranlar" gibi) kategori adından ufak bir
+        // varyasyonla ayrılırsa fiş sessizce kategorisiz kalmasın diye eşleştir.
         return categories.stream()
-                .filter(c -> c.getName().equalsIgnoreCase(suggestedCategoryName))
+                .filter(c -> c.getName().toLowerCase().contains(needle.toLowerCase())
+                        || needle.toLowerCase().contains(c.getName().toLowerCase()))
                 .findFirst()
                 .map(Category::getId)
                 .orElse(null);
