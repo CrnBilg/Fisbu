@@ -3,6 +3,7 @@ import '../models/restore_receipt_result.dart';
 import '../models/category.dart';
 import '../services/receipt_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/widgets/category_picker.dart';
 import 'add_receipt_screen.dart';
 
 /// AI restorasyonu düşük güven skoruyla döndüğünde, tüm alanları tek formda
@@ -194,20 +195,12 @@ class _ReceiptVerificationScreenState extends State<ReceiptVerificationScreen> {
         return _buildFieldStep(
           title: 'Kategori uygun mu?',
           subtitle: '"${_storeController.text}" mağazasından daha önceki fişlerine bakarak öneriyorum',
-          child: _isLoadingCategories || _isLoadingSuggestion
-              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-              : DropdownButtonFormField<Category>(
-                  initialValue: _selectedCategory,
-                  decoration: InputDecoration(
-                    labelText: 'Kategori',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  hint: const Text('Kategori seç (opsiyonel)'),
-                  items: _categories
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))
-                      .toList(),
-                  onChanged: (value) => setState(() => _selectedCategory = value),
-                ),
+          child: CategoryPicker(
+            categories: _categories,
+            value: _selectedCategory,
+            isLoading: _isLoadingCategories || _isLoadingSuggestion,
+            onChanged: (value) => setState(() => _selectedCategory = value),
+          ),
           onNext: _finish,
           isLast: true,
         );
