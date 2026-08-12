@@ -57,9 +57,13 @@ class _CodeInputState extends State<CodeInput> {
           return SizedBox(
             width: 40,
             height: 56,
-            // Tire her zaman sabit bir alt katman olarak çiziliyor (hintText'e
-            // güvenmiyoruz — bazı kutularda hiç görünmüyordu). Rakam onun
-            // üzerine, aynı Stack içinde ortalanmış şekilde biniyor.
+            // iOS'ta fiziksel cihazda TextField'ın KENDİ native metin render'ı
+            // bozuk glyph gösteriyordu (bkz. Apple Developer Forums'ta bilinen
+            // Variation Selector-15 render hatası, iOS 18.1.1). Çözüm: TextField'ın
+            // görünen metnini şeffaf yapıp gerçek rakamı Flutter'ın kendi (Skia)
+            // render motoruyla ayrı bir Text widget'ında üstüne bindiriyoruz —
+            // input/klavye/focus mantığı aynen TextField üzerinden çalışıyor,
+            // sadece görünen glyph artık iOS'un native metin katmanından geçmiyor.
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -71,6 +75,23 @@ class _CodeInputState extends State<CodeInput> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _controllers[index],
+                  builder: (context, value, _) {
+                    if (value.text.isEmpty) return const SizedBox.shrink();
+                    return IgnorePointer(
+                      child: Text(
+                        value.text,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    );
+                  },
+                ),
                 TextField(
                   controller: _controllers[index],
                   focusNode: _focusNodes[index],
@@ -81,9 +102,10 @@ class _CodeInputState extends State<CodeInput> {
                   autocorrect: false,
                   enableSuggestions: false,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  // Gerçek glyph artık yukarıdaki Text widget'ından görünüyor —
+                  // TextField'ın kendi metni şeffaf, sadece imleç görünür kalıyor.
                   style: const TextStyle(
-                    fontFamily: 'Inter',
-                    color: Colors.white,
+                    color: Colors.transparent,
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
                   ),
