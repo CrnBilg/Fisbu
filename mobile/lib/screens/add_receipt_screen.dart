@@ -259,6 +259,17 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
       return;
     }
 
+    final items = _collectItems();
+    final itemsTotal = _itemsTotal(items);
+    if (itemsTotal > amount + 0.01) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+          'Ürünlerin toplamı (${itemsTotal.toStringAsFixed(2)} TL) tutardan (${amount.toStringAsFixed(2)} TL) fazla olamaz',
+        ),
+      ));
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -268,7 +279,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
         receiptDate: _formatDate(_selectedDate!),
         categoryId: _selectedCategory?.id,
         image: _selectedImage,
-        items: _collectItems(),
+        items: items,
         allowDuplicate: allowDuplicate,
       );
 
@@ -411,6 +422,10 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
     return items;
   }
 
+  double _itemsTotal(List<ReceiptItem> items) {
+    return items.fold(0.0, (sum, item) => sum + item.unitPrice * item.quantity);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -510,6 +525,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
+              onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 labelText: 'Tutar (TL)',
                 prefixIcon: const Icon(Icons.payments_outlined),
@@ -644,6 +660,18 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                 'Ürün eklersen zamanla fiyat değişimini takip edebilirsin.',
                 style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
+            Builder(builder: (context) {
+              final amount = double.tryParse(_amountController.text.trim().replaceAll(',', '.'));
+              final itemsTotal = _itemsTotal(_collectItems());
+              if (amount == null || itemsTotal <= amount + 0.01) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Ürünlerin toplamı (${itemsTotal.toStringAsFixed(2)} TL) tutardan (${amount.toStringAsFixed(2)} TL) fazla olamaz',
+                  style: TextStyle(fontSize: 12, color: AppColors.error, fontWeight: FontWeight.w600),
+                ),
+              );
+            }),
             ..._itemRows.asMap().entries.map((entry) {
               final index = entry.key;
               final row = entry.value;
@@ -673,6 +701,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                       child: TextField(
                         controller: row.priceController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
                           labelText: 'Fiyat',
                           isDense: true,
@@ -690,6 +719,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                       child: TextField(
                         controller: row.qtyController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
                           labelText: 'Adet',
                           isDense: true,
