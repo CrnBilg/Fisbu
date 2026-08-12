@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../theme/app_colors.dart';
 
 /// 6 haneli (varsayılan) tek haneli kutulardan oluşan kod giriş widget'ı.
 /// E-posta doğrulama ve şifre sıfırlama ekranlarında ortak kullanılır.
@@ -48,8 +47,11 @@ class _CodeInputState extends State<CodeInput> {
 
   @override
   Widget build(BuildContext context) {
-    return AutofillGroup(
-      child: Row(
+    // AutofillGroup kaldırıldı — SMS autofill zaten devre dışıydı (autofillHints
+    // kaldırılmıştı), ama grup sarmalayıcının kendisi iOS'a bunun tek bir
+    // doğrulama kodu formu olduğunu işaretleyip kendi (bozuk) render/overlay
+    // mekanizmasını tetikliyor olabilir.
+    return Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: List.generate(widget.length, (index) {
           return SizedBox(
@@ -99,7 +101,6 @@ class _CodeInputState extends State<CodeInput> {
             ),
           );
         }),
-      ),
     );
   }
 }
