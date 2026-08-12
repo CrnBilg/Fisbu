@@ -55,38 +55,47 @@ class _CodeInputState extends State<CodeInput> {
           return SizedBox(
             width: 40,
             height: 56,
-            child: TextField(
-              controller: _controllers[index],
-              focusNode: _focusNodes[index],
-              textAlign: TextAlign.center,
-              textDirection: TextDirection.ltr,
-              keyboardType: TextInputType.number,
-              maxLength: 1,
-              autocorrect: false,
-              enableSuggestions: false,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-              ),
-              // Kutu/çerçeve tasarımı tamamen kaldırıldı — boşken tire ("-")
-              // placeholder'ı gösteriliyor, dolunca rakam onun yerini alıyor.
-              decoration: InputDecoration(
-                counterText: '',
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                isCollapsed: true,
-                hintText: '-',
-                hintStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.35),
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
+            // Tire her zaman sabit bir alt katman olarak çiziliyor (hintText'e
+            // güvenmiyoruz — bazı kutularda hiç görünmüyordu). Rakam onun
+            // üzerine, aynı Stack içinde ortalanmış şekilde biniyor.
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Text(
+                  '-',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.35),
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              onChanged: (value) => _handleChanged(index, value),
+                TextField(
+                  controller: _controllers[index],
+                  focusNode: _focusNodes[index],
+                  textAlign: TextAlign.center,
+                  textDirection: TextDirection.ltr,
+                  keyboardType: TextInputType.number,
+                  maxLength: 1,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  decoration: const InputDecoration(
+                    counterText: '',
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    isCollapsed: true,
+                    filled: false,
+                  ),
+                  onChanged: (value) => _handleChanged(index, value),
+                ),
+              ],
             ),
           );
         }),
