@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../theme/app_colors.dart';
 
 /// 6 haneli (varsayılan) tek haneli kutulardan oluşan kod giriş widget'ı.
 /// E-posta doğrulama ve şifre sıfırlama ekranlarında ortak kullanılır.
@@ -48,53 +47,82 @@ class _CodeInputState extends State<CodeInput> {
 
   @override
   Widget build(BuildContext context) {
-    return AutofillGroup(
-      child: Row(
+    // AutofillGroup kaldırıldı — SMS autofill zaten devre dışıydı (autofillHints
+    // kaldırılmıştı), ama grup sarmalayıcının kendisi iOS'a bunun tek bir
+    // doğrulama kodu formu olduğunu işaretleyip kendi (bozuk) render/overlay
+    // mekanizmasını tetikliyor olabilir.
+    return Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: List.generate(widget.length, (index) {
           return SizedBox(
-            width: 46,
+            width: 40,
             height: 56,
-            child: TextField(
-              controller: _controllers[index],
-              focusNode: _focusNodes[index],
-              textAlign: TextAlign.center,
-              keyboardType: TextInputType.number,
-              maxLength: 1,
-              autocorrect: false,
-              enableSuggestions: false,
-              autofillHints: const [AutofillHints.oneTimeCode],
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-              decoration: InputDecoration(
-                counterText: '',
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.07),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: AppColors.primary.withOpacity(0.6),
-                    width: 1.5,
+            // iOS'ta fiziksel cihazda TextField'ın KENDİ native metin render'ı
+            // bozuk glyph gösteriyordu (bkz. Apple Developer Forums'ta bilinen
+            // Variation Selector-15 render hatası, iOS 18.1.1). Çözüm: TextField'ın
+            // görünen metnini şeffaf yapıp gerçek rakamı Flutter'ın kendi (Skia)
+            // render motoruyla ayrı bir Text widget'ında üstüne bindiriyoruz —
+            // input/klavye/focus mantığı aynen TextField üzerinden çalışıyor,
+            // sadece görünen glyph artık iOS'un native metin katmanından geçmiyor.
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Text(
+                  '-',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.35),
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ),
-              onChanged: (value) => _handleChanged(index, value),
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _controllers[index],
+                  builder: (context, value, _) {
+                    if (value.text.isEmpty) return const SizedBox.shrink();
+                    return IgnorePointer(
+                      child: Text(
+                        value.text,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                TextField(
+                  controller: _controllers[index],
+                  focusNode: _focusNodes[index],
+                  textAlign: TextAlign.center,
+                  textDirection: TextDirection.ltr,
+                  keyboardType: TextInputType.number,
+                  maxLength: 1,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  // Gerçek glyph artık yukarıdaki Text widget'ından görünüyor —
+                  // TextField'ın kendi metni şeffaf, sadece imleç görünür kalıyor.
+                  style: const TextStyle(
+                    color: Colors.transparent,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  decoration: const InputDecoration(
+                    counterText: '',
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    isCollapsed: true,
+                    filled: false,
+                  ),
+                  onChanged: (value) => _handleChanged(index, value),
+                ),
+              ],
             ),
           );
         }),
-      ),
     );
   }
 }
