@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/category.dart';
 import '../services/receipt_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/utils/network_error.dart';
 
 const _categoryColorOptions = [
   AppColors.primary,
@@ -58,7 +59,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Kategoriler yüklenemedi: $e';
+        _errorMessage = NetworkError.friendlyMessage(e, fallback: 'Kategoriler yüklenemedi, lütfen tekrar deneyin.');
         _isLoading = false;
       });
     }

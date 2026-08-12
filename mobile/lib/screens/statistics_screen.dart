@@ -8,6 +8,7 @@ import '../models/store_stat.dart';
 import '../models/top_product.dart';
 import '../models/subscription_candidate.dart';
 import '../core/widgets/offline_banner.dart';
+import '../core/utils/network_error.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -71,7 +72,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       final subscriptions = await ReceiptService.getPotentialSubscriptions();
       setState(() => _subscriptions = subscriptions);
     } catch (e) {
-      setState(() => _subscriptionsError = 'Olası abonelikler alınamadı: $e');
+      setState(() => _subscriptionsError = NetworkError.friendlyMessage(e, fallback: 'Olası abonelikler alınamadı, lütfen tekrar deneyin.'));
     } finally {
       if (mounted) setState(() => _isLoadingSubscriptions = false);
     }
@@ -86,7 +87,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       final stats = await ReceiptService.getStoreStatistics();
       setState(() => _storeStats = stats);
     } catch (e) {
-      setState(() => _storeStatsError = 'Mağaza istatistikleri alınamadı: $e');
+      setState(() => _storeStatsError = NetworkError.friendlyMessage(e, fallback: 'Mağaza istatistikleri alınamadı, lütfen tekrar deneyin.'));
     } finally {
       if (mounted) setState(() => _isLoadingStoreStats = false);
     }
@@ -101,7 +102,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       final products = await ReceiptService.getTopProducts();
       setState(() => _topProducts = products);
     } catch (e) {
-      setState(() => _topProductsError = 'En çok alınan ürünler alınamadı: $e');
+      setState(() => _topProductsError = NetworkError.friendlyMessage(e, fallback: 'En çok alınan ürünler alınamadı, lütfen tekrar deneyin.'));
     } finally {
       if (mounted) setState(() => _isLoadingTopProducts = false);
     }
@@ -116,7 +117,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       final summary = await ReceiptService.getInflationSummary(months: 3);
       setState(() => _inflationSummary = summary);
     } catch (e) {
-      setState(() => _inflationError = 'Enflasyon özeti alınamadı: $e');
+      setState(() => _inflationError = NetworkError.friendlyMessage(e, fallback: 'Enflasyon özeti alınamadı, lütfen tekrar deneyin.'));
     } finally {
       if (mounted) setState(() => _isLoadingInflation = false);
     }
@@ -201,7 +202,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       );
       setState(() => _aiAnalysis = result);
     } catch (e) {
-      setState(() => _aiCommentError = 'AI yorumu alınamadı: $e');
+      setState(() => _aiCommentError = NetworkError.friendlyMessage(e, fallback: 'AI yorumu alınamadı, lütfen tekrar deneyin.'));
     } finally {
       if (mounted) setState(() => _isLoadingAiComment = false);
     }

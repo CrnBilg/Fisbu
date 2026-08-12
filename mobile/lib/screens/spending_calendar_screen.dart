@@ -6,6 +6,7 @@ import '../services/receipt_service.dart';
 import '../core/theme/app_colors.dart';
 import '../core/utils/category_helper.dart';
 import '../core/utils/date_formatter.dart';
+import '../core/utils/network_error.dart';
 import 'receipt_detail_screen.dart';
 
 class SpendingCalendarScreen extends StatefulWidget {
@@ -54,7 +55,7 @@ class _SpendingCalendarScreenState extends State<SpendingCalendarScreen> {
         _maxDaySpend = totalByDay.values.isEmpty ? 0 : totalByDay.values.reduce((a, b) => a > b ? a : b);
       });
     } catch (e) {
-      setState(() => _errorMessage = 'Fişler alınamadı: $e');
+      setState(() => _errorMessage = NetworkError.friendlyMessage(e, fallback: 'Fişler alınamadı, lütfen tekrar deneyin.'));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

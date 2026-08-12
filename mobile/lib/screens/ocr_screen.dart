@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'add_receipt_screen.dart';
 import 'receipt_verification_screen.dart';
 import '../core/theme/app_colors.dart';
+import '../core/utils/network_error.dart';
 
 class OcrScreen extends StatefulWidget {
   const OcrScreen({super.key});
@@ -111,7 +112,7 @@ class _OcrScreenState extends State<OcrScreen> {
       });
     } catch (e) {
       setState(() {
-        _recognizedText = 'Hata oluştu: $e';
+        _recognizedText = NetworkError.friendlyMessage(e, fallback: 'Metin tanıma başarısız oldu, lütfen tekrar deneyin.');
         _isProcessing = false;
       });
     }
@@ -128,7 +129,7 @@ class _OcrScreenState extends State<OcrScreen> {
       final result = await ReceiptService.restoreReceipt(_recognizedText);
       setState(() => _aiResult = result);
     } catch (e) {
-      setState(() => _aiError = 'AI restorasyonu başarısız oldu: $e');
+      setState(() => _aiError = NetworkError.friendlyMessage(e, fallback: 'AI restorasyonu başarısız oldu, lütfen tekrar deneyin.'));
     } finally {
       if (mounted) setState(() => _isRestoring = false);
     }
