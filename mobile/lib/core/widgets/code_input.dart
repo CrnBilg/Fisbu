@@ -53,42 +53,37 @@ class _CodeInputState extends State<CodeInput> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: List.generate(widget.length, (index) {
           return SizedBox(
-            width: 46,
-            // fontSize 26'ya çıkarılırken yükseklik 56'dan 52'ye düşürülmüştü —
-            // fiziksel cihazda görülen "bozuk glyph" görüntüsü aslında rakamın üstten/
-            // alttan kırpılması olabilir (kutu, büyütülen fontu sığdıramıyor).
-            // Yükseklik artırıldı, tekrar cihazda doğrulanmalı.
-            height: 64,
+            width: 40,
+            height: 56,
             child: TextField(
               controller: _controllers[index],
               focusNode: _focusNodes[index],
               textAlign: TextAlign.center,
-              // Fiziksel cihazda bazı girilen rakamların bozuk/ters glyph ile render
-              // edildiği gözlemlendi (issue #47) — cihaz bölge/dil ayarı RTL ise BiDi
-              // mirroring bazı karakterleri döndürebiliyor, LTR'yi açıkça zorlamak
-              // buna karşı ucuz bir önlem
               textDirection: TextDirection.ltr,
               keyboardType: TextInputType.number,
               maxLength: 1,
               autocorrect: false,
               enableSuggestions: false,
-              // AutofillHints.oneTimeCode kaldırıldı (issue #47 best-effort denemesi) —
-              // bu widget'a özgü, uygulamanın başka hiçbir yerinde olmayan bir mekanizma;
-              // SMS otomatik doldurma regresyon riski var, test planında ayrıca doğrulanmalı
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: const TextStyle(
                 fontFamily: 'Inter',
                 color: Colors.white,
-                fontSize: 26,
+                fontSize: 22,
                 fontWeight: FontWeight.w700,
               ),
+              // Kutu/çerçeve tasarımı tamamen kaldırıldı — boşken tire ("-")
+              // placeholder'ı gösteriliyor, dolunca rakam onun yerini alıyor.
               decoration: InputDecoration(
                 counterText: '',
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.25), width: 1.5),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: AppColors.primary, width: 2),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                isCollapsed: true,
+                hintText: '-',
+                hintStyle: TextStyle(
+                  color: Colors.white.withOpacity(0.35),
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               onChanged: (value) => _handleChanged(index, value),
