@@ -54,7 +54,11 @@ class _CodeInputState extends State<CodeInput> {
         children: List.generate(widget.length, (index) {
           return SizedBox(
             width: 46,
-            height: 52,
+            // fontSize 26'ya çıkarılırken yükseklik 56'dan 52'ye düşürülmüştü —
+            // fiziksel cihazda görülen "bozuk glyph" görüntüsü aslında rakamın üstten/
+            // alttan kırpılması olabilir (kutu, büyütülen fontu sığdıramıyor).
+            // Yükseklik artırıldı, tekrar cihazda doğrulanmalı.
+            height: 64,
             child: TextField(
               controller: _controllers[index],
               focusNode: _focusNodes[index],
