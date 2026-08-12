@@ -172,10 +172,12 @@ public class BudgetService {
     }
 
     /**
-     * Son 3 ayın ortalama harcamasına göre bu kategori için bir bütçe önerisi üretir.
-     * Öneri tutarı deterministik hesaplanır (AI'a bırakılmaz, hatalı/tutarsız rakam riskini önler);
-     * AI sadece bu rakamı açıklayan kısa bir not yazmak için kullanılır ve o adım başarısız olursa
-     * (Groq yapılandırılmamış/kesinti) sabit bir metne düşülür, öneri yine de döner.
+     * Son 3 ayda harcama olan ayların ortalamasına göre bu kategori için bir bütçe önerisi üretir
+     * (3 aydan biri hiç harcama içermiyorsa ortalama sadece veri olan aylara bölünür, aksi halde
+     * ortalama olması gerekenden düşük çıkar). Öneri tutarı deterministik hesaplanır (AI'a bırakılmaz,
+     * hatalı/tutarsız rakam riskini önler); AI sadece bu rakamı açıklayan kısa bir not yazmak için
+     * kullanılır ve o adım başarısız olursa (Groq yapılandırılmamış/kesinti) sabit bir metne düşülür,
+     * öneri yine de döner.
      */
     public BudgetSuggestionResponse getBudgetSuggestion(String email, Long categoryId, Integer year, Integer month) {
         User user = getUserByEmail(email);
@@ -208,7 +210,7 @@ public class BudgetService {
             return response;
         }
 
-        BigDecimal average = total.divide(BigDecimal.valueOf(SUGGESTION_LOOKBACK_MONTHS), 2, RoundingMode.HALF_UP);
+        BigDecimal average = total.divide(BigDecimal.valueOf(monthsWithData), 2, RoundingMode.HALF_UP);
         BigDecimal suggestedLimit = average
                 .divide(ROUNDING_STEP, 0, RoundingMode.UP)
                 .multiply(ROUNDING_STEP);
