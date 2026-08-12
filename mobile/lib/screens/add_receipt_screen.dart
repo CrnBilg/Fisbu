@@ -7,6 +7,7 @@ import '../services/receipt_service.dart';
 import '../models/category.dart';
 import '../models/receipt_item.dart';
 import '../core/theme/app_colors.dart';
+import '../core/widgets/category_picker.dart';
 
 class _ItemRow {
   final TextEditingController nameController;
@@ -604,35 +605,17 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
               ),
 
             // Kategori seçici
-            _isCategoriesLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
-                  )
-                : DropdownButtonFormField<Category>(
-                    value: _selectedCategory,
-                    decoration: InputDecoration(
-                      labelText: 'Kategori',
-                      prefixIcon: const Icon(Icons.category_outlined),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      filled: true,
-                      fillColor: AppColors.surf(context),
-                    ),
-                    hint: Text('Kategori seç'),
-                    items: _categories.map((category) {
-                      return DropdownMenuItem(
-                        value: category,
-                        child: Text(category.name),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCategory = value;
-                        _categorySuggestion = null;
-                      });
-                    },
-                  ),
+            CategoryPicker(
+              categories: _categories,
+              value: _selectedCategory,
+              isLoading: _isCategoriesLoading,
+              onChanged: (value) {
+                setState(() {
+                  _selectedCategory = value;
+                  _categorySuggestion = null;
+                });
+              },
+            ),
             const SizedBox(height: 24),
 
             // Ürünler (opsiyonel) — kişisel enflasyon takibi için satır kalemleri
