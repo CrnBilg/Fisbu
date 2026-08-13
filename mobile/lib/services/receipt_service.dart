@@ -22,7 +22,7 @@ import '../models/imported_transaction.dart';
 import '../models/parsed_statement_result.dart';
 import '../models/bulk_import_result.dart';
 import '../models/split_participant.dart';
-import 'auth_service.dart';
+import 'api_client.dart';
 import 'local_cache_service.dart';
 import 'pending_receipt_queue.dart';
 
@@ -33,19 +33,13 @@ class DuplicateReceiptException implements Exception {
 }
 
 class ReceiptService {
-  static const String _baseUrl = 'https://fisbu-production-613c.up.railway.app';
-
   static bool _isNetworkFailure(Object e) {
     return e is SocketException || e is http.ClientException;
   }
 
   static Future<List<Receipt>> getReceipts() async {
     try {
-      final token = await AuthService.getToken();
-      final response = await http.get(
-        Uri.parse('$_baseUrl/receipts'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
+      final response = await ApiClient.get('/receipts');
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         await LocalCacheService.put(LocalCacheService.receiptsBox, 'all', data);
@@ -76,7 +70,6 @@ class ReceiptService {
     int page = 0,
     int size = 20,
   }) async {
-    final token = await AuthService.getToken();
     final params = <String, String>{
       'page': '$page',
       'size': '$size',
@@ -88,8 +81,7 @@ class ReceiptService {
       params['categoryId'] = '$categoryId';
     }
 
-    final uri = Uri.parse('$_baseUrl/receipts/search').replace(queryParameters: params);
-    final response = await http.get(uri, headers: {'Authorization': 'Bearer $token'});
+    final response = await ApiClient.get('/receipts/search', query: params);
     if (response.statusCode == 200) {
       return ReceiptPage.fromJson(jsonDecode(response.body));
     } else {
@@ -168,26 +160,17 @@ class ReceiptService {
     String? returnDeadline,
     String? warrantyExpiryDate,
   }) async {
-    final token = await AuthService.getToken();
-    final response = await http.post(
-      Uri.parse('$_baseUrl/receipts'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'storeName': storeName,
-        'totalAmount': totalAmount,
-        'receiptDate': receiptDate,
-        'categoryId': categoryId,
-        'imageUrl': imageUrl,
-        'allowDuplicate': allowDuplicate,
-        'returnDeadline': returnDeadline,
-        'warrantyExpiryDate': warrantyExpiryDate,
-        if (items != null && items.isNotEmpty)
-          'items': items.map((e) => e.toJson()).toList(),
-      }),
-    );
+    final response = await ApiClient.post('/receipts', body: {
+      'storeName': storeName,
+      'totalAmount': totalAmount,
+      'receiptDate': receiptDate,
+      'categoryId': categoryId,
+      'imageUrl': imageUrl,
+      'allowDuplicate': allowDuplicate,
+      'returnDeadline': returnDeadline,
+      'warrantyExpiryDate': warrantyExpiryDate,
+      if (items != null && items.isNotEmpty) 'items': items.map((e) => e.toJson()).toList(),
+    });
     if (response.statusCode == 201) {
       return Receipt.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 409) {
@@ -206,17 +189,9 @@ class ReceiptService {
   }
 
   static Future<Receipt> saveSplit(int receiptId, List<SplitParticipant> participants) async {
-    final token = await AuthService.getToken();
-    final response = await http.put(
-      Uri.parse('$_baseUrl/receipts/$receiptId/split'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'participants': participants.map((e) => e.toJson()).toList(),
-      }),
-    );
+    final response = await ApiClient.put('/receipts/$receiptId/split', body: {
+      'participants': participants.map((e) => e.toJson()).toList(),
+    });
     if (response.statusCode == 200) {
       return Receipt.fromJson(jsonDecode(response.body));
     } else {
@@ -227,18 +202,10 @@ class ReceiptService {
   /// Garanti/iade hatırlatıcı tarihlerini fiş eklendikten sonra kurar/günceller.
   /// null gönderilen alan temizlenir (hatırlatma kaldırılır).
   static Future<Receipt> setReminders(int receiptId, {String? returnDeadline, String? warrantyExpiryDate}) async {
-    final token = await AuthService.getToken();
-    final response = await http.put(
-      Uri.parse('$_baseUrl/receipts/$receiptId/reminders'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'returnDeadline': returnDeadline,
-        'warrantyExpiryDate': warrantyExpiryDate,
-      }),
-    );
+    final response = await ApiClient.put('/receipts/$receiptId/reminders', body: {
+      'returnDeadline': returnDeadline,
+      'warrantyExpiryDate': warrantyExpiryDate,
+    });
     if (response.statusCode == 200) {
       return Receipt.fromJson(jsonDecode(response.body));
     } else {
@@ -247,11 +214,7 @@ class ReceiptService {
   }
 
   static Future<void> deleteReceipt(int id) async {
-    final token = await AuthService.getToken();
-    final response = await http.delete(
-      Uri.parse('$_baseUrl/receipts/$id'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await ApiClient.delete('/receipts/$id');
     if (response.statusCode != 204) {
       throw Exception('Fiş silinemedi: ${response.statusCode}');
     }
@@ -259,11 +222,7 @@ class ReceiptService {
 
   static Future<List<Category>> getCategories() async {
     try {
-      final token = await AuthService.getToken();
-      final response = await http.get(
-        Uri.parse('$_baseUrl/categories'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
+      final response = await ApiClient.get('/categories');
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         await LocalCacheService.put(LocalCacheService.categoriesBox, 'all', data);
@@ -287,10 +246,8 @@ class ReceiptService {
   /// Elle fiş eklerken mağaza adına göre kategori önerisi. Öneri yoksa null döner.
   static Future<({int categoryId, String categoryName})?> getCategorySuggestion(String storeName) async {
     if (storeName.trim().length < 2) return null;
-    final token = await AuthService.getToken();
-    final uri = Uri.parse('$_baseUrl/receipts/category-suggestion')
-        .replace(queryParameters: {'storeName': storeName.trim()});
-    final response = await http.get(uri, headers: {'Authorization': 'Bearer $token'});
+    final response =
+        await ApiClient.get('/receipts/category-suggestion', query: {'storeName': storeName.trim()});
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return (categoryId: data['categoryId'] as int, categoryName: data['categoryName'] as String);
@@ -302,15 +259,7 @@ class ReceiptService {
     required String name,
     required String color,
   }) async {
-    final token = await AuthService.getToken();
-    final response = await http.post(
-      Uri.parse('$_baseUrl/categories'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({'name': name, 'color': color}),
-    );
+    final response = await ApiClient.post('/categories', body: {'name': name, 'color': color});
     if (response.statusCode == 201) {
       return Category.fromJson(jsonDecode(response.body));
     } else {
@@ -319,11 +268,7 @@ class ReceiptService {
   }
 
   static Future<void> deleteCategory(int id) async {
-    final token = await AuthService.getToken();
-    final response = await http.delete(
-      Uri.parse('$_baseUrl/categories/$id'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await ApiClient.delete('/categories/$id');
     if (response.statusCode != 204) {
       throw Exception('Kategori silinemedi: ${response.statusCode}');
     }
@@ -334,15 +279,7 @@ class ReceiptService {
     required String name,
     required String color,
   }) async {
-    final token = await AuthService.getToken();
-    final response = await http.put(
-      Uri.parse('$_baseUrl/categories/$id'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({'name': name, 'color': color}),
-    );
+    final response = await ApiClient.put('/categories/$id', body: {'name': name, 'color': color});
     if (response.statusCode == 200) {
       return Category.fromJson(jsonDecode(response.body));
     } else {
@@ -351,15 +288,7 @@ class ReceiptService {
   }
 
   static Future<RestoreReceiptResult> restoreReceipt(String rawOcrText) async {
-    final token = await AuthService.getToken();
-    final response = await http.post(
-      Uri.parse('$_baseUrl/ai/restore-receipt'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({'rawOcrText': rawOcrText}),
-    );
+    final response = await ApiClient.post('/ai/restore-receipt', body: {'rawOcrText': rawOcrText});
     if (response.statusCode == 200) {
       return RestoreReceiptResult.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 503) {
@@ -373,11 +302,8 @@ class ReceiptService {
     required int year,
     required int month,
   }) async {
-    final token = await AuthService.getToken();
-    final response = await http.get(
-      Uri.parse('$_baseUrl/ai/spending-analysis?year=$year&month=$month'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response =
+        await ApiClient.get('/ai/spending-analysis', query: {'year': '$year', 'month': '$month'});
     if (response.statusCode == 200) {
       return SpendingAnalysisResult.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 503) {
@@ -393,11 +319,8 @@ class ReceiptService {
     required String start,
     required String end,
   }) async {
-    final token = await AuthService.getToken();
-    final response = await http.get(
-      Uri.parse('$_baseUrl/receipts/export?format=$format&start=$start&end=$end'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response =
+        await ApiClient.get('/receipts/export', query: {'format': format, 'start': start, 'end': end});
     if (response.statusCode == 200) {
       return response.bodyBytes;
     } else {
@@ -406,11 +329,7 @@ class ReceiptService {
   }
 
   static Future<PersonalInflationSummary> getInflationSummary({int months = 3}) async {
-    final token = await AuthService.getToken();
-    final response = await http.get(
-      Uri.parse('$_baseUrl/inflation/summary?months=$months'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await ApiClient.get('/inflation/summary', query: {'months': '$months'});
     if (response.statusCode == 200) {
       return PersonalInflationSummary.fromJson(jsonDecode(response.body));
     } else {
@@ -419,11 +338,7 @@ class ReceiptService {
   }
 
   static Future<List<StoreStat>> getStoreStatistics() async {
-    final token = await AuthService.getToken();
-    final response = await http.get(
-      Uri.parse('$_baseUrl/statistics/stores'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await ApiClient.get('/statistics/stores');
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((json) => StoreStat.fromJson(json)).toList();
@@ -433,11 +348,7 @@ class ReceiptService {
   }
 
   static Future<List<TopProduct>> getTopProducts({int limit = 10}) async {
-    final token = await AuthService.getToken();
-    final response = await http.get(
-      Uri.parse('$_baseUrl/statistics/top-products?limit=$limit'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await ApiClient.get('/statistics/top-products', query: {'limit': '$limit'});
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((json) => TopProduct.fromJson(json)).toList();
@@ -447,11 +358,7 @@ class ReceiptService {
   }
 
   static Future<List<SubscriptionCandidate>> getPotentialSubscriptions() async {
-    final token = await AuthService.getToken();
-    final response = await http.get(
-      Uri.parse('$_baseUrl/statistics/subscriptions'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await ApiClient.get('/statistics/subscriptions');
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((json) => SubscriptionCandidate.fromJson(json)).toList();
@@ -461,11 +368,7 @@ class ReceiptService {
   }
 
   static Future<SpendingPersonality> getSpendingPersonality() async {
-    final token = await AuthService.getToken();
-    final response = await http.get(
-      Uri.parse('$_baseUrl/statistics/spending-personality'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await ApiClient.get('/statistics/spending-personality');
     if (response.statusCode == 200) {
       return SpendingPersonality.fromJson(jsonDecode(response.body));
     } else {
@@ -474,11 +377,8 @@ class ReceiptService {
   }
 
   static Future<ProductPriceHistory> getProductPriceHistory(String normalizedName) async {
-    final token = await AuthService.getToken();
-    final response = await http.get(
-      Uri.parse('$_baseUrl/inflation/products/${Uri.encodeComponent(normalizedName)}/history'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response =
+        await ApiClient.get('/inflation/products/${Uri.encodeComponent(normalizedName)}/history');
     if (response.statusCode == 200) {
       return ProductPriceHistory.fromJson(jsonDecode(response.body));
     } else {
@@ -489,15 +389,10 @@ class ReceiptService {
   /// Banka ekstresi (PDF/CSV) ya da uygulamanın kendi CSV export'unu yükleyip
   /// içindeki işlemleri harcama önerisi listesine dönüştürür. Hiçbir şey kaydetmez.
   static Future<ParsedStatementResult> importStatement(File file) async {
-    final token = await AuthService.getToken();
-    final request = http.MultipartRequest(
-      'POST',
-      Uri.parse('$_baseUrl/receipts/import/parse'),
+    final response = await ApiClient.postMultipart(
+      '/receipts/import/parse',
+      file: await http.MultipartFile.fromPath('file', file.path),
     );
-    request.headers['Authorization'] = 'Bearer $token';
-    request.files.add(await http.MultipartFile.fromPath('file', file.path));
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
     if (response.statusCode == 200) {
       return ParsedStatementResult.fromJson(jsonDecode(response.body));
     } else {
@@ -507,24 +402,16 @@ class ReceiptService {
 
   /// Kullanıcının seçtiği işlemleri toplu olarak fiş olarak kaydeder.
   static Future<BulkImportResult> confirmImport(List<ImportedTransaction> transactions) async {
-    final token = await AuthService.getToken();
-    final response = await http.post(
-      Uri.parse('$_baseUrl/receipts/import/confirm'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'receipts': transactions
-            .map((t) => {
-                  'storeName': t.description,
-                  'totalAmount': t.amount,
-                  'receiptDate': t.date,
-                  'categoryId': t.matchedCategoryId,
-                })
-            .toList(),
-      }),
-    );
+    final response = await ApiClient.post('/receipts/import/confirm', body: {
+      'receipts': transactions
+          .map((t) => {
+                'storeName': t.description,
+                'totalAmount': t.amount,
+                'receiptDate': t.date,
+                'categoryId': t.matchedCategoryId,
+              })
+          .toList(),
+    });
     if (response.statusCode == 201) {
       return BulkImportResult.fromJson(jsonDecode(response.body));
     } else {
@@ -533,26 +420,15 @@ class ReceiptService {
   }
 
   static Future<String> uploadImage(XFile image) async {
-    final token = await AuthService.getToken();
-    final request = http.MultipartRequest(
-      'POST',
-      Uri.parse('$_baseUrl/receipts/upload'),
-    );
-    request.headers['Authorization'] = 'Bearer $token';
     final bytes = await image.readAsBytes();
     // http.MultipartFile.fromBytes contentType belirtilmezse application/octet-stream'e
     // düşer — backend'in content-type doğrulaması bunu reddeder, o yüzden dosya
     // baytlarından (uzantı yoksa/yanlışsa bile güvenilir) MIME türünü açıkça belirliyoruz
     final mimeType = lookupMimeType(image.name, headerBytes: bytes) ?? 'image/jpeg';
-    final multipartFile = http.MultipartFile.fromBytes(
-      'file',
-      bytes,
-      filename: image.name,
-      contentType: MediaType.parse(mimeType),
+    final response = await ApiClient.postMultipart(
+      '/receipts/upload',
+      file: http.MultipartFile.fromBytes('file', bytes, filename: image.name, contentType: MediaType.parse(mimeType)),
     );
-    request.files.add(multipartFile);
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return data['imageUrl'] as String;
@@ -564,20 +440,11 @@ class ReceiptService {
   /// Çevrimdışıyken sıraya alınmış bir fişin daha önce diske kopyalanmış
   /// görselini bağlantı gelince yüklemek için kullanılır.
   static Future<String> uploadImageFile(File file) async {
-    final token = await AuthService.getToken();
-    final request = http.MultipartRequest(
-      'POST',
-      Uri.parse('$_baseUrl/receipts/upload'),
-    );
-    request.headers['Authorization'] = 'Bearer $token';
     final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
-    request.files.add(await http.MultipartFile.fromPath(
-      'file',
-      file.path,
-      contentType: MediaType.parse(mimeType),
-    ));
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
+    final response = await ApiClient.postMultipart(
+      '/receipts/upload',
+      file: await http.MultipartFile.fromPath('file', file.path, contentType: MediaType.parse(mimeType)),
+    );
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return data['imageUrl'] as String;

@@ -51,6 +51,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   List<SubscriptionCandidate> _subscriptions = [];
   String? _subscriptionsError;
 
+  // Her _load* metodu kendi çağrı sayacına sahip — pull-to-refresh/tekrar dene gibi
+  // eylemler bir önceki isteği hâlâ beklerken yenisini tetiklerse, geç gelen eski
+  // cevabın daha yeni veriyi ezmesini önler
+  int _subscriptionsRequestId = 0;
+  int _storeStatsRequestId = 0;
+  int _topProductsRequestId = 0;
+  int _inflationRequestId = 0;
+  int _receiptsRequestId = 0;
+  int _aiAnalysisRequestId = 0;
+
   @override
   void initState() {
     super.initState();
@@ -64,68 +74,82 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Future<void> _loadSubscriptions() async {
+    final requestId = ++_subscriptionsRequestId;
     setState(() {
       _isLoadingSubscriptions = true;
       _subscriptionsError = null;
     });
     try {
       final subscriptions = await ReceiptService.getPotentialSubscriptions();
+      if (!mounted || requestId != _subscriptionsRequestId) return;
       setState(() => _subscriptions = subscriptions);
     } catch (e) {
+      if (!mounted || requestId != _subscriptionsRequestId) return;
       setState(() => _subscriptionsError = NetworkError.friendlyMessage(e, fallback: 'Olası abonelikler alınamadı, lütfen tekrar deneyin.'));
     } finally {
-      if (mounted) setState(() => _isLoadingSubscriptions = false);
+      if (mounted && requestId == _subscriptionsRequestId) setState(() => _isLoadingSubscriptions = false);
     }
   }
 
   Future<void> _loadStoreStats() async {
+    final requestId = ++_storeStatsRequestId;
     setState(() {
       _isLoadingStoreStats = true;
       _storeStatsError = null;
     });
     try {
       final stats = await ReceiptService.getStoreStatistics();
+      if (!mounted || requestId != _storeStatsRequestId) return;
       setState(() => _storeStats = stats);
     } catch (e) {
+      if (!mounted || requestId != _storeStatsRequestId) return;
       setState(() => _storeStatsError = NetworkError.friendlyMessage(e, fallback: 'Mağaza istatistikleri alınamadı, lütfen tekrar deneyin.'));
     } finally {
-      if (mounted) setState(() => _isLoadingStoreStats = false);
+      if (mounted && requestId == _storeStatsRequestId) setState(() => _isLoadingStoreStats = false);
     }
   }
 
   Future<void> _loadTopProducts() async {
+    final requestId = ++_topProductsRequestId;
     setState(() {
       _isLoadingTopProducts = true;
       _topProductsError = null;
     });
     try {
       final products = await ReceiptService.getTopProducts();
+      if (!mounted || requestId != _topProductsRequestId) return;
       setState(() => _topProducts = products);
     } catch (e) {
+      if (!mounted || requestId != _topProductsRequestId) return;
       setState(() => _topProductsError = NetworkError.friendlyMessage(e, fallback: 'En çok alınan ürünler alınamadı, lütfen tekrar deneyin.'));
     } finally {
-      if (mounted) setState(() => _isLoadingTopProducts = false);
+      if (mounted && requestId == _topProductsRequestId) setState(() => _isLoadingTopProducts = false);
     }
   }
 
   Future<void> _loadInflationSummary() async {
+    final requestId = ++_inflationRequestId;
     setState(() {
       _isLoadingInflation = true;
       _inflationError = null;
     });
     try {
       final summary = await ReceiptService.getInflationSummary(months: 3);
+      if (!mounted || requestId != _inflationRequestId) return;
       setState(() => _inflationSummary = summary);
     } catch (e) {
+      if (!mounted || requestId != _inflationRequestId) return;
       setState(() => _inflationError = NetworkError.friendlyMessage(e, fallback: 'Enflasyon özeti alınamadı, lütfen tekrar deneyin.'));
     } finally {
-      if (mounted) setState(() => _isLoadingInflation = false);
+      if (mounted && requestId == _inflationRequestId) setState(() => _isLoadingInflation = false);
     }
   }
 
   Future<void> _loadReceipts() async {
+    final requestId = ++_receiptsRequestId;
     try {
       final receipts = await ReceiptService.getReceipts();
+      if (!mounted || requestId != _receiptsRequestId) return;
       final months = <DateTime>{};
       for (final r in receipts) {
         try {
@@ -148,6 +172,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted || requestId != _receiptsRequestId) return;
       debugPrint('İstatistik hata: $e');
       setState(() => _isLoading = false);
     }
@@ -191,6 +216,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Future<void> _loadAiAnalysis() async {
+    final requestId = ++_aiAnalysisRequestId;
     setState(() {
       _isLoadingAiComment = true;
       _aiCommentError = null;
@@ -200,11 +226,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         year: _selectedMonth.year,
         month: _selectedMonth.month,
       );
+      if (!mounted || requestId != _aiAnalysisRequestId) return;
       setState(() => _aiAnalysis = result);
     } catch (e) {
+      if (!mounted || requestId != _aiAnalysisRequestId) return;
       setState(() => _aiCommentError = NetworkError.friendlyMessage(e, fallback: 'AI yorumu alınamadı, lütfen tekrar deneyin.'));
     } finally {
-      if (mounted) setState(() => _isLoadingAiComment = false);
+      if (mounted && requestId == _aiAnalysisRequestId) setState(() => _isLoadingAiComment = false);
     }
   }
 

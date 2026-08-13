@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_client.dart';
 import '../services/auth_service.dart';
 import '../services/biometric_service.dart';
 import '../services/pin_service.dart';
@@ -25,7 +26,27 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   void initState() {
     super.initState();
+    ApiClient.sessionExpired.addListener(_onSessionExpired);
     _init();
+  }
+
+  @override
+  void dispose() {
+    ApiClient.sessionExpired.removeListener(_onSessionExpired);
+    super.dispose();
+  }
+
+  /// Oturum ortasında herhangi bir istek 401/403 dönerse (token süresi doldu/geçersiz
+  /// kılındı) tetiklenir — kullanıcıyı login ekranına düşürür. Açılıştaki ilk oturum
+  /// kontrolü (_init → validateSession) sırasında _isLoggedIn henüz null/false olduğu
+  /// için bu guard o akışla çakışmaz.
+  void _onSessionExpired() {
+    if (!mounted || _isLoggedIn != true) return;
+    AuthService.logout();
+    setState(() {
+      _isLoggedIn = false;
+      _gateStatus = _GateStatus.checking;
+    });
   }
 
   Future<void> _init() async {

@@ -1,43 +1,25 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'api_client.dart';
 
 class AuthService {
-  static const String _baseUrl = 'https://fisbu-production-613c.up.railway.app';
   static const String _tokenKey = 'jwt_token';
   static const _storage = FlutterSecureStorage();
 
   // Bellekte önbelleklenir, ilk okumada secure storage'dan yüklenir
   static String? _token;
 
-  /// Başarısız bir response'un body'sinden hata mesajını çıkarır. Body boş ya
-  /// da JSON olarak ayrıştırılamıyorsa (ör. token mid-session geçersiz kılındığında
-  /// Spring Security'nin döndürdüğü boş 401/403 body'si) ham FormatException
-  /// kullanıcıya sızmaz, [fallback] döner.
-  static String _parseErrorMessage(http.Response response, {String fallback = 'Bilinmeyen hata'}) {
-    if (response.body.isEmpty) return fallback;
-    try {
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-      return body['error'] as String? ?? fallback;
-    } catch (_) {
-      return fallback;
-    }
-  }
-
   static Future<AuthResult> login(String email, String password) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
-      );
+      final response = await ApiClient.post('/auth/login',
+          auth: false, body: {'email': email, 'password': password});
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         _token = body['token'] as String;
         await _storage.write(key: _tokenKey, value: _token);
         return AuthResult(success: true);
       } else {
-        return AuthResult(success: false, errorMessage: _parseErrorMessage(response));
+        return AuthResult(success: false, errorMessage: ApiClient.errorMessage(response));
       }
     } catch (e) {
       return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
@@ -46,15 +28,12 @@ class AuthService {
 
   static Future<AuthResult> register(String email, String password, {String? name}) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password, if (name != null) 'name': name}),
-      );
+      final response = await ApiClient.post('/auth/register',
+          auth: false, body: {'email': email, 'password': password, if (name != null) 'name': name});
       if (response.statusCode == 200) {
         return AuthResult(success: true);
       } else {
-        return AuthResult(success: false, errorMessage: _parseErrorMessage(response));
+        return AuthResult(success: false, errorMessage: ApiClient.errorMessage(response));
       }
     } catch (e) {
       return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
@@ -87,10 +66,7 @@ class AuthService {
     final token = await getToken();
     if (token == null) return false;
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/auth/profile'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
+      final response = await ApiClient.get('/auth/profile');
       if (response.statusCode == 200) return true;
       if (response.statusCode == 401 || response.statusCode == 403) return false;
       return null;
@@ -108,21 +84,14 @@ class AuthService {
       return AuthResult(success: false, errorMessage: 'Giriş yapılmamış');
     }
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/auth/change-password'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'currentPassword': currentPassword,
-          'newPassword': newPassword,
-        }),
-      );
+      final response = await ApiClient.post('/auth/change-password', body: {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      });
       if (response.statusCode == 200) {
         return AuthResult(success: true);
       } else {
-        final error = _parseErrorMessage(
+        final error = ApiClient.errorMessage(
           response,
           fallback: 'Oturum süresi dolmuş olabilir, lütfen tekrar giriş yap',
         );
@@ -137,10 +106,7 @@ class AuthService {
     final token = await getToken();
     if (token == null) return null;
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/auth/profile'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
+      final response = await ApiClient.get('/auth/profile');
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       }
@@ -155,10 +121,7 @@ class AuthService {
     if (token == null) {
       throw Exception('Oturum süresi doldu, lütfen tekrar giriş yapın');
     }
-    final response = await http.get(
-      Uri.parse('$_baseUrl/users/me/export'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await ApiClient.get('/users/me/export');
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       return const JsonEncoder.withIndent('  ').convert(decoded);
@@ -173,17 +136,10 @@ class AuthService {
     final token = await getToken();
     if (token == null) return false;
     try {
-      final response = await http.put(
-        Uri.parse('$_baseUrl/auth/profile'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          if (name != null) 'name': name,
-          if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
-        }),
-      );
+      final response = await ApiClient.put('/auth/profile', body: {
+        if (name != null) 'name': name,
+        if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
+      });
       return response.statusCode == 200;
     } catch (e) {
       return false;
@@ -192,15 +148,11 @@ class AuthService {
 
   static Future<AuthResult> forgotPassword(String email) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/auth/forgot-password'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email}),
-      );
+      final response = await ApiClient.post('/auth/forgot-password', auth: false, body: {'email': email});
       if (response.statusCode == 200) {
         return AuthResult(success: true);
       } else {
-        return AuthResult(success: false, errorMessage: _parseErrorMessage(response));
+        return AuthResult(success: false, errorMessage: ApiClient.errorMessage(response));
       }
     } catch (e) {
       return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
@@ -213,19 +165,15 @@ class AuthService {
     String newPassword,
   ) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/auth/reset-password'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'code': code,
-          'newPassword': newPassword,
-        }),
-      );
+      final response = await ApiClient.post('/auth/reset-password', auth: false, body: {
+        'email': email,
+        'code': code,
+        'newPassword': newPassword,
+      });
       if (response.statusCode == 200) {
         return AuthResult(success: true);
       } else {
-        return AuthResult(success: false, errorMessage: _parseErrorMessage(response));
+        return AuthResult(success: false, errorMessage: ApiClient.errorMessage(response));
       }
     } catch (e) {
       return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
@@ -234,15 +182,11 @@ class AuthService {
 
   static Future<AuthResult> resendVerificationCode(String email) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/auth/resend-verification'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email}),
-      );
+      final response = await ApiClient.post('/auth/resend-verification', auth: false, body: {'email': email});
       if (response.statusCode == 200) {
         return AuthResult(success: true);
       } else {
-        return AuthResult(success: false, errorMessage: _parseErrorMessage(response));
+        return AuthResult(success: false, errorMessage: ApiClient.errorMessage(response));
       }
     } catch (e) {
       return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
@@ -251,15 +195,12 @@ class AuthService {
 
   static Future<AuthResult> verifyEmail(String email, String code) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/auth/verify-email'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'code': code}),
-      );
+      final response =
+          await ApiClient.post('/auth/verify-email', auth: false, body: {'email': email, 'code': code});
       if (response.statusCode == 200) {
         return AuthResult(success: true);
       } else {
-        return AuthResult(success: false, errorMessage: _parseErrorMessage(response));
+        return AuthResult(success: false, errorMessage: ApiClient.errorMessage(response));
       }
     } catch (e) {
       return AuthResult(success: false, errorMessage: 'Bağlantı hatası: $e');
@@ -272,18 +213,12 @@ class AuthService {
       return AuthResult(success: false, errorMessage: 'Giriş yapılmamış');
     }
     try {
-      final response = await http.delete(
-        Uri.parse('$_baseUrl/auth/account'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+      final response = await ApiClient.delete('/auth/account');
       if (response.statusCode == 200 || response.statusCode == 204) {
         await logout();
         return AuthResult(success: true);
       } else {
-        final error = _parseErrorMessage(
+        final error = ApiClient.errorMessage(
           response,
           fallback: 'Oturum süresi dolmuş olabilir, lütfen tekrar giriş yap',
         );

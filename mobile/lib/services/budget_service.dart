@@ -3,22 +3,17 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/budget.dart';
 import '../models/budget_suggestion.dart';
-import 'auth_service.dart';
+import 'api_client.dart';
 import 'local_cache_service.dart';
 
 class BudgetService {
-  static const String _baseUrl = 'https://fisbu-production-613c.up.railway.app';
-
   static Future<List<Budget>> getBudgets({int? year, int? month}) async {
     try {
-      final token = await AuthService.getToken();
       final query = <String, String>{
         if (year != null) 'year': '$year',
         if (month != null) 'month': '$month',
       };
-      final uri = Uri.parse('$_baseUrl/budgets')
-          .replace(queryParameters: query.isEmpty ? null : query);
-      final response = await http.get(uri, headers: {'Authorization': 'Bearer $token'});
+      final response = await ApiClient.get('/budgets', query: query.isEmpty ? null : query);
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         // Sadece filtresiz (tüm bütçeler) sorguyu cache'liyoruz — dashboard'un offline fallback ihtiyacı bu
@@ -48,20 +43,12 @@ class BudgetService {
     required int year,
     required int month,
   }) async {
-    final token = await AuthService.getToken();
-    final response = await http.post(
-      Uri.parse('$_baseUrl/budgets'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'categoryId': categoryId,
-        'monthlyLimit': monthlyLimit,
-        'year': year,
-        'month': month,
-      }),
-    );
+    final response = await ApiClient.post('/budgets', body: {
+      'categoryId': categoryId,
+      'monthlyLimit': monthlyLimit,
+      'year': year,
+      'month': month,
+    });
     if (response.statusCode == 201) {
       return Budget.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 409) {
@@ -78,20 +65,12 @@ class BudgetService {
     required int year,
     required int month,
   }) async {
-    final token = await AuthService.getToken();
-    final response = await http.put(
-      Uri.parse('$_baseUrl/budgets/$id'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'categoryId': categoryId,
-        'monthlyLimit': monthlyLimit,
-        'year': year,
-        'month': month,
-      }),
-    );
+    final response = await ApiClient.put('/budgets/$id', body: {
+      'categoryId': categoryId,
+      'monthlyLimit': monthlyLimit,
+      'year': year,
+      'month': month,
+    });
     if (response.statusCode == 200) {
       return Budget.fromJson(jsonDecode(response.body));
     } else {
@@ -104,14 +83,12 @@ class BudgetService {
     int? year,
     int? month,
   }) async {
-    final token = await AuthService.getToken();
     final query = <String, String>{
       'categoryId': '$categoryId',
       if (year != null) 'year': '$year',
       if (month != null) 'month': '$month',
     };
-    final uri = Uri.parse('$_baseUrl/budgets/suggestion').replace(queryParameters: query);
-    final response = await http.get(uri, headers: {'Authorization': 'Bearer $token'});
+    final response = await ApiClient.get('/budgets/suggestion', query: query);
     if (response.statusCode == 200) {
       return BudgetSuggestion.fromJson(jsonDecode(response.body));
     } else {
@@ -120,11 +97,7 @@ class BudgetService {
   }
 
   static Future<void> deleteBudget(int id) async {
-    final token = await AuthService.getToken();
-    final response = await http.delete(
-      Uri.parse('$_baseUrl/budgets/$id'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await ApiClient.delete('/budgets/$id');
     if (response.statusCode != 204) {
       throw Exception('Bütçe silinemedi: ${response.statusCode}');
     }

@@ -181,11 +181,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isUpdatingPhoto = true);
     try {
       final imageUrl = await ReceiptService.uploadImage(image);
-      await AuthService.updateProfile(profileImageUrl: imageUrl);
-      setState(() {
-        _profileImageUrl = imageUrl;
-        _isUpdatingPhoto = false;
-      });
+      final success = await AuthService.updateProfile(profileImageUrl: imageUrl);
+      if (!mounted) return;
+      if (success) {
+        setState(() {
+          _profileImageUrl = imageUrl;
+          _isUpdatingPhoto = false;
+        });
+      } else {
+        setState(() => _isUpdatingPhoto = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Fotoğraf kaydedilemedi, lütfen tekrar deneyin')),
+        );
+      }
     } catch (e) {
       setState(() => _isUpdatingPhoto = false);
       if (mounted) {
@@ -226,9 +234,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onPressed: () async {
                 final name = controller.text.trim();
                 if (name.isEmpty) return;
-                await AuthService.updateProfile(name: name);
-                setState(() => _name = name);
-                if (ctx.mounted) Navigator.pop(ctx);
+                final success = await AuthService.updateProfile(name: name);
+                if (!ctx.mounted) return;
+                if (success) {
+                  if (mounted) setState(() => _name = name);
+                  Navigator.pop(ctx);
+                } else {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(content: Text('İsim güncellenemedi, lütfen tekrar deneyin')),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
               child: const Text('Kaydet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
@@ -236,7 +251,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
-    );
+    ).whenComplete(controller.dispose);
   }
 
   void _showAboutSheet() {

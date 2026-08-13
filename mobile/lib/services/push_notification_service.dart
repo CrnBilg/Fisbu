@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 import 'auth_service.dart';
 
 /// Uygulama arka plandayken gelen mesajları işleyen üst düzey fonksiyon.
@@ -17,8 +16,6 @@ Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
 /// - Bildirim izni ister (iOS + Android 13+)
 /// - Ön planda gelen bildirimleri yerel bildirim olarak gösterir
 class PushNotificationService {
-  static const String _baseUrl = 'https://fisbu-production-613c.up.railway.app';
-
   static final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
@@ -115,14 +112,7 @@ class PushNotificationService {
     if (jwt == null) return; // Giriş yapılmamışsa kaydetme
 
     try {
-      await http.post(
-        Uri.parse('$_baseUrl/users/fcm-token'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $jwt',
-        },
-        body: jsonEncode({'fcmToken': fcmToken}),
-      );
+      await ApiClient.post('/users/fcm-token', body: {'fcmToken': fcmToken});
     } catch (_) {
       // Token kaydı başarısız olsa da uygulama akışı bozulmamalı
     }

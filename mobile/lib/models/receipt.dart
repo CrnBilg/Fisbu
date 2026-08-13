@@ -33,10 +33,22 @@ class Receipt {
   });
 
   factory Receipt.fromJson(Map<String, dynamic> json) {
+    // id/totalAmount zorunlu alanlar — backend kısmi/bozuk bir yanıt dönerse
+    // ham `as int`/`as num` cast'i belirsiz bir TypeError fırlatırdı; bunun yerine
+    // net bir FormatException fırlatıyoruz (çağıranların mevcut catch(e) +
+    // NetworkError.friendlyMessage akışı bunu zaten düzgün bir mesaja çeviriyor)
+    final id = json['id'];
+    final totalAmount = json['totalAmount'];
+    if (id is! int) {
+      throw const FormatException('Fiş verisi geçersiz: id alanı eksik/bozuk');
+    }
+    if (totalAmount is! num) {
+      throw const FormatException('Fiş verisi geçersiz: totalAmount alanı eksik/bozuk');
+    }
     return Receipt(
-      id: json['id'] as int,
+      id: id,
       storeName: json['storeName'] as String? ?? '',
-      totalAmount: (json['totalAmount'] as num).toDouble(),
+      totalAmount: totalAmount.toDouble(),
       receiptDate: json['receiptDate'] as String? ?? '',
       categoryId: json['categoryId'] as int?,
       categoryName: json['categoryName'] as String?,

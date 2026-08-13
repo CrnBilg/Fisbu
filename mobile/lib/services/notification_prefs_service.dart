@@ -1,13 +1,11 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'auth_service.dart';
+import 'api_client.dart';
 
 /// Bütçe push bildirim tercihlerini backend'de tutar (asıl kaynak burasıdır —
 /// backend push göndermeden önce bu tercihlere bakar). SharedPreferences sadece
 /// ekran açılırken ağ yokken gösterilecek son bilinen değeri önbelleklemek için.
 class NotificationPrefsService {
-  static const String _baseUrl = 'https://fisbu-production-613c.up.railway.app';
   static const String _budgetWarningKey = 'notif_budget_warning_enabled';
   static const String _budgetOverspendKey = 'notif_budget_overspend_enabled';
 
@@ -26,11 +24,7 @@ class NotificationPrefsService {
   static Future<({bool warning, bool overspend})> fetchPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     try {
-      final token = await AuthService.getToken();
-      final response = await http.get(
-        Uri.parse('$_baseUrl/users/notification-prefs'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
+      final response = await ApiClient.get('/users/notification-prefs');
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final warning = data['budgetWarningEnabled'] as bool? ?? true;
@@ -64,18 +58,10 @@ class NotificationPrefsService {
   }
 
   static Future<void> _syncToBackend({required bool warning, required bool overspend}) async {
-    final token = await AuthService.getToken();
-    final response = await http.put(
-      Uri.parse('$_baseUrl/users/notification-prefs'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'budgetWarningEnabled': warning,
-        'budgetOverspendEnabled': overspend,
-      }),
-    );
+    final response = await ApiClient.put('/users/notification-prefs', body: {
+      'budgetWarningEnabled': warning,
+      'budgetOverspendEnabled': overspend,
+    });
     if (response.statusCode != 200) {
       throw Exception('Bildirim tercihi kaydedilemedi: ${response.statusCode}');
     }

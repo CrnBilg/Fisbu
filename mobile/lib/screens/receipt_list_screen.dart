@@ -36,6 +36,11 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
   String? _selectedCategoryLabel;
   String? _errorMessage;
 
+  // Arama/filtre değişince önceki (daha yavaş) isteğin geç gelen cevabının state'i
+  // ezmesini önler — her _loadReceipts çağrısı kendi ID'sini alır, cevap geldiğinde
+  // hâlâ en güncel istek o mu diye kontrol edilir
+  int _requestId = 0;
+
   @override
   void initState() {
     super.initState();
@@ -82,6 +87,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
   bool get _selectedUncategorized => _selectedCategoryLabel == _uncategorizedLabel;
 
   Future<void> _loadReceipts({bool reset = false}) async {
+    final requestId = ++_requestId;
     final nextPage = reset ? 0 : _page + 1;
     setState(() {
       if (reset) {
@@ -99,6 +105,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
         uncategorized: _selectedUncategorized,
         page: nextPage,
       );
+      if (!mounted || requestId != _requestId) return;
       setState(() {
         _receipts = reset ? result.content : [..._receipts, ...result.content];
         _page = result.page;
@@ -107,6 +114,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
         _isLoadingMore = false;
       });
     } catch (e) {
+      if (!mounted || requestId != _requestId) return;
       setState(() {
         _isLoading = false;
         _isLoadingMore = false;
