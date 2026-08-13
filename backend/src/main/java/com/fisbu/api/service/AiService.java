@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +35,10 @@ public class AiService {
     private String model;
 
     private final ObjectMapper objectMapper;
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+    // Groq bağlantısı takılırsa request thread'i süresiz bloklamasın diye connect/response timeout'ları var
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(5))
+            .build();
 
     public AiService(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
@@ -84,6 +88,7 @@ public class AiService {
                     .uri(GROQ_ENDPOINT)
                     .header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json")
+                    .timeout(Duration.ofSeconds(30))
                     .POST(HttpRequest.BodyPublishers.ofString(json))
                     .build();
 

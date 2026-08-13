@@ -23,6 +23,7 @@ import com.fisbu.api.entity.User;
 import com.fisbu.api.repository.BudgetRepository;
 import com.fisbu.api.repository.CategoryRepository;
 import com.fisbu.api.repository.ReceiptRepository;
+import com.fisbu.api.repository.SavingsGoalRepository;
 import com.fisbu.api.repository.UserRepository;
 
 @Service // AuthService, kullanıcı kayıt işlemlerini yönetir
@@ -38,11 +39,13 @@ public class AuthService {
     private final CategoryRepository categoryRepository;
     private final ReceiptRepository receiptRepository;
     private final BudgetRepository budgetRepository;
+    private final SavingsGoalRepository savingsGoalRepository;
     private final EmailService emailService;
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
                        JwtService jwtService, CategoryRepository categoryRepository,
                        ReceiptRepository receiptRepository, BudgetRepository budgetRepository,
+                       SavingsGoalRepository savingsGoalRepository,
                        EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -50,6 +53,7 @@ public class AuthService {
         this.categoryRepository = categoryRepository;
         this.receiptRepository = receiptRepository;
         this.budgetRepository = budgetRepository;
+        this.savingsGoalRepository = savingsGoalRepository;
         this.emailService = emailService;
     }
 
@@ -277,6 +281,7 @@ public class AuthService {
 
         // Budget, category'ye NOT NULL FK ile bağlı — önce silinmeli, yoksa kategori/kullanıcı silme FK hatası verir
         budgetRepository.deleteAll(budgetRepository.findByUser(user));
+        savingsGoalRepository.deleteAll(savingsGoalRepository.findByUser(user));
         receiptRepository.deleteAll(receiptRepository.findByUser(user));
         categoryRepository.deleteAll(categoryRepository.findByUser(user));
         userRepository.delete(user);

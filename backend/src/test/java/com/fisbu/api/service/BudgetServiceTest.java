@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -17,7 +16,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fisbu.api.dto.BudgetSuggestionResponse;
 import com.fisbu.api.entity.Category;
-import com.fisbu.api.entity.Receipt;
 import com.fisbu.api.entity.User;
 import com.fisbu.api.repository.BudgetRepository;
 import com.fisbu.api.repository.CategoryRepository;
@@ -65,12 +63,6 @@ class BudgetServiceTest {
         return category;
     }
 
-    private Receipt receiptOf(BigDecimal amount) {
-        Receipt receipt = new Receipt();
-        receipt.setTotalAmount(amount);
-        return receipt;
-    }
-
     @Test
     void averagesOverMonthsWithDataOnly_whenOneOfThreeMonthsHasNoSpend() {
         User user = someUser();
@@ -81,15 +73,15 @@ class BudgetServiceTest {
         when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
 
         // targetMonth = 2026-03-01 → geriye dönük Şubat, Ocak, Aralık 2025 taranır.
-        when(receiptRepository.findByUserAndCategoryAndReceiptDateBetween(
+        when(receiptRepository.sumTotalAmountByUserAndCategoryAndReceiptDateBetween(
                 eq(user), eq(category), eq(LocalDate.of(2026, 2, 1)), eq(LocalDate.of(2026, 2, 28))))
-                .thenReturn(List.of(receiptOf(new BigDecimal("600.00"))));
-        when(receiptRepository.findByUserAndCategoryAndReceiptDateBetween(
+                .thenReturn(new BigDecimal("600.00"));
+        when(receiptRepository.sumTotalAmountByUserAndCategoryAndReceiptDateBetween(
                 eq(user), eq(category), eq(LocalDate.of(2026, 1, 1)), eq(LocalDate.of(2026, 1, 31))))
-                .thenReturn(List.of(receiptOf(new BigDecimal("600.00"))));
-        when(receiptRepository.findByUserAndCategoryAndReceiptDateBetween(
+                .thenReturn(new BigDecimal("600.00"));
+        when(receiptRepository.sumTotalAmountByUserAndCategoryAndReceiptDateBetween(
                 eq(user), eq(category), eq(LocalDate.of(2025, 12, 1)), eq(LocalDate.of(2025, 12, 31))))
-                .thenReturn(List.of());
+                .thenReturn(BigDecimal.ZERO);
 
         BudgetSuggestionResponse response =
                 service.getBudgetSuggestion(user.getEmail(), category.getId(), 2026, 3);
@@ -108,9 +100,9 @@ class BudgetServiceTest {
 
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
         when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
-        when(receiptRepository.findByUserAndCategoryAndReceiptDateBetween(
+        when(receiptRepository.sumTotalAmountByUserAndCategoryAndReceiptDateBetween(
                 eq(user), eq(category), any(), any()))
-                .thenReturn(List.of(receiptOf(new BigDecimal("300.00"))));
+                .thenReturn(new BigDecimal("300.00"));
 
         BudgetSuggestionResponse response =
                 service.getBudgetSuggestion(user.getEmail(), category.getId(), 2026, 3);

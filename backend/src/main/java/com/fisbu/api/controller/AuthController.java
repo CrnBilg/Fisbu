@@ -41,7 +41,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")// HTTP POST isteği ile "/auth/login" endpoint'ine gelen giriş isteklerini işler.
-    public AuthResponse login(@RequestBody LoginRequest request) {//Gelen JSON'ı LoginRequest nesnesine dönüştürür ve authService.login() metodunu çağırarak kullanıcı giriş işlemini gerçekleştirir. Giriş başarılı ise bir token döndürür.
+    public AuthResponse login(@RequestBody @Valid LoginRequest request) {//Gelen JSON'ı LoginRequest nesnesine dönüştürür ve authService.login() metodunu çağırarak kullanıcı giriş işlemini gerçekleştirir. Giriş başarılı ise bir token döndürür.
         String token = authService.login(request);
         return new AuthResponse(token);
     }

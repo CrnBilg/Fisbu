@@ -247,16 +247,8 @@ public class BudgetService {
         LocalDate start = LocalDate.of(year, month, 1);
         LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
 
-        List<Receipt> receipts = receiptRepository.findByUserAndCategoryAndReceiptDateBetween(
+        return receiptRepository.sumTotalAmountByUserAndCategoryAndReceiptDateBetween(
                 user, category, start, end);
-
-        BigDecimal total = BigDecimal.ZERO;
-        for (Receipt receipt : receipts) {
-            if (receipt.getTotalAmount() != null) {
-                total = total.add(receipt.getTotalAmount());
-            }
-        }
-        return total;
     }
 
     private BudgetResponse toResponse(Budget budget) {

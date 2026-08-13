@@ -72,7 +72,33 @@ public class StatisticsService {
         LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
 
         List<Receipt> receipts = receiptRepository.findByUserAndReceiptDateBetween(user, start, end);
+        return buildMonthlyStatistics(receipts, resolvedYear, resolvedMonth);
+    }
 
+    // Ardışık N ayı TEK sorguda çekip her ay için ayrı bir MonthlyStatisticsResponse üretir —
+    // FinancialChatService gibi birden çok ayı aynı anda isteyen çağrıların N ayrı sorgu atmasını önler
+    public List<MonthlyStatisticsResponse> getMonthlyStatisticsRange(String email, int months) {
+        User user = getUserByEmail(email);
+        LocalDate today = LocalDate.now();
+
+        LocalDate rangeStart = today.minusMonths(months - 1L).withDayOfMonth(1);
+        LocalDate rangeEnd = today.withDayOfMonth(today.lengthOfMonth());
+        List<Receipt> rangeReceipts = receiptRepository.findByUserAndReceiptDateBetween(user, rangeStart, rangeEnd);
+
+        List<MonthlyStatisticsResponse> results = new ArrayList<>();
+        for (int i = months - 1; i >= 0; i--) {
+            LocalDate monthDate = today.minusMonths(i);
+            LocalDate monthStart = monthDate.withDayOfMonth(1);
+            LocalDate monthEnd = monthDate.withDayOfMonth(monthDate.lengthOfMonth());
+            List<Receipt> monthReceipts = rangeReceipts.stream()
+                    .filter(r -> !r.getReceiptDate().isBefore(monthStart) && !r.getReceiptDate().isAfter(monthEnd))
+                    .collect(Collectors.toList());
+            results.add(buildMonthlyStatistics(monthReceipts, monthDate.getYear(), monthDate.getMonthValue()));
+        }
+        return results;
+    }
+
+    private MonthlyStatisticsResponse buildMonthlyStatistics(List<Receipt> receipts, int year, int month) {
         Map<Long, CategoryTotalResponse> totals = new LinkedHashMap<>();
         BigDecimal grandTotal = BigDecimal.ZERO;
 
@@ -100,8 +126,8 @@ public class StatisticsService {
         sortedCategories.sort(Comparator.comparing(CategoryTotalResponse::getTotalAmount).reversed());
 
         MonthlyStatisticsResponse response = new MonthlyStatisticsResponse();
-        response.setYear(resolvedYear);
-        response.setMonth(resolvedMonth);
+        response.setYear(year);
+        response.setMonth(month);
         response.setTotalAmount(grandTotal);
         response.setCategories(sortedCategories);
         return response;
@@ -175,7 +201,10 @@ public class StatisticsService {
     public List<SubscriptionCandidateResponse> getPotentialSubscriptions(String email) {
         User user = getUserByEmail(email);
         List<Receipt> receipts = receiptRepository.findByUser(user);
+        return computeSubscriptionCandidates(receipts);
+    }
 
+    private List<SubscriptionCandidateResponse> computeSubscriptionCandidates(List<Receipt> receipts) {
         Map<String, List<Receipt>> byStoreKey = new LinkedHashMap<>();
         for (Receipt receipt : receipts) {
             if (receipt.getStoreName() == null || receipt.getReceiptDate() == null || receipt.getTotalAmount() == null) {
@@ -250,7 +279,7 @@ public class StatisticsService {
         List<Receipt> receipts = receiptRepository.findByUser(user);
 
         SpendingPersonaResponse persona = computePersona(receipts);
-        List<BadgeResponse> badges = computeBadges(email, user, receipts);
+        List<BadgeResponse> badges = computeBadges(user, receipts);
         return new SpendingPersonalityResponse(persona, badges);
     }
 
@@ -325,7 +354,7 @@ public class StatisticsService {
                 "Harcamaların kategoriler arasında dengeli dağılıyor");
     }
 
-    private List<BadgeResponse> computeBadges(String email, User user, List<Receipt> receipts) {
+    private List<BadgeResponse> computeBadges(User user, List<Receipt> receipts) {
         int receiptCount = receipts.size();
         long distinctCategories = receipts.stream()
                 .map(Receipt::getCategory).filter(java.util.Objects::nonNull)
@@ -335,7 +364,7 @@ public class StatisticsService {
                 .collect(Collectors.groupingBy(r -> r.getStoreName().trim(), Collectors.counting()));
         boolean hasLoyalStore = storeCounts.values().stream().anyMatch(c -> c >= 10);
         boolean hasSplitReceipt = receipts.stream().anyMatch(r -> r.getSplitDetailsJson() != null);
-        boolean hasSubscription = !getPotentialSubscriptions(email).isEmpty();
+        boolean hasSubscription = !computeSubscriptionCandidates(receipts).isEmpty();
         boolean hasAchievedSavingsGoal = savingsGoalRepository.findByUser(user).stream()
                 .anyMatch(g -> g.getCurrentAmount().compareTo(g.getTargetAmount()) >= 0);
 

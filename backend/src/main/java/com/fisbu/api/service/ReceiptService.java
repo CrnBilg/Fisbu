@@ -51,6 +51,10 @@ public class ReceiptService {
 
     private static final Logger log = LoggerFactory.getLogger(ReceiptService.class);
 
+    // GET /receipts gerçek sayfalamaya geçene kadar (mobil taraf hâlâ tüm listeyi tek
+    // seferde bekliyor) sınırsız büyümeyi önlemek için üst sınır — normal kullanım için yeterince geniş
+    private static final int MAX_RECEIPTS_LIST = 2000;
+
     private final ReceiptRepository receiptRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
@@ -72,10 +76,12 @@ public class ReceiptService {
         this.objectMapper = objectMapper;
     }
 
-    // Kullanıcının tüm fişlerini listeler
+    // Kullanıcının fişlerini listeler (en yeni önce, MAX_RECEIPTS_LIST ile sınırlı)
     public List<ReceiptResponse> getReceipts(String email) {
         User user = getUserByEmail(email);
-        return receiptRepository.findByUser(user)
+        Pageable pageable = PageRequest.of(0, MAX_RECEIPTS_LIST,
+                Sort.by(Sort.Direction.DESC, "receiptDate").and(Sort.by(Sort.Direction.DESC, "id")));
+        return receiptRepository.findByUser(user, pageable)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -222,18 +228,13 @@ public class ReceiptService {
         if (newAmount == null) {
             return null;
         }
-        List<Receipt> previous = receiptRepository.findByCategory(category).stream()
-                .filter(r -> r.getTotalAmount() != null)
-                .collect(Collectors.toList());
-        if (previous.size() < ANOMALY_MIN_SAMPLE_SIZE) {
+        long previousCount = receiptRepository.countByCategoryAndTotalAmountIsNotNull(category);
+        if (previousCount < ANOMALY_MIN_SAMPLE_SIZE) {
             return null;
         }
 
-        BigDecimal total = BigDecimal.ZERO;
-        for (Receipt r : previous) {
-            total = total.add(r.getTotalAmount());
-        }
-        BigDecimal average = total.divide(BigDecimal.valueOf(previous.size()), 2, RoundingMode.HALF_UP);
+        BigDecimal average = receiptRepository.avgTotalAmountByCategory(category)
+                .setScale(2, RoundingMode.HALF_UP);
         if (average.compareTo(ANOMALY_MIN_AVERAGE) < 0) {
             return null;
         }

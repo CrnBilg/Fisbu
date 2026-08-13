@@ -4,12 +4,14 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,12 +32,17 @@ public class EmailService {
     private String fromName;
 
     private final ObjectMapper objectMapper;
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+    // Brevo bağlantısı takılırsa çağıran thread'i süresiz bloklamasın diye connect timeout var;
+    // gönderim ayrıca @Async ile çalışır, register/forgot-password gibi akışlar e-postayı beklemez
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(5))
+            .build();
 
     public EmailService(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
+    @Async
     public void sendVerificationCode(String toEmail, String code) {
         send(
                 toEmail,
@@ -45,6 +52,7 @@ public class EmailService {
         );
     }
 
+    @Async
     public void sendPasswordResetCode(String toEmail, String code) {
         send(
                 toEmail,
@@ -74,6 +82,7 @@ public class EmailService {
                     .header("api-key", apiKey)
                     .header("Content-Type", "application/json")
                     .header("Accept", "application/json")
+                    .timeout(Duration.ofSeconds(15))
                     .POST(HttpRequest.BodyPublishers.ofString(json))
                     .build();
 

@@ -66,8 +66,11 @@ public class FinancialChatService {
 
     private String buildSystemPrompt(String email) {
         LocalDate today = LocalDate.now();
-        MonthlyStatisticsResponse stats = statisticsService.getMonthlyStatistics(
-                email, today.getYear(), today.getMonthValue());
+        // Tek sorguda son MONTHLY_HISTORY_SPAN ayı çeker; son eleman (bu ay) hem kategori
+        // dökümü hem de aylık geçmiş listesi için kullanılır — 7 ayrı sorgu yerine 1
+        List<MonthlyStatisticsResponse> monthlyRange =
+                statisticsService.getMonthlyStatisticsRange(email, MONTHLY_HISTORY_SPAN);
+        MonthlyStatisticsResponse stats = monthlyRange.get(monthlyRange.size() - 1);
 
         String categoryBreakdown = stats.getCategories().stream()
                 .map(c -> "- " + c.getCategoryName() + ": " + c.getTotalAmount() + " TL")
@@ -92,7 +95,7 @@ public class FinancialChatService {
                                 + " TL (%" + Math.round(g.getProgressPercent()) + ")")
                         .collect(Collectors.joining("\n"));
 
-        String monthlyHistory = buildMonthlyHistory(email, today);
+        String monthlyHistory = buildMonthlyHistory(monthlyRange);
 
         return """
                 Sen FişBu uygulamasında kullanıcının kişisel finansal asistanısın. Kullanıcının %d yılı \
@@ -124,14 +127,11 @@ public class FinancialChatService {
                 categoryBreakdown, MONTHLY_HISTORY_SPAN, monthlyHistory, budgetSummary, goalsSummary);
     }
 
-    private String buildMonthlyHistory(String email, LocalDate today) {
+    private String buildMonthlyHistory(List<MonthlyStatisticsResponse> monthlyRange) {
         StringBuilder sb = new StringBuilder();
-        for (int i = MONTHLY_HISTORY_SPAN - 1; i >= 0; i--) {
-            LocalDate month = today.minusMonths(i);
-            MonthlyStatisticsResponse monthStats = statisticsService.getMonthlyStatistics(
-                    email, month.getYear(), month.getMonthValue());
-            sb.append("- ").append(TURKISH_MONTHS[month.getMonthValue() - 1]).append(" ")
-                    .append(month.getYear()).append(": ").append(monthStats.getTotalAmount()).append(" TL\n");
+        for (MonthlyStatisticsResponse monthStats : monthlyRange) {
+            sb.append("- ").append(TURKISH_MONTHS[monthStats.getMonth() - 1]).append(" ")
+                    .append(monthStats.getYear()).append(": ").append(monthStats.getTotalAmount()).append(" TL\n");
         }
         return sb.toString();
     }
