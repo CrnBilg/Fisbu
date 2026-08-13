@@ -59,8 +59,16 @@ public class ExportService {
         return sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 
+    private static final String CSV_FORMULA_TRIGGER_CHARS = "=+-@";
+
     private String csvField(String value) {
         String safe = value == null ? "" : value;
+        // Excel/Sheets'te =, +, -, @ ile başlayan hücreler formül olarak yorumlanır — storeName
+        // serbest metin (OCR/AI'dan da gelebilir) olduğu için CSV/formula injection'a açık,
+        // OWASP önerisi gereği başına tek tırnak ekleyip metin olarak zorluyoruz
+        if (!safe.isEmpty() && CSV_FORMULA_TRIGGER_CHARS.indexOf(safe.charAt(0)) >= 0) {
+            safe = "'" + safe;
+        }
         if (safe.contains(",") || safe.contains("\"") || safe.contains("\n")) {
             safe = "\"" + safe.replace("\"", "\"\"") + "\"";
         }

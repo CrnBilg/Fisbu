@@ -13,6 +13,21 @@ import 'services/local_cache_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/pending_receipt_queue.dart';
 
+final RegExp _emailPattern = RegExp(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}');
+final RegExp _jwtPattern = RegExp(r'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+');
+
+/// Crashlytics'e gitmeden önce hata mesajındaki e-posta/JWT gibi olası hassas
+/// parçaları maskeler — yakalanan exception'lar sunucu yanıt gövdesi içerebilir
+/// (bkz. auth_service.dart'taki 'Bağlantı hatası: $e' deseni), crash raporları
+/// bunları düz metin taşımasın diye
+Object _sanitizeForCrashlytics(Object error) {
+  final message = error.toString();
+  final sanitized = message
+      .replaceAll(_emailPattern, '[email]')
+      .replaceAll(_jwtPattern, '[jwt]');
+  return sanitized == message ? error : Exception(sanitized);
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -27,9 +42,16 @@ void main() async {
 
     // Crashlytics: debug modda toplama kapalı, sadece release'de gerçek kullanıcı çökmeleri raporlanır
     await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(FlutterErrorDetails(
+        exception: _sanitizeForCrashlytics(details.exception),
+        stack: details.stack,
+        library: details.library,
+        context: details.context,
+      ));
+    };
     PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      FirebaseCrashlytics.instance.recordError(_sanitizeForCrashlytics(error), stack, fatal: true);
       return true;
     };
   } catch (_) {

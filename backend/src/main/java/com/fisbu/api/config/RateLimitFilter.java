@@ -30,7 +30,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
             "/auth/forgot-password", 10,
             "/auth/reset-password", 10,
             "/auth/verify-email", 10,
-            "/auth/resend-verification", 10
+            "/auth/resend-verification", 10,
+            // Davet kodu 6 karakter/32 alfabe (~1 milyar kombinasyon) — pratik açıdan brute-force
+            // zor olsa da bu uç hiç sınırlanmıyordu, defense-in-depth için ekleniyor
+            "/households/join", 10
     );
 
     // Önek eşleşmesi — Groq AI çağrısı yapan veya CPU-ağır PDF/CSV parse eden uçlar,
