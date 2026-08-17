@@ -1,4 +1,4 @@
-package com.fisbu.api.dto;
+package com.fisbu.api.category.adapter.in.web;
 
 public class CategoryResponse {
     private Long id;

@@ -16,10 +16,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fisbu.api.budget.application.port.in.CreateBudgetUseCase;
+import com.fisbu.api.budget.application.port.in.DeleteBudgetUseCase;
+import com.fisbu.api.budget.application.port.in.GetBudgetSuggestionUseCase;
+import com.fisbu.api.budget.application.port.in.GetBudgetsUseCase;
+import com.fisbu.api.budget.application.port.in.UpdateBudgetUseCase;
 import com.fisbu.api.dto.BudgetRequest;
 import com.fisbu.api.dto.BudgetResponse;
 import com.fisbu.api.dto.BudgetSuggestionResponse;
-import com.fisbu.api.service.BudgetService;
 
 import jakarta.validation.Valid;
 
@@ -27,24 +31,34 @@ import jakarta.validation.Valid;
 @RequestMapping("/budgets")
 public class BudgetController {
 
-    private final BudgetService budgetService;
+    private final GetBudgetsUseCase getBudgetsUseCase;
+    private final CreateBudgetUseCase createBudgetUseCase;
+    private final UpdateBudgetUseCase updateBudgetUseCase;
+    private final DeleteBudgetUseCase deleteBudgetUseCase;
+    private final GetBudgetSuggestionUseCase getBudgetSuggestionUseCase;
 
-    public BudgetController(BudgetService budgetService) {
-        this.budgetService = budgetService;
+    public BudgetController(GetBudgetsUseCase getBudgetsUseCase, CreateBudgetUseCase createBudgetUseCase,
+                             UpdateBudgetUseCase updateBudgetUseCase, DeleteBudgetUseCase deleteBudgetUseCase,
+                             GetBudgetSuggestionUseCase getBudgetSuggestionUseCase) {
+        this.getBudgetsUseCase = getBudgetsUseCase;
+        this.createBudgetUseCase = createBudgetUseCase;
+        this.updateBudgetUseCase = updateBudgetUseCase;
+        this.deleteBudgetUseCase = deleteBudgetUseCase;
+        this.getBudgetSuggestionUseCase = getBudgetSuggestionUseCase;
     }
 
     @GetMapping
     public List<BudgetResponse> getBudgets(@AuthenticationPrincipal UserDetails userDetails,
                                             @RequestParam(required = false) Integer year,
                                             @RequestParam(required = false) Integer month) {
-        return budgetService.getBudgets(userDetails.getUsername(), year, month);
+        return getBudgetsUseCase.getBudgets(userDetails.getUsername(), year, month);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public BudgetResponse createBudget(@AuthenticationPrincipal UserDetails userDetails,
                                         @RequestBody @Valid BudgetRequest request) {
-        return budgetService.createBudget(userDetails.getUsername(), request);
+        return createBudgetUseCase.createBudget(userDetails.getUsername(), request);
     }
 
     @GetMapping("/suggestion")
@@ -52,19 +66,19 @@ public class BudgetController {
                                                          @RequestParam Long categoryId,
                                                          @RequestParam(required = false) Integer year,
                                                          @RequestParam(required = false) Integer month) {
-        return budgetService.getBudgetSuggestion(userDetails.getUsername(), categoryId, year, month);
+        return getBudgetSuggestionUseCase.getBudgetSuggestion(userDetails.getUsername(), categoryId, year, month);
     }
 
     @PutMapping("/{id}")
     public BudgetResponse updateBudget(@AuthenticationPrincipal UserDetails userDetails,
                                         @PathVariable Long id,
                                         @RequestBody @Valid BudgetRequest request) {
-        return budgetService.updateBudget(userDetails.getUsername(), id, request);
+        return updateBudgetUseCase.updateBudget(userDetails.getUsername(), id, request);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteBudget(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id) {
-        budgetService.deleteBudget(userDetails.getUsername(), id);
+        deleteBudgetUseCase.deleteBudget(userDetails.getUsername(), id);
     }
 }

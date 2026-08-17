@@ -3,6 +3,8 @@ package com.fisbu.api.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fisbu.api.category.adapter.in.web.CategoryResponse;
+
 // KVKK m. 11 (veri taşınabilirliği) kapsamında kullanıcının kendi verilerini
 // makine okunabilir formatta indirmesi için — profil + kategori + bütçe + fiş verilerinin tamamı
 public class UserDataExportResponse {

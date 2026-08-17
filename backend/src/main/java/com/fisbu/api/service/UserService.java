@@ -6,6 +6,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fisbu.api.budget.application.port.in.GetAllBudgetsUseCase;
+import com.fisbu.api.category.adapter.in.web.CategoryWebMapper;
+import com.fisbu.api.category.application.port.in.GetCategoriesUseCase;
 import com.fisbu.api.dto.NotificationPrefsRequest;
 import com.fisbu.api.dto.NotificationPrefsResponse;
 import com.fisbu.api.dto.UserDataExportResponse;
@@ -17,17 +20,19 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final AuthService authService;
-    private final CategoryService categoryService;
-    private final BudgetService budgetService;
+    private final GetCategoriesUseCase getCategoriesUseCase;
+    private final CategoryWebMapper categoryWebMapper;
+    private final GetAllBudgetsUseCase getAllBudgetsUseCase;
     private final ReceiptService receiptService;
 
     public UserService(UserRepository userRepository, AuthService authService,
-                        CategoryService categoryService, BudgetService budgetService,
-                        ReceiptService receiptService) {
+                        GetCategoriesUseCase getCategoriesUseCase, CategoryWebMapper categoryWebMapper,
+                        GetAllBudgetsUseCase getAllBudgetsUseCase, ReceiptService receiptService) {
         this.userRepository = userRepository;
         this.authService = authService;
-        this.categoryService = categoryService;
-        this.budgetService = budgetService;
+        this.getCategoriesUseCase = getCategoriesUseCase;
+        this.categoryWebMapper = categoryWebMapper;
+        this.getAllBudgetsUseCase = getAllBudgetsUseCase;
         this.receiptService = receiptService;
     }
 
@@ -63,8 +68,8 @@ public class UserService {
         return new UserDataExportResponse(
                 LocalDateTime.now(),
                 authService.getProfile(email),
-                categoryService.getCategories(email),
-                budgetService.getAllBudgets(email),
+                categoryWebMapper.toResponseList(getCategoriesUseCase.getCategories(email)),
+                getAllBudgetsUseCase.getAllBudgets(email),
                 receiptService.getReceipts(email));
     }
 }

@@ -1,4 +1,4 @@
-package com.fisbu.api.dto;
+package com.fisbu.api.category.adapter.in.web;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

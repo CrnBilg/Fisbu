@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.fisbu.api.budget.application.port.in.GetBudgetsUseCase;
 import com.fisbu.api.dto.BudgetResponse;
 import com.fisbu.api.dto.ChatMessageDto;
 import com.fisbu.api.dto.ChatRequest;
@@ -32,14 +33,14 @@ public class FinancialChatService {
 
     private final AiService aiService;
     private final StatisticsService statisticsService;
-    private final BudgetService budgetService;
+    private final GetBudgetsUseCase getBudgetsUseCase;
     private final SavingsGoalService savingsGoalService;
 
     public FinancialChatService(AiService aiService, StatisticsService statisticsService,
-                                 BudgetService budgetService, SavingsGoalService savingsGoalService) {
+                                 GetBudgetsUseCase getBudgetsUseCase, SavingsGoalService savingsGoalService) {
         this.aiService = aiService;
         this.statisticsService = statisticsService;
-        this.budgetService = budgetService;
+        this.getBudgetsUseCase = getBudgetsUseCase;
         this.savingsGoalService = savingsGoalService;
     }
 
@@ -79,7 +80,7 @@ public class FinancialChatService {
             categoryBreakdown = "(bu ay hiç fiş eklenmemiş)";
         }
 
-        List<BudgetResponse> budgets = budgetService.getBudgets(email, today.getYear(), today.getMonthValue());
+        List<BudgetResponse> budgets = getBudgetsUseCase.getBudgets(email, today.getYear(), today.getMonthValue());
         String budgetSummary = budgets.isEmpty()
                 ? "(bu ay bütçe tanımlanmamış)"
                 : budgets.stream()

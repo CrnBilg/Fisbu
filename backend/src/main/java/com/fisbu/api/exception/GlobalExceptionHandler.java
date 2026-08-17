@@ -12,14 +12,35 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fisbu.api.shared.adapter.in.web.ErrorResponse;
+import com.fisbu.api.shared.domain.exception.ConflictException;
+import com.fisbu.api.shared.domain.exception.ForbiddenException;
+import com.fisbu.api.shared.domain.exception.NotFoundException;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    // Hexagonal migrasyonuyla gelen framework'ten bağımsız domain exception'ları (bkz. shared.domain.exception)
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(NotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.of(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponse.of(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.of(ex.getMessage()));
+    }
+
     // Validasyon hataları (boş alan, geçersiz tutar vb.)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationErrors(
+    public ResponseEntity<ErrorResponse> handleValidationErrors(
             MethodArgumentNotValidException ex) {
 
         Map<String, String> fieldErrors = new HashMap<>();
@@ -27,46 +48,42 @@ public class GlobalExceptionHandler {
                 fieldErrors.put(error.getField(), error.getDefaultMessage())
         );
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("error", "Geçersiz istek");
-        response.put("details", fieldErrors);
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.of("Geçersiz istek", fieldErrors));
     }
 
     // ResponseStatusException (404, 403 vb.)
     @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<Map<String, String>> handleResponseStatus(
+    public ResponseEntity<ErrorResponse> handleResponseStatus(
             ResponseStatusException ex) {
         return ResponseEntity
                 .status(ex.getStatusCode())
-                .body(Map.of("error", ex.getReason() != null ? ex.getReason() : "Hata oluştu"));
+                .body(ErrorResponse.of(ex.getReason() != null ? ex.getReason() : "Hata oluştu"));
     }
 
     // JSON parse hatası (geçersiz format)
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
-    public ResponseEntity<Map<String, String>> handleJsonParseError(
+    public ResponseEntity<ErrorResponse> handleJsonParseError(
             org.springframework.http.converter.HttpMessageNotReadableException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", "Geçersiz JSON formatı. Lütfen tarih formatını kontrol edin (YYYY-MM-DD)"));
+                .body(ErrorResponse.of("Geçersiz JSON formatı. Lütfen tarih formatını kontrol edin (YYYY-MM-DD)"));
     }
 
     // Dosya boyutu limiti aşıldığında (örn. çok büyük ekstre yükleme)
     @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
-    public ResponseEntity<Map<String, String>> handleMaxUploadSizeExceeded(
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(
             org.springframework.web.multipart.MaxUploadSizeExceededException ex) {
         return ResponseEntity
                 .status(HttpStatus.PAYLOAD_TOO_LARGE)
-                .body(Map.of("error", "Dosya boyutu çok büyük"));
+                .body(ErrorResponse.of("Dosya boyutu çok büyük"));
     }
 
     // Genel beklenmedik hatalar
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleGenericError(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleGenericError(Exception ex) {
         log.error("Beklenmedik hata", ex);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Sunucu hatası oluştu. Lütfen tekrar deneyin."));
+                .body(ErrorResponse.of("Sunucu hatası oluştu. Lütfen tekrar deneyin."));
     }
 }

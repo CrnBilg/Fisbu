@@ -26,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fisbu.api.budget.application.port.in.CheckBudgetThresholdUseCase;
 import com.fisbu.api.dto.BulkImportError;
 import com.fisbu.api.dto.BulkReceiptImportResponse;
 import com.fisbu.api.dto.CategorySuggestionResponse;
@@ -58,20 +59,20 @@ public class ReceiptService {
     private final ReceiptRepository receiptRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
-    private final BudgetService budgetService;
+    private final CheckBudgetThresholdUseCase checkBudgetThresholdUseCase;
     private final ExportService exportService;
     private final ObjectMapper objectMapper;
 
     public ReceiptService(ReceiptRepository receiptRepository,
                           UserRepository userRepository,
                           CategoryRepository categoryRepository,
-                          BudgetService budgetService,
+                          CheckBudgetThresholdUseCase checkBudgetThresholdUseCase,
                           ExportService exportService,
                           ObjectMapper objectMapper) {
         this.receiptRepository = receiptRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
-        this.budgetService = budgetService;
+        this.checkBudgetThresholdUseCase = checkBudgetThresholdUseCase;
         this.exportService = exportService;
         this.objectMapper = objectMapper;
     }
@@ -207,8 +208,8 @@ public class ReceiptService {
 
         // Fiş kategorili ve tarihliyse, o ayki bütçe eşiği geçildiyse push bildirimi gönder
         if (saved.getCategory() != null && saved.getReceiptDate() != null) {
-            budgetService.checkBudgetAndNotify(
-                    user, saved.getCategory(),
+            checkBudgetThresholdUseCase.checkAndNotify(
+                    user.getId(), saved.getCategory().getId(),
                     saved.getReceiptDate().getYear(),
                     saved.getReceiptDate().getMonthValue());
         }
