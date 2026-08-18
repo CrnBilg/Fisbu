@@ -1,0 +1,74 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: fisbu_ci
+          POSTGRES_USER: fisbu
+          POSTGRES_PASSWORD: fisbu_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Kodu çek
+        uses: actions/checkout@v4
+
+      - name: JDK 21 kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Gradle wrapper bütünlüğünü doğrula
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Build + test
+        env:
+          # CI'da gerçek Supabase'e değil, yukarıdaki tek kullanımlık Postgres servisine bağlanır.
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fisbu_ci
+          SPRING_DATASOURCE_USERNAME: fisbu
+          SPRING_DATASOURCE_PASSWORD: fisbu_ci_password
+          # Gerçek servislere bağlanmayan (context yüklemesi için gereken) dummy değerler —
+          # prod sırrı değil, sadece Spring'in @Value ile zorunlu tuttuğu alanları doldurur.
+          JWT_SECRET: ci-only-dummy-jwt-secret-not-for-production-use
+          CLOUDINARY_CLOUD_NAME: ci-dummy
+          CLOUDINARY_API_KEY: ci-dummy
+          CLOUDINARY_API_SECRET: ci-dummy
+        run: ./gradlew build --no-daemon
+
+      - name: Test raporlarını yükle (başarısızlıkta)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: backend/build/reports/tests/test
+          retention-days: 7
