@@ -13,6 +13,8 @@ import com.fisbu.api.dto.NotificationPrefsRequest;
 import com.fisbu.api.dto.NotificationPrefsResponse;
 import com.fisbu.api.dto.UserDataExportResponse;
 import com.fisbu.api.entity.User;
+import com.fisbu.api.receipt.adapter.in.web.ReceiptWebMapper;
+import com.fisbu.api.receipt.application.port.in.GetReceiptsUseCase;
 import com.fisbu.api.repository.UserRepository;
 
 @Service
@@ -23,17 +25,20 @@ public class UserService {
     private final GetCategoriesUseCase getCategoriesUseCase;
     private final CategoryWebMapper categoryWebMapper;
     private final GetAllBudgetsUseCase getAllBudgetsUseCase;
-    private final ReceiptService receiptService;
+    private final GetReceiptsUseCase getReceiptsUseCase;
+    private final ReceiptWebMapper receiptWebMapper;
 
     public UserService(UserRepository userRepository, AuthService authService,
                         GetCategoriesUseCase getCategoriesUseCase, CategoryWebMapper categoryWebMapper,
-                        GetAllBudgetsUseCase getAllBudgetsUseCase, ReceiptService receiptService) {
+                        GetAllBudgetsUseCase getAllBudgetsUseCase, GetReceiptsUseCase getReceiptsUseCase,
+                        ReceiptWebMapper receiptWebMapper) {
         this.userRepository = userRepository;
         this.authService = authService;
         this.getCategoriesUseCase = getCategoriesUseCase;
         this.categoryWebMapper = categoryWebMapper;
         this.getAllBudgetsUseCase = getAllBudgetsUseCase;
-        this.receiptService = receiptService;
+        this.getReceiptsUseCase = getReceiptsUseCase;
+        this.receiptWebMapper = receiptWebMapper;
     }
 
     /** Kullanıcının FCM cihaz token'ını kaydeder/günceller. */
@@ -70,6 +75,6 @@ public class UserService {
                 authService.getProfile(email),
                 categoryWebMapper.toResponseList(getCategoriesUseCase.getCategories(email)),
                 getAllBudgetsUseCase.getAllBudgets(email),
-                receiptService.getReceipts(email));
+                receiptWebMapper.toResponseList(getReceiptsUseCase.getReceipts(email)));
     }
 }

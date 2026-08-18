@@ -13,36 +13,30 @@ import com.fisbu.api.category.application.port.out.LoadCategoriesPort;
 import com.fisbu.api.category.application.port.out.LoadCategoryPort;
 import com.fisbu.api.category.application.port.out.ResolveUserIdPort;
 import com.fisbu.api.category.application.port.out.SaveCategoryPort;
-import com.fisbu.api.category.application.port.out.UnlinkReceiptsFromCategoryPort;
 import com.fisbu.api.category.domain.Category;
-import com.fisbu.api.entity.Receipt;
 import com.fisbu.api.entity.User;
 import com.fisbu.api.repository.BudgetRepository;
 import com.fisbu.api.repository.CategoryRepository;
-import com.fisbu.api.repository.ReceiptRepository;
 import com.fisbu.api.repository.UserRepository;
 
-// Category modülünün çıkış adaptörü. Receipt/Budget henüz kendi hexagonal modüllerine
-// taşınmadığı için, bu adaptör geçici olarak onların legacy repository'lerini de kullanır
-// (bkz. DeleteBudgetsByCategoryPort / UnlinkReceiptsFromCategoryPort javadoc'u — o modüller
-// migrate olduğunda buradaki doğrudan erişim, onların kendi out-port'larıyla değiştirilecek).
+// Category modülünün çıkış adaptörü. Budget henüz kendi hexagonal modülüne taşınmadığı için,
+// bu adaptör geçici olarak onun legacy repository'sini de kullanır (bkz. DeleteBudgetsByCategoryPort
+// javadoc'u — Budget migrate olduğunda buradaki doğrudan erişim, onun kendi out-port'uyla
+// değiştirilecek). UnlinkReceiptsFromCategoryPort artık burada değil, CategoryReceiptAdapter'da
+// (Receipt modülü migrate oldu, bkz. adapter/out/receipt).
 @Component
 public class CategoryPersistenceAdapter implements ResolveUserIdPort, LoadCategoriesPort, LoadCategoryPort,
-        FindCategoryByNamePort, SaveCategoryPort, DeleteCategoryPort, DeleteBudgetsByCategoryPort,
-        UnlinkReceiptsFromCategoryPort {
+        FindCategoryByNamePort, SaveCategoryPort, DeleteCategoryPort, DeleteBudgetsByCategoryPort {
 
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
-    private final ReceiptRepository receiptRepository;
     private final BudgetRepository budgetRepository;
     private final CategoryPersistenceMapper mapper;
 
     public CategoryPersistenceAdapter(CategoryRepository categoryRepository, UserRepository userRepository,
-                                       ReceiptRepository receiptRepository, BudgetRepository budgetRepository,
-                                       CategoryPersistenceMapper mapper) {
+                                       BudgetRepository budgetRepository, CategoryPersistenceMapper mapper) {
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
-        this.receiptRepository = receiptRepository;
         this.budgetRepository = budgetRepository;
         this.mapper = mapper;
     }
@@ -93,14 +87,6 @@ public class CategoryPersistenceAdapter implements ResolveUserIdPort, LoadCatego
     public void deleteBudgetsByCategory(Long categoryId) {
         com.fisbu.api.entity.Category category = requireCategoryEntity(categoryId);
         budgetRepository.deleteAll(budgetRepository.findByCategory(category));
-    }
-
-    @Override
-    public void unlinkReceiptsFromCategory(Long categoryId) {
-        com.fisbu.api.entity.Category category = requireCategoryEntity(categoryId);
-        List<Receipt> receipts = receiptRepository.findByCategory(category);
-        receipts.forEach(receipt -> receipt.setCategory(null));
-        receiptRepository.saveAll(receipts);
     }
 
     private User requireUser(Long userId) {

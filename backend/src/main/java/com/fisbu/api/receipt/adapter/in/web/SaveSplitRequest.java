@@ -1,4 +1,4 @@
-package com.fisbu.api.dto;
+package com.fisbu.api.receipt.adapter.in.web;
 
 import java.util.List;
 

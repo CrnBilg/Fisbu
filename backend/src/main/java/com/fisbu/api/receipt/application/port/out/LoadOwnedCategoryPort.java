@@ -1,0 +1,13 @@
+package com.fisbu.api.receipt.application.port.out;
+
+import java.util.Optional;
+
+import com.fisbu.api.category.domain.Category;
+
+// Category modülü zaten hexagonal'a taşındığı için bu bir köprü değil: adaptörü doğrudan
+// Category modülünün kendi LoadCategoryPort'unu sarmalar (bkz. adapter/out/category),
+// tıpkı Budget'ın LoadOwnedCategoryPort'u gibi.
+public interface LoadOwnedCategoryPort {
+
+    Optional<Category> loadById(Long categoryId);
+}

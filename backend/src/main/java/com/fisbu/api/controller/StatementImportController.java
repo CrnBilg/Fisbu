@@ -1,5 +1,8 @@
 package com.fisbu.api.controller;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -13,10 +16,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fisbu.api.dto.BulkReceiptImportRequest;
-import com.fisbu.api.dto.BulkReceiptImportResponse;
 import com.fisbu.api.dto.ParsedStatementResponse;
-import com.fisbu.api.service.ReceiptService;
+import com.fisbu.api.receipt.adapter.in.web.BulkReceiptImportRequest;
+import com.fisbu.api.receipt.adapter.in.web.BulkReceiptImportResponse;
+import com.fisbu.api.receipt.adapter.in.web.ReceiptWebMapper;
+import com.fisbu.api.receipt.application.port.in.CreateReceiptsBulkUseCase;
 import com.fisbu.api.service.StatementImportService;
 
 @RestController
@@ -24,11 +28,14 @@ import com.fisbu.api.service.StatementImportService;
 public class StatementImportController {
 
     private final StatementImportService statementImportService;
-    private final ReceiptService receiptService;
+    private final CreateReceiptsBulkUseCase createReceiptsBulkUseCase;
+    private final ReceiptWebMapper mapper;
 
-    public StatementImportController(StatementImportService statementImportService, ReceiptService receiptService) {
+    public StatementImportController(StatementImportService statementImportService,
+                                      CreateReceiptsBulkUseCase createReceiptsBulkUseCase, ReceiptWebMapper mapper) {
         this.statementImportService = statementImportService;
-        this.receiptService = receiptService;
+        this.createReceiptsBulkUseCase = createReceiptsBulkUseCase;
+        this.mapper = mapper;
     }
 
     @PostMapping("/parse")
@@ -41,6 +48,9 @@ public class StatementImportController {
     @ResponseStatus(HttpStatus.CREATED)
     public BulkReceiptImportResponse confirmImport(@AuthenticationPrincipal UserDetails userDetails,
                                                      @RequestBody @Valid BulkReceiptImportRequest request) {
-        return receiptService.createReceiptsBulk(userDetails.getUsername(), request.getReceipts());
+        String email = userDetails.getUsername();
+        List<com.fisbu.api.receipt.application.port.in.CreateReceiptUseCase.CreateReceiptCommand> commands =
+                request.getReceipts().stream().map(r -> mapper.toCommand(email, r)).collect(Collectors.toList());
+        return mapper.toBulkResponse(createReceiptsBulkUseCase.createReceiptsBulk(email, commands));
     }
 }
