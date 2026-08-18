@@ -93,7 +93,7 @@ public class CategoryService implements GetCategoriesUseCase, CreateCategoryUseC
     // DataIntegrityViolationException/500 yerine düzgün bir 409 dönmesini sağlar.
     private void ensureNameNotTaken(Long userId, String name, Long excludingCategoryId) {
         findCategoryByNamePort.findByUserIdAndNameIgnoreCase(userId, name).ifPresent(existing -> {
-            if (!existing.id().equals(excludingCategoryId)) {
+            if (existing.isDifferentCategoryFrom(excludingCategoryId)) {
                 throw new CategoryNameAlreadyExistsException();
             }
         });

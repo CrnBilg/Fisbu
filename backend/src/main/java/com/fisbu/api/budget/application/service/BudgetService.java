@@ -154,50 +154,27 @@ public class BudgetService implements GetBudgetsUseCase, GetAllBudgetsUseCase, C
                 .orElseThrow(UserNotFoundException::new);
 
         BigDecimal spend = sumReceiptSpendPort.sumSpend(userId, categoryId, year, month);
-        double pct = spend.divide(limit, 4, RoundingMode.HALF_UP)
-                .multiply(BigDecimal.valueOf(100)).doubleValue();
-        long pctRounded = Math.round(pct);
+        Budget.SpendEvaluation evaluation = budget.evaluateSpend(spend);
 
-        boolean warningNotified = Boolean.TRUE.equals(budget.warningNotified());
-        boolean overspendNotified = Boolean.TRUE.equals(budget.overspendNotified());
-        boolean changed = false;
-
-        if (pct >= 100.0) {
-            if (!overspendNotified) {
+        switch (evaluation.event()) {
+            case OVERSPEND -> {
                 if (profile.notifyBudgetOverspend()) {
                     sendBudgetNotificationPort.send(profile.fcmToken(), "Bütçe Aşıldı",
-                            category.name() + " bütçeni aştın! (şu an %" + pctRounded + " kullanıldı)");
+                            category.name() + " bütçeni aştın! (şu an %" + evaluation.percentRounded() + " kullanıldı)");
                 }
-                overspendNotified = true;
-                warningNotified = true;
-                changed = true;
             }
-        } else if (pct >= 80.0) {
-            if (!warningNotified) {
+            case WARNING -> {
                 if (profile.notifyBudgetWarning()) {
                     sendBudgetNotificationPort.send(profile.fcmToken(), "Bütçe Uyarısı",
-                            category.name() + " bütçenin %80'ine ulaştın (şu an %" + pctRounded + ")");
+                            category.name() + " bütçenin %80'ine ulaştın (şu an %" + evaluation.percentRounded() + ")");
                 }
-                warningNotified = true;
-                changed = true;
             }
-            // Aşımdan uyarı bandına düştüyse aşım bayrağını sıfırla
-            if (overspendNotified) {
-                overspendNotified = false;
-                changed = true;
-            }
-        } else {
-            // %80 altına döndü → sonraki eşik geçişinde tekrar bildirebilmek için bayrakları sıfırla
-            if (warningNotified || overspendNotified) {
-                warningNotified = false;
-                overspendNotified = false;
-                changed = true;
+            case NONE -> {
             }
         }
 
-        if (changed) {
-            saveBudgetPort.save(new Budget(budget.id(), budget.userId(), budget.categoryId(), budget.monthlyLimit(),
-                    budget.year(), budget.month(), warningNotified, overspendNotified));
+        if (evaluation.changed()) {
+            saveBudgetPort.save(evaluation.budget());
         }
     }
 
