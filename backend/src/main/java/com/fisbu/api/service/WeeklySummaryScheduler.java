@@ -64,7 +64,9 @@ public class WeeklySummaryScheduler {
             try {
                 sendSummaryForUser(user, lastWeekTotals, prevWeekTotals);
             } catch (Exception e) {
-                log.error("Haftalık özet gönderilemedi ({}): {}", user.getEmail(), e.getMessage());
+                // SEC-006: e-posta adresi (PII) yerine userId loglanır — hata ayıklama için
+                // "hangi kullanıcı" bilgisi kaybolmaz, e-posta log dosyasına düz metin yazılmaz.
+                log.error("Haftalık özet gönderilemedi (userId={}): {}", user.getId(), e.getMessage());
             }
         }
     }

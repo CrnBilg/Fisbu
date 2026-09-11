@@ -11,3 +11,5 @@
 | PERF-002 | Scheduler index eksikliği (return_deadline/warranty_expiry_date) + N+1 düzeltmesi | Acil — Sprint 2 denetim bulgusu A4 | S | Done | 2 |
 | PERF-001 | Idempotency-Key mekanizması (SavingsGoal) | Acil — Sprint 2 denetim bulgusu A3 | M | Done | 2 |
 | TEST-004 | Kalan 7 controller için test yaz (SavingsGoal/StatementImport/Statistics/Upload/Inflation/AI/User) | Acil — Sprint 2 denetim bulgusu A5 | M | Done | 2 |
+| SEC-005 | Bilinen CVE'li 2 bağımlılığı yükselt (postgresql, poi-ooxml) | Yüksek | S | Done | - |
+| SEC-006 | Log çıktılarında kullanıcı e-postası (PII) sızıntısı düzeltmesi | Orta | S | Done | - |

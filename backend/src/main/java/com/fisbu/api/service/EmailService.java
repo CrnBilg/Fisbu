@@ -65,7 +65,7 @@ public class EmailService {
 
     private void send(String toEmail, String subject, String htmlContent) {
         if (apiKey == null || apiKey.isBlank()) {
-            log.warn("BREVO_API_KEY tanımlı değil, e-posta gönderilmedi ({} -> {})", subject, toEmail);
+            log.warn("BREVO_API_KEY tanımlı değil, e-posta gönderilmedi ({} -> {})", subject, maskEmail(toEmail));
             return;
         }
         try {
@@ -91,7 +91,20 @@ public class EmailService {
                 log.error("Brevo isteği başarısız: {} - {}", response.statusCode(), response.body());
             }
         } catch (Exception e) {
-            log.error("E-posta gönderilirken hata oluştu ({} -> {}): {}", subject, toEmail, e.getMessage());
+            log.error("E-posta gönderilirken hata oluştu ({} -> {}): {}", subject, maskEmail(toEmail), e.getMessage());
         }
+    }
+
+    // SEC-006: e-posta adresi (PII) log'a düz metin yazılmaz — hata ayıklama için ilk karakter +
+    // domain yeterli ("j***@fisbu.com"), tam adres saklanmaz/loglanmaz.
+    static String maskEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return "(bilinmiyor)";
+        }
+        int at = email.indexOf('@');
+        if (at <= 0) {
+            return "***";
+        }
+        return email.charAt(0) + "***" + email.substring(at);
     }
 }
