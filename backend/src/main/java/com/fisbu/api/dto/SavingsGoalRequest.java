@@ -20,4 +20,9 @@ public class SavingsGoalRequest {
     private BigDecimal targetAmount;
 
     private LocalDate targetDate;
+
+    // PERF-001: opsiyonel — client (mobil app) network retry'de aynı isteği tekrar gönderirse
+    // bu alanla (bir UUID) aynı kaydı işaret eder; boş bırakılırsa idempotency garantisi yoktur
+    // (geriye dönük uyumluluk için zorunlu değil).
+    private String idempotencyKey;
 }

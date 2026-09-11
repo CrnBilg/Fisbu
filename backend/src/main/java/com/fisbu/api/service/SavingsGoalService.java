@@ -40,11 +40,23 @@ public class SavingsGoalService {
     public SavingsGoalResponse createGoal(String email, SavingsGoalRequest request) {
         User user = getUserByEmail(email);
 
+        // PERF-001: idempotency-key gönderildiyse ve aynı kullanıcı+key ile daha önce bir hedef
+        // oluşturulmuşsa, YENİ kayıt açmadan var olan hedefi döner — network retry'de çift kayıt
+        // oluşmasını önler. Key gönderilmezse (null) bu kontrol atlanır, mevcut davranış korunur.
+        String idempotencyKey = request.getIdempotencyKey();
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            var existing = savingsGoalRepository.findByUserAndIdempotencyKey(user, idempotencyKey);
+            if (existing.isPresent()) {
+                return toResponse(existing.get());
+            }
+        }
+
         SavingsGoal goal = new SavingsGoal();
         goal.setUser(user);
         goal.setName(request.getName().trim());
         goal.setTargetAmount(request.getTargetAmount());
         goal.setTargetDate(request.getTargetDate());
+        goal.setIdempotencyKey(idempotencyKey != null && !idempotencyKey.isBlank() ? idempotencyKey : null);
 
         return toResponse(savingsGoalRepository.save(goal));
     }

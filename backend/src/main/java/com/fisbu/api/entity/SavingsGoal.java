@@ -51,4 +51,10 @@ public class SavingsGoal {
     // Hedefe ulaşıldığında bir kez push gönderilir, tekrar tekrar bildirmemek için
     @Column(name = "achieved_notified", nullable = false, columnDefinition = "boolean default false")
     private Boolean achievedNotified = false;
+
+    // PERF-001: network retry'de çift kayıt oluşmasını önlemek için — client bir UUID gönderirse
+    // aynı (user_id, idempotency_key) çifti ile ikinci create isteği yeni satır oluşturmaz,
+    // var olan kaydı döner. Null ise (eski/güncellenmemiş client) mevcut davranış korunur.
+    @Column(name = "idempotency_key")
+    private String idempotencyKey;
 }
