@@ -8,12 +8,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fisbu.api.budget.application.port.in.CheckBudgetThresholdUseCase;
 import com.fisbu.api.category.domain.Category;
 import com.fisbu.api.receipt.application.port.in.CreateReceiptUseCase;
 import com.fisbu.api.receipt.application.port.in.CreateReceiptsBulkUseCase;
@@ -31,7 +32,6 @@ import com.fisbu.api.receipt.application.port.out.DeleteReceiptPort;
 import com.fisbu.api.receipt.application.port.out.FindDuplicateReceiptPort;
 import com.fisbu.api.receipt.application.port.out.FindReceiptsByStoreNameContainingPort;
 import com.fisbu.api.receipt.application.port.out.GenerateReceiptExportPort;
-import com.fisbu.api.receipt.application.port.out.LoadOwnedCategoryPort;
 import com.fisbu.api.receipt.application.port.out.LoadReceiptPort;
 import com.fisbu.api.receipt.application.port.out.LoadReceiptsPort;
 import com.fisbu.api.receipt.application.port.out.ReceiptPage;
@@ -46,8 +46,10 @@ import com.fisbu.api.receipt.domain.exception.CategoryNotFoundException;
 import com.fisbu.api.receipt.domain.exception.DuplicateReceiptException;
 import com.fisbu.api.receipt.domain.exception.ReceiptAccessDeniedException;
 import com.fisbu.api.receipt.domain.exception.ReceiptNotFoundException;
+import com.fisbu.api.receipt.domain.event.ReceiptRecordedEvent;
 import com.fisbu.api.receipt.domain.exception.UserNotFoundException;
 import com.fisbu.api.service.ProductNameNormalizer;
+import com.fisbu.api.shared.application.port.out.LoadOwnedCategoryPort;
 
 @Service
 public class ReceiptService implements GetReceiptsUseCase, SearchReceiptsUseCase, SuggestCategoryUseCase,
@@ -70,10 +72,11 @@ public class ReceiptService implements GetReceiptsUseCase, SearchReceiptsUseCase
     private final CountReceiptsByCategoryPort countReceiptsByCategoryPort;
     private final AverageAmountByCategoryPort averageAmountByCategoryPort;
     private final GenerateReceiptExportPort generateReceiptExportPort;
-    private final CheckBudgetThresholdUseCase checkBudgetThresholdUseCase;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final ObjectMapper objectMapper;
 
-    public ReceiptService(ResolveUserIdPort resolveUserIdPort, LoadOwnedCategoryPort loadOwnedCategoryPort,
+    public ReceiptService(ResolveUserIdPort resolveUserIdPort,
+                           @Qualifier("receiptCategoryAdapter") LoadOwnedCategoryPort loadOwnedCategoryPort,
                            LoadReceiptPort loadReceiptPort, LoadReceiptsPort loadReceiptsPort,
                            SearchReceiptsPort searchReceiptsPort,
                            FindReceiptsByStoreNameContainingPort findReceiptsByStoreNameContainingPort,
@@ -81,7 +84,7 @@ public class ReceiptService implements GetReceiptsUseCase, SearchReceiptsUseCase
                            DeleteReceiptPort deleteReceiptPort, CountReceiptsByCategoryPort countReceiptsByCategoryPort,
                            AverageAmountByCategoryPort averageAmountByCategoryPort,
                            GenerateReceiptExportPort generateReceiptExportPort,
-                           CheckBudgetThresholdUseCase checkBudgetThresholdUseCase, ObjectMapper objectMapper) {
+                           ApplicationEventPublisher applicationEventPublisher, ObjectMapper objectMapper) {
         this.resolveUserIdPort = resolveUserIdPort;
         this.loadOwnedCategoryPort = loadOwnedCategoryPort;
         this.loadReceiptPort = loadReceiptPort;
@@ -94,7 +97,7 @@ public class ReceiptService implements GetReceiptsUseCase, SearchReceiptsUseCase
         this.countReceiptsByCategoryPort = countReceiptsByCategoryPort;
         this.averageAmountByCategoryPort = averageAmountByCategoryPort;
         this.generateReceiptExportPort = generateReceiptExportPort;
-        this.checkBudgetThresholdUseCase = checkBudgetThresholdUseCase;
+        this.applicationEventPublisher = applicationEventPublisher;
         this.objectMapper = objectMapper;
     }
 
@@ -185,10 +188,12 @@ public class ReceiptService implements GetReceiptsUseCase, SearchReceiptsUseCase
 
         Receipt saved = saveReceiptPort.save(receipt);
 
-        // Fiş kategorili ve tarihliyse, o ayki bütçe eşiği geçildiyse push bildirimi gönder
+        // Fiş kategorili ve tarihliyse, o ayki bütçe eşiği geçildiyse push bildirimi gönder.
+        // ARCH-001/ADR-001: budget'ın in-port'unu doğrudan çağırmak yerine event yayınlanır —
+        // receipt artık budget modülünün hiçbir port'una bağımlı değil (döngüsel bağımlılık kırıldı).
         if (saved.categoryId() != null && saved.receiptDate() != null) {
-            checkBudgetThresholdUseCase.checkAndNotify(
-                    userId, saved.categoryId(), saved.receiptDate().getYear(), saved.receiptDate().getMonthValue());
+            applicationEventPublisher.publishEvent(new ReceiptRecordedEvent(
+                    userId, saved.categoryId(), saved.receiptDate().getYear(), saved.receiptDate().getMonthValue()));
         }
 
         return new CreateReceiptResult(saved, anomalyWarning);

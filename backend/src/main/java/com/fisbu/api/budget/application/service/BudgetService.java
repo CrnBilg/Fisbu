@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import com.fisbu.api.budget.application.port.in.CheckBudgetThresholdUseCase;
@@ -21,7 +22,7 @@ import com.fisbu.api.budget.application.port.out.FindBudgetByCategoryAndPeriodPo
 import com.fisbu.api.budget.application.port.out.GenerateSuggestionCommentPort;
 import com.fisbu.api.budget.application.port.out.LoadBudgetPort;
 import com.fisbu.api.budget.application.port.out.LoadBudgetsPort;
-import com.fisbu.api.budget.application.port.out.LoadOwnedCategoryPort;
+import com.fisbu.api.shared.application.port.out.LoadOwnedCategoryPort;
 import com.fisbu.api.budget.application.port.out.LoadUserNotificationProfilePort;
 import com.fisbu.api.budget.application.port.out.ResolveUserIdPort;
 import com.fisbu.api.budget.application.port.out.SaveBudgetPort;
@@ -61,7 +62,8 @@ public class BudgetService implements GetBudgetsUseCase, GetAllBudgetsUseCase, C
 
     public BudgetService(ResolveUserIdPort resolveUserIdPort,
                           LoadUserNotificationProfilePort loadUserNotificationProfilePort,
-                          LoadOwnedCategoryPort loadOwnedCategoryPort, SumReceiptSpendPort sumReceiptSpendPort,
+                          @Qualifier("budgetCategoryAdapter") LoadOwnedCategoryPort loadOwnedCategoryPort,
+                          SumReceiptSpendPort sumReceiptSpendPort,
                           LoadBudgetsPort loadBudgetsPort, LoadBudgetPort loadBudgetPort,
                           FindBudgetByCategoryAndPeriodPort findBudgetByCategoryAndPeriodPort,
                           SaveBudgetPort saveBudgetPort, DeleteBudgetPort deleteBudgetPort,

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import com.fisbu.api.category.application.port.out.LoadCategoryPort;
 import com.fisbu.api.category.domain.Category;
-import com.fisbu.api.receipt.application.port.out.LoadOwnedCategoryPort;
+import com.fisbu.api.shared.application.port.out.LoadOwnedCategoryPort;
 
 // Category modülü zaten hexagonal olduğu için burada legacy repository'ye değil,
 // doğrudan Category modülünün kendi out-port'una (LoadCategoryPort) delege ediyoruz

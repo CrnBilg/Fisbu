@@ -21,7 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fisbu.api.budget.application.port.in.CheckBudgetThresholdUseCase;
+import org.springframework.context.ApplicationEventPublisher;
 import com.fisbu.api.category.domain.Category;
 import com.fisbu.api.receipt.application.port.in.CreateReceiptUseCase.CreateReceiptCommand;
 import com.fisbu.api.receipt.application.port.in.CreateReceiptUseCase.CreateReceiptResult;
@@ -32,7 +32,8 @@ import com.fisbu.api.receipt.application.port.out.DeleteReceiptPort;
 import com.fisbu.api.receipt.application.port.out.FindDuplicateReceiptPort;
 import com.fisbu.api.receipt.application.port.out.FindReceiptsByStoreNameContainingPort;
 import com.fisbu.api.receipt.application.port.out.GenerateReceiptExportPort;
-import com.fisbu.api.receipt.application.port.out.LoadOwnedCategoryPort;
+import com.fisbu.api.receipt.domain.event.ReceiptRecordedEvent;
+import com.fisbu.api.shared.application.port.out.LoadOwnedCategoryPort;
 import com.fisbu.api.receipt.application.port.out.LoadReceiptPort;
 import com.fisbu.api.receipt.application.port.out.LoadReceiptsPort;
 import com.fisbu.api.receipt.application.port.out.ResolveUserIdPort;
@@ -79,13 +80,13 @@ class ReceiptServiceTest {
     @Mock
     private GenerateReceiptExportPort generateReceiptExportPort;
     @Mock
-    private CheckBudgetThresholdUseCase checkBudgetThresholdUseCase;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     private ReceiptService newService() {
         return new ReceiptService(resolveUserIdPort, loadOwnedCategoryPort, loadReceiptPort, loadReceiptsPort,
                 searchReceiptsPort, findReceiptsByStoreNameContainingPort, findDuplicateReceiptPort, saveReceiptPort,
                 deleteReceiptPort, countReceiptsByCategoryPort, averageAmountByCategoryPort, generateReceiptExportPort,
-                checkBudgetThresholdUseCase, new ObjectMapper());
+                applicationEventPublisher, new ObjectMapper());
     }
 
     private Category category(Long id, Long userId, String name) {
@@ -118,7 +119,7 @@ class ReceiptServiceTest {
 
         assertThat(result.receipt().id()).isEqualTo(RECEIPT_ID);
         assertThat(result.anomalyWarning()).isNull();
-        verify(checkBudgetThresholdUseCase, never()).checkAndNotify(any(), any(), anyInt(), anyInt());
+        verify(applicationEventPublisher, never()).publishEvent(any(ReceiptRecordedEvent.class));
     }
 
     @Test
@@ -197,7 +198,7 @@ class ReceiptServiceTest {
 
         newService().createReceipt(command(CATEGORY_ID, true));
 
-        verify(checkBudgetThresholdUseCase).checkAndNotify(USER_ID, CATEGORY_ID, 2026, 8);
+        verify(applicationEventPublisher).publishEvent(new ReceiptRecordedEvent(USER_ID, CATEGORY_ID, 2026, 8));
     }
 
     @Test

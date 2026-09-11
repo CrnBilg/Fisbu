@@ -23,7 +23,7 @@ import com.fisbu.api.budget.application.port.out.FindBudgetByCategoryAndPeriodPo
 import com.fisbu.api.budget.application.port.out.GenerateSuggestionCommentPort;
 import com.fisbu.api.budget.application.port.out.LoadBudgetPort;
 import com.fisbu.api.budget.application.port.out.LoadBudgetsPort;
-import com.fisbu.api.budget.application.port.out.LoadOwnedCategoryPort;
+import com.fisbu.api.shared.application.port.out.LoadOwnedCategoryPort;
 import com.fisbu.api.budget.application.port.out.LoadUserNotificationProfilePort;
 import com.fisbu.api.budget.application.port.out.ResolveUserIdPort;
 import com.fisbu.api.budget.application.port.out.SaveBudgetPort;
