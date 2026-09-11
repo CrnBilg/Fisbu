@@ -1,0 +1,5 @@
+{
+ "current_sprint": 2,
+ "phase": "in_progress",
+ "sprint_goal": "Sprint 2 backend denetimi düzeltme fazı: receipt/budget döngüsel bağımlılığını kırmak (ARCH-001), idempotency eklemek (PERF-001), scheduler/index sorunlarını çözmek (PERF-002), ve finansal servisler/controller'lar için regresyon testleri yazmak (TEST-001..004)."
+}
