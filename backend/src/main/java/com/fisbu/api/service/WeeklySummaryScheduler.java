@@ -4,15 +4,16 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.fisbu.api.entity.Receipt;
 import com.fisbu.api.entity.User;
 import com.fisbu.api.repository.ReceiptRepository;
 import com.fisbu.api.repository.UserRepository;
@@ -52,35 +53,40 @@ public class WeeklySummaryScheduler {
         List<User> users = userRepository.findByFcmTokenIsNotNull();
         log.info("Haftalık özet bildirimi gönderiliyor: {} kullanıcı", users.size());
 
+        // PERF-002: kullanıcı başına ayrı sorgu (N+1) yerine, her iki hafta için TEK agregasyon
+        // sorgusu — toplam sorgu sayısı kullanıcı sayısından bağımsız, sabit (2) kalır.
+        Map<Long, BigDecimal> lastWeekTotals = toTotalsByUserId(
+                receiptRepository.sumTotalAmountGroupedByUserForDateRange(lastWeekStart, lastWeekEnd));
+        Map<Long, BigDecimal> prevWeekTotals = toTotalsByUserId(
+                receiptRepository.sumTotalAmountGroupedByUserForDateRange(prevWeekStart, prevWeekEnd));
+
         for (User user : users) {
             try {
-                sendSummaryForUser(user, lastWeekStart, lastWeekEnd, prevWeekStart, prevWeekEnd);
+                sendSummaryForUser(user, lastWeekTotals, prevWeekTotals);
             } catch (Exception e) {
                 log.error("Haftalık özet gönderilemedi ({}): {}", user.getEmail(), e.getMessage());
             }
         }
     }
 
-    private void sendSummaryForUser(User user, LocalDate lastWeekStart, LocalDate lastWeekEnd,
-                                     LocalDate prevWeekStart, LocalDate prevWeekEnd) {
-        BigDecimal lastWeekTotal = sumReceipts(user, lastWeekStart, lastWeekEnd);
+    private Map<Long, BigDecimal> toTotalsByUserId(List<Object[]> rows) {
+        Map<Long, BigDecimal> totals = new HashMap<>();
+        for (Object[] row : rows) {
+            totals.put((Long) row[0], (BigDecimal) row[1]);
+        }
+        return totals;
+    }
+
+    private void sendSummaryForUser(User user, Map<Long, BigDecimal> lastWeekTotals,
+                                     Map<Long, BigDecimal> prevWeekTotals) {
+        BigDecimal lastWeekTotal = lastWeekTotals.getOrDefault(user.getId(), BigDecimal.ZERO);
         if (lastWeekTotal.compareTo(BigDecimal.ZERO) == 0) {
             return; // Hiç harcama yoksa bildirimle rahatsız etme
         }
-        BigDecimal prevWeekTotal = sumReceipts(user, prevWeekStart, prevWeekEnd);
+        BigDecimal prevWeekTotal = prevWeekTotals.getOrDefault(user.getId(), BigDecimal.ZERO);
 
         String body = buildBody(lastWeekTotal, prevWeekTotal);
         pushService.send(user.getFcmToken(), "Haftalık Harcama Özetin", body);
-    }
-
-    private BigDecimal sumReceipts(User user, LocalDate start, LocalDate end) {
-        BigDecimal total = BigDecimal.ZERO;
-        for (Receipt receipt : receiptRepository.findByUserAndReceiptDateBetween(user, start, end)) {
-            if (receipt.getTotalAmount() != null) {
-                total = total.add(receipt.getTotalAmount());
-            }
-        }
-        return total;
     }
 
     private String buildBody(BigDecimal lastWeekTotal, BigDecimal prevWeekTotal) {

@@ -57,6 +57,12 @@ public interface ReceiptRepository extends JpaRepository<Receipt, Long>, JpaSpec
             @Param("user") User user, @Param("category") Category category,
             @Param("start") LocalDate start, @Param("end") LocalDate end);
 
+    // PERF-002: WeeklySummaryScheduler'ın kullanıcı başına ayrı sorgu attığı N+1 deseni yerine —
+    // tüm FCM-token'lı kullanıcıların bir haftalık toplamı TEK sorguda (userId'ye göre gruplanmış) hesaplanır.
+    @Query("SELECT r.user.id, COALESCE(SUM(r.totalAmount), 0) FROM Receipt r " +
+            "WHERE r.user.fcmToken IS NOT NULL AND r.receiptDate BETWEEN :start AND :end GROUP BY r.user.id")
+    List<Object[]> sumTotalAmountGroupedByUserForDateRange(@Param("start") LocalDate start, @Param("end") LocalDate end);
+
     // Tutar anomali tespiti — ortalama/adet DB'de hesaplanır, kategori geçmişi belleğe yüklenmez
     long countByCategoryAndTotalAmountIsNotNull(Category category);
 
