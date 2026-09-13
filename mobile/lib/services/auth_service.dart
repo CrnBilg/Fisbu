@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api_client.dart';
 
@@ -8,6 +9,16 @@ class AuthService {
 
   // Bellekte önbelleklenir, ilk okumada secure storage'dan yüklenir
   static String? _token;
+
+  /// Çağıranın davranışını değiştirmeden (hata yutulmuş gibi görünse de)
+  /// en-iyi-çaba ile Crashlytics'e kaydeder — sessiz `catch (e) {}` yerine.
+  /// Crashlytics'in kendisi hata fırlatırsa (örn. Firebase hiç başlatılamadıysa)
+  /// bu da yutulur: ikinci bir raporlama hatası, ilk hatayı maskelememeli.
+  static void _reportSilently(Object error, StackTrace stack, {required String context}) {
+    try {
+      FirebaseCrashlytics.instance.recordError(error, stack, reason: context, fatal: false);
+    } catch (_) {}
+  }
 
   static Future<AuthResult> login(String email, String password) async {
     try {
@@ -54,7 +65,9 @@ class AuthService {
     _token = null;
     try {
       await _storage.delete(key: _tokenKey);
-    } catch (e) {}
+    } catch (e, stack) {
+      _reportSilently(e, stack, context: 'AuthService.logout: secure storage delete başarısız');
+    }
   }
 
   static Future<bool> isLoggedIn() async => await getToken() != null;
@@ -110,7 +123,9 @@ class AuthService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       }
-    } catch (e) {}
+    } catch (e, stack) {
+      _reportSilently(e, stack, context: 'AuthService.getProfile başarısız');
+    }
     return null;
   }
 
