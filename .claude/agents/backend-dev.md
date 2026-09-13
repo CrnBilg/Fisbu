@@ -76,9 +76,13 @@ Backend-dev, iş mantığı içeren her fonksiyon için unit test yazar (domain 
 ## Test — Integration
 API + veritabanı etkileşimi içeren akışlar için integration test yazar. Testler, in-memory (sahte) veritabanı değil, gerçek PostgreSQL'e karşı çalışır — production veritabanına değil, her test için oluşturulan geçici/izole bir veritabanına (Testcontainers ile).
 
-## Doğrulama komutları
-Backend-dev, kodu göndermeden önce şu komutları çalıştırıp çıktısını story dosyasına ekler:
+## Test — E2E — kritik, yeni bir kritik akış eklendiğinde zorunlu
+Backend-dev, **yeni bir kritik kullanıcı akışı** eklediğinde (yeni bir kayıt/ödeme/veri-kaybı-riski taşıyan işlem, veya mevcut hiçbir E2E'nin kapsamadığı yeni bir modüller-arası entegrasyon — örn. ARCH-001'deki receipt→budget event akışı gibi) `backend/src/e2e/java/` altına bir E2E testi de eklemeden story Done işaretlenemez. Araç ve desen: `testing-strategy` skill'inin "Backend E2E" bölümü (Testcontainers + `@SpringBootTest` + `TestRestTemplate`, `./gradlew e2eTest` ile çalışır — argümansız `test`/`build`'e dahil değildir). Akış gerçekten kritik değilse (örn. küçük bir CRUD varyasyonu), backend-dev bunu story'nin Çıktı bölümünde gerekçeyle not düşer, QA bu gerekçeyi değerlendirir.
+
+## Doğrulama komutları — kritik
+Backend-dev, kodu göndermeden önce şu komutları çalıştırıp çıktısını story dosyasına ekler. **Argümansız `./gradlew test` veya `./gradlew build` ÇALIŞTIRMA** — proje canlı bir Supabase veritabanına bağlı ve `ApiApplicationTests` (tam Spring context) bu argümansız komutlarla tetiklenir. Bunun yerine:
 ```
-./gradlew build
-./gradlew test
+./gradlew compileJava compileTestJava
+./gradlew test --tests "com.fisbu.api.<paket>.<SınıfAdı>Test"   # sadece değiştirilen/yeni sınıflar için, hedefli
+./gradlew e2eTest   # SADECE yeni bir E2E testi eklendiğinde, Testcontainers ile — canlı DB'ye bağlanmaz
 ```

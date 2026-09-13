@@ -18,6 +18,23 @@ repositories {
 	mavenCentral()
 }
 
+// E2E-001: gerçek Testcontainers Postgres'e karşı çalışan uçtan uca testler için AYRI bir
+// kaynak seti. Bilerek `test`/`compileTestJava`'dan izole — argümansız `./gradlew test` veya
+// `./gradlew build` bu testleri TETİKLEMEZ, sadece açıkça `./gradlew e2eTest` ile çalışır.
+sourceSets {
+	e2e {
+		java.srcDir 'src/e2e/java'
+		resources.srcDir 'src/e2e/resources'
+		compileClasspath += sourceSets.main.output + sourceSets.test.output
+		runtimeClasspath += sourceSets.main.output + sourceSets.test.output
+	}
+}
+
+configurations {
+	e2eImplementation.extendsFrom testImplementation
+	e2eRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
 dependencies {
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
 	implementation 'com.cloudinary:cloudinary-http44:1.36.0'
@@ -53,10 +70,23 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 
+	// E2E-001: Testcontainers sürümü Spring Boot BOM'u tarafından yönetiliyor (projedeki diğer
+	// versiyonsuz bağımlılıklarla aynı desen)
+	e2eImplementation 'org.testcontainers:junit-jupiter'
+	e2eImplementation 'org.testcontainers:postgresql'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+tasks.register('e2eTest', Test) {
+	description = 'Gerçek Testcontainers Postgres ile uçtan uca (E2E) testlerini çalıştırır.'
+	group = 'verification'
+	testClassesDirs = sourceSets.e2e.output.classesDirs
+	classpath = sourceSets.e2e.runtimeClasspath
+	useJUnitPlatform()
+	shouldRunAfter test
 }
 
 checkstyle {

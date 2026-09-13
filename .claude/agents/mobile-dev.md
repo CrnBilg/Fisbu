@@ -62,9 +62,15 @@ Mobile-dev, kullanıcı arayüzü bileşenleri için widget test yazar. Loading,
 ## Test — Unit
 İş mantığı içeren her fonksiyon/servis (örn. bir formatter, bir hesaplama) için unit test yazar; harici sistemlere (ağ, disk) bağlı olmayan saf mantık test edilir.
 
+## Test — E2E — kritik, yeni bir kritik akış eklendiğinde zorunlu
+Mobile-dev, **yeni bir kritik kullanıcı akışı** eklediğinde (login, ödeme/veri-kaybı riski taşıyan işlemler, veya mevcut hiçbir E2E'nin kapsamadığı yeni bir ana ekran akışı) `mobile/integration_test/` altına bir E2E testi de eklemeden story Done işaretlenemez. Araç ve desen: `testing-strategy` skill'inin "Mobil E2E" bölümü (`integration_test` paketi, gerçek bir simulator/emulator'da, `--dart-define=API_BASE_URL=...` ile yerel/ephemeral bir backend'e karşı — production Supabase'e KESİNLİKLE bağlanılmaz). Akış gerçekten kritik değilse, mobile-dev bunu story'nin Çıktı bölümünde gerekçeyle not düşer.
+
+Native izin diyalogları (bildirim izni gibi) Flutter widget ağacının parçası değildir — E2E testi yazarken bunu unutma (bkz. PERF-004: bu, gerçek bir "kasma" bulgusunun kök nedeniydi). Otomasyon için izin `adb shell pm grant` ile test kurulumunda verilir, production kodunda bir hack yapılmaz.
+
 ## Doğrulama komutları
 Mobile-dev, kodu göndermeden önce şu komutları çalıştırıp çıktısını story dosyasına ekler:
 ```
 flutter analyze
 flutter test
+flutter test integration_test/<x>_test.dart -d <device>   # SADECE yeni bir E2E testi eklendiğinde
 ```

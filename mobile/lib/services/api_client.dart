@@ -10,7 +10,13 @@ import 'auth_service.dart';
 /// Ağ hataları (SocketException/http.ClientException) yakalanmaz — çağıranların
 /// offline-cache fallback mantığı bu exception'ları görmeye devam eder.
 class ApiClient {
-  static const String baseUrl = 'https://fisbu-production-613c.up.railway.app';
+  // E2E-001: `--dart-define=API_BASE_URL=...` ile override edilebilir — SADECE E2E
+  // testlerinin yerel/ephemeral bir backend'e karşı çalışması için (production'a
+  // asla bağlanmamaları amacıyla). Override verilmezse davranış AYNI kalır.
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://fisbu-production-613c.up.railway.app',
+  );
 
   /// 401/403 alındığında (yalnızca Authorization header'ı eklenmiş bir istekte)
   /// tetiklenir — AuthWrapper bunu dinleyip kullanıcıyı login'e yönlendirir.
