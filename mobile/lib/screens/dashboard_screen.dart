@@ -1,3 +1,4 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'profile_screen.dart';
@@ -28,6 +29,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<Receipt> _receipts = [];
   List<Budget> _budgets = [];
   bool _isLoading = true;
+  bool _hasError = false;
   final _currencyFormat = NumberFormat('#,##0.00', 'tr_TR');
 
   @override
@@ -36,22 +38,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadReceipts();
   }
 
+  /// Fiş ve bütçe verisini paralel çeker. İkisinden biri başarısız olursa
+  /// (MOB-004) kısmi/tutarsız veri göstermek yerine Error durumuna geçilir —
+  /// önceki davranış (hata sessizce yutulup boş liste gösterilmesi, "hiç fişin
+  /// yok" ile "veri çekilemedi" ayırt edilemiyordu) düzeltildi.
   Future<void> _loadReceipts() async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
     try {
-      final receipts = await ReceiptService.getReceipts();
+      final results = await Future.wait([
+        ReceiptService.getReceipts(),
+        BudgetService.getBudgets(),
+      ]);
+      if (!mounted) return;
       setState(() {
-        _receipts = receipts;
+        _receipts = results[0] as List<Receipt>;
+        _budgets = results[1] as List<Budget>;
         _isLoading = false;
       });
-    } catch (e) {
-      setState(() => _isLoading = false);
-    }
-
-    try {
-      final budgets = await BudgetService.getBudgets();
-      if (mounted) setState(() => _budgets = budgets);
-    } catch (e) {
-      // Bütçeler yüklenemese de dashboard'un geri kalanı çalışmaya devam etsin
+    } catch (e, stack) {
+      try {
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          stack,
+          reason: 'DashboardScreen._loadReceipts başarısız',
+          fatal: false,
+        );
+      } catch (_) {}
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
     }
   }
 
@@ -517,7 +537,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                           )
-                        : _recentReceipts.isEmpty
+                        : _hasError
+                            ? Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 40),
+                                  child: Column(
+                                    children: [
+                                      Icon(Icons.cloud_off_outlined, size: 80, color: AppColors.error),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Veriler yüklenemedi',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.txt(context),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        'Bağlantını kontrol edip tekrar dene',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: AppColors.txtSecondary(context),
+                                          height: 1.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      OutlinedButton(
+                                        onPressed: _loadReceipts,
+                                        child: const Text('Tekrar dene'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : _recentReceipts.isEmpty
                             ? Center(
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 40),
