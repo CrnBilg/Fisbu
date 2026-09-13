@@ -35,10 +35,10 @@ void main() async {
   // başlatılmadan çağrılırsa LocaleDataException fırlatır
   await initializeDateFormatting('tr_TR', null);
 
-  // Firebase + push bildirim altyapısı (native config dosyalarından okur)
+  // Firebase (native config dosyalarından okur) — Crashlytics kurulumu için gerekli,
+  // bu kısım hızlı/senkron bir SDK kaydı, ağ/native diyalog beklemez.
   try {
     await Firebase.initializeApp();
-    await PushNotificationService.init();
 
     // Crashlytics: debug modda toplama kapalı, sadece release'de gerçek kullanıcı çökmeleri raporlanır
     await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
@@ -78,6 +78,21 @@ void main() async {
     ),
   );
   runApp(MyApp(initialDarkMode: isDark));
+
+  // PERF-005: bildirim izni isteği (native diyalog — Flutter widget ağacının parçası
+  // değil) artık ilk frame'i BLOKLAMIYOR. Eskiden bu, runApp()'dan ÖNCE await edilip
+  // izin diyaloğu kapatılana kadar hiçbir UI render edilmemesine yol açıyordu (bkz.
+  // PERF-004). İlk frame çizildikten SONRA, arka planda başlatılır; hata sessizce
+  // yutulmaz ama uygulamanın açılışını engellemez.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    PushNotificationService.init().catchError((Object error, StackTrace stack) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: error,
+        stack: stack,
+        library: 'PushNotificationService.init (post-frame)',
+      ));
+    });
+  });
 }
 
 class ThemeController extends ValueNotifier<ThemeMode> {
