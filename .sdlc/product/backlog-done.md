@@ -13,3 +13,8 @@
 | TEST-004 | Kalan 7 controller için test yaz (SavingsGoal/StatementImport/Statistics/Upload/Inflation/AI/User) | Acil — Sprint 2 denetim bulgusu A5 | M | Done | 2 |
 | SEC-005 | Bilinen CVE'li 2 bağımlılığı yükselt (postgresql, poi-ooxml) | Yüksek | S | Done | - |
 | SEC-006 | Log çıktılarında kullanıcı e-postası (PII) sızıntısı düzeltmesi | Orta | S | Done | - |
+| E2E-001 | Backend (Testcontainers) + mobil (integration_test) E2E stratejisi, örnek testler, agent kuralları | Yüksek — kullanıcı talebi, gerçek bir production kasma bulgusu ortaya çıkardı | L | Done | - |
+| PERF-004 | "Debug modda kasma/donma" araştırması — kök neden: main()'in bildirim izni diyaloğunu runApp()'dan önce bloklaması | Yüksek — gerçek kullanıcı şikayeti, kod satırı seviyesinde kanıtlandı | - | Done (araştırma) | - |
+| PERF-005 | PERF-004'ün düzeltmesi — bildirim izni artık runApp()'dan sonra tetikleniyor, açılış 33+s'den 5.4s'ye düştü (canlı emulator'de kanıtlandı) | Yüksek | S | Done | - |
+| PERF-006 | ~24s login gecikmesi araştırması — DÜZELTİLDİ: gerçek kök neden `pumpAndSettle`'ın indeterminate spinner'a duyarlılığından kaynaklanan ölçüm artefaktı; gerçek gecikme ~1.2s, gerçek bir performans sorunu yok | Orta | - | Done (araştırma, düzeltilmiş sonuç) | - |
+| PERF-007 | (PERF-006'nın düzeltilmiş sonucu nedeniyle Kapatıldı — dayandığı öncül geçersiz, secure-storage yazma işlemi hiçbir zaman yavaş değildi) | - | - | Kapatıldı (gerçek sorun değil) | - |
