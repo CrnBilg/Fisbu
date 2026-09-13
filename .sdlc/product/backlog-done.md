@@ -18,3 +18,8 @@
 | PERF-005 | PERF-004'ün düzeltmesi — bildirim izni artık runApp()'dan sonra tetikleniyor, açılış 33+s'den 5.4s'ye düştü (canlı emulator'de kanıtlandı) | Yüksek | S | Done | - |
 | PERF-006 | ~24s login gecikmesi araştırması — DÜZELTİLDİ: gerçek kök neden `pumpAndSettle`'ın indeterminate spinner'a duyarlılığından kaynaklanan ölçüm artefaktı; gerçek gecikme ~1.2s, gerçek bir performans sorunu yok | Orta | - | Done (araştırma, düzeltilmiş sonuç) | - |
 | PERF-007 | (PERF-006'nın düzeltilmiş sonucu nedeniyle Kapatıldı — dayandığı öncül geçersiz, secure-storage yazma işlemi hiçbir zaman yavaş değildi) | - | - | Kapatıldı (gerçek sorun değil) | - |
+| MOB-001 | PrivacyInfo.xcprivacy ekle (Apple zorunlu privacy manifest) | Acil — mobil denetim bulgusu A1 | S | Done | - |
+| MOB-002 | widget_test.dart'ı düzelt + minimum unit/widget test seti kur + mobile-dev.md'ye kalıcı test kuralı eklendi | Acil — mobil denetim bulgusu A2 | M | Done | - |
+| MOB-003 | auth_service.dart'taki boş catch bloklarını düzelt (Crashlytics'e raporlama eklendi) | Acil — mobil denetim bulgusu A3 | S | Done | - |
+| MOB-004 | Dashboard'a hata durumu (error state) eklendi | Yüksek — mobil denetim bulgusu Y1 | S | Done | - |
+| MOB-005 | Dashboard'daki bağımsız network çağrıları paralelleştirildi (MOB-004 ile birlikte uygulandı) | Yüksek — mobil denetim bulgusu Y2 | S | Done | - |
