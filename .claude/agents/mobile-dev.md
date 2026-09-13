@@ -56,11 +56,15 @@ Sunucudan veri çeken her ekran/widget dört durumu ayrı ayrı ele alır:
 - **Empty**: veri başarıyla çekildi ama liste boşsa, kullanıcıyı yönlendiren bir mesaj gösterilir (örn: "henüz fiş eklemediniz").
 - **Success**: veri başarıyla geldiyse, normal şekilde gösterilir.
 
-## Test — Widget/Component
-Mobile-dev, kullanıcı arayüzü bileşenleri için widget test yazar. Loading, error, empty, success durumlarının her biri ayrı ayrı test edilir.
+## Test — Widget/Unit — kritik, her yeni ekran/servis için zorunlu (MOB-002)
+E2E'ye ek olarak, daha temel/hızlı çalışan bu katman HER yeni ekran veya serviste zorunludur — sadece kritik akışlarda değil:
+- **Yeni bir ekran/widget eklendiğinde**: en az bir widget test yazılır. Sunucudan veri çeken ekranlarda dört durum (Loading/Error/Empty/Success) ayrı ayrı test edilir.
+- **Yeni bir servis fonksiyonu eklendiğinde**: en az bir unit test yazılır. Harici sistemlere (ağ, disk, platform-plugin) bağlı olmayan SAF mantık (formatter, parser, hesaplama — örn. `ApiClient.errorMessage`) öncelikli hedeftir; bu tür fonksiyonlar mock gerektirmeden en yüksek doğrulama/efor oranını sağlar.
+- Story, bu testler eklenmeden Done işaretlenemez. Test gerçekten mümkün/anlamlı değilse (örn. tamamen platform-plugin'e bağlı, mock kurulumu story kapsamını aşan bir davranış), mobile-dev bunu story'nin Çıktı bölümünde AÇIKÇA gerekçeyle not düşer — sessizce atlanmaz.
 
-## Test — Unit
-İş mantığı içeren her fonksiyon/servis (örn. bir formatter, bir hesaplama) için unit test yazar; harici sistemlere (ağ, disk) bağlı olmayan saf mantık test edilir.
+**Bilinen platform-plugin sınırı (MOB-002'de doğrulandı)**: `flutter_secure_storage` gibi Pigeon-tabanlı bazı plugin'lerin çağrıları, `testWidgets` ortamının fake-async pump döngüsünde HİÇ çözülmeyebilir (throw değil, sessiz askıda kalma) — aynı çağrı gerçek bir `test()` fonksiyonunda anında sonuçlanır. Böyle bir widget'ı test ederken ya platform channel'ı mock'la (`TestDefaultBinaryMessengerBinding`) ya da testin neyi doğrulayıp neyi doğrulamadığını (örn. "crash yok" ama "belirli bir ekrana ulaştı" değil) yorumla açıkça sınırlandır.
+
+**pumpAndSettle tuzağı (PERF-006'da öğrenildi)**: `pumpAndSettle(Duration)`'daki `duration` bir timeout DEĞİL, iterasyon adım büyüklüğüdür. Ekranda indeterminate bir animasyon (spinner, shimmer) varken `pumpAndSettle` sonsuza kadar/çok uzun bekleyebilir. Zamanlama iddiaları veya belirsiz-süreli spinner içeren ekranlarda `pumpAndSettle` YERİNE bounded bir `pump(Duration)` döngüsü (hedef widget'ı arayıp bulunca `break` eden) kullanılır.
 
 ## Test — E2E — kritik, yeni bir kritik akış eklendiğinde zorunlu
 Mobile-dev, **yeni bir kritik kullanıcı akışı** eklediğinde (login, ödeme/veri-kaybı riski taşıyan işlemler, veya mevcut hiçbir E2E'nin kapsamadığı yeni bir ana ekran akışı) `mobile/integration_test/` altına bir E2E testi de eklemeden story Done işaretlenemez. Araç ve desen: `testing-strategy` skill'inin "Mobil E2E" bölümü (`integration_test` paketi, gerçek bir simulator/emulator'da, `--dart-define=API_BASE_URL=...` ile yerel/ephemeral bir backend'e karşı — production Supabase'e KESİNLİKLE bağlanılmaz). Akış gerçekten kritik değilse, mobile-dev bunu story'nin Çıktı bölümünde gerekçeyle not düşer.
