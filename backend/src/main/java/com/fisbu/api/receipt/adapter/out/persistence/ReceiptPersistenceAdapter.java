@@ -12,15 +12,21 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fisbu.api.entity.Category;
 import com.fisbu.api.entity.User;
 import com.fisbu.api.receipt.application.port.out.AverageAmountByCategoryPort;
 import com.fisbu.api.receipt.application.port.out.CountReceiptsByCategoryPort;
 import com.fisbu.api.receipt.application.port.out.DeleteReceiptPort;
+import com.fisbu.api.receipt.application.port.out.DeleteReceiptsByUserPort;
 import com.fisbu.api.receipt.application.port.out.FindDuplicateReceiptPort;
 import com.fisbu.api.receipt.application.port.out.FindReceiptsByStoreNameContainingPort;
+import com.fisbu.api.receipt.application.port.out.LoadAllReceiptsByUserPort;
+import com.fisbu.api.receipt.application.port.out.LoadReceiptItemsByUserPort;
 import com.fisbu.api.receipt.application.port.out.LoadReceiptPort;
+import com.fisbu.api.receipt.application.port.out.LoadReceiptsByUserAndDateRangePort;
+import com.fisbu.api.receipt.application.port.out.LoadReceiptsByUserIdsAndDateRangePort;
 import com.fisbu.api.receipt.application.port.out.LoadReceiptsPort;
 import com.fisbu.api.receipt.application.port.out.ReceiptPage;
 import com.fisbu.api.receipt.application.port.out.ResolveUserIdPort;
@@ -31,6 +37,7 @@ import com.fisbu.api.receipt.application.port.out.UnlinkCategoryFromReceiptsPort
 import com.fisbu.api.receipt.domain.Receipt;
 import com.fisbu.api.receipt.domain.ReceiptItem;
 import com.fisbu.api.repository.CategoryRepository;
+import com.fisbu.api.repository.ReceiptItemRepository;
 import com.fisbu.api.repository.ReceiptRepository;
 import com.fisbu.api.repository.ReceiptSpecifications;
 import com.fisbu.api.repository.UserRepository;
@@ -39,16 +46,20 @@ import com.fisbu.api.repository.UserRepository;
 public class ReceiptPersistenceAdapter implements LoadReceiptPort, LoadReceiptsPort, SearchReceiptsPort,
         FindReceiptsByStoreNameContainingPort, FindDuplicateReceiptPort, SaveReceiptPort, DeleteReceiptPort,
         CountReceiptsByCategoryPort, AverageAmountByCategoryPort, ResolveUserIdPort, SumReceiptSpendByCategoryPort,
-        UnlinkCategoryFromReceiptsPort {
+        UnlinkCategoryFromReceiptsPort, DeleteReceiptsByUserPort, LoadReceiptsByUserAndDateRangePort,
+        LoadReceiptsByUserIdsAndDateRangePort, LoadAllReceiptsByUserPort, LoadReceiptItemsByUserPort {
 
     private final ReceiptRepository receiptRepository;
+    private final ReceiptItemRepository receiptItemRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final ReceiptPersistenceMapper mapper;
 
-    public ReceiptPersistenceAdapter(ReceiptRepository receiptRepository, UserRepository userRepository,
-                                      CategoryRepository categoryRepository, ReceiptPersistenceMapper mapper) {
+    public ReceiptPersistenceAdapter(ReceiptRepository receiptRepository, ReceiptItemRepository receiptItemRepository,
+                                      UserRepository userRepository, CategoryRepository categoryRepository,
+                                      ReceiptPersistenceMapper mapper) {
         this.receiptRepository = receiptRepository;
+        this.receiptItemRepository = receiptItemRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.mapper = mapper;
@@ -91,12 +102,21 @@ public class ReceiptPersistenceAdapter implements LoadReceiptPort, LoadReceiptsP
                 result.getTotalPages(), result.hasNext());
     }
 
+    // ARCH-006: kategori önerisi (suggestCategory) için TÜM eşleşen fişleri değil, en son
+    // MAX_CATEGORY_SUGGESTION_SAMPLE kadarını örnekliyoruz — aynı mağazadan yüzlerce/binlerce
+    // kez alışveriş yapan bir kullanıcı için "en sık kullanılan kategoriyi öner" amacına en
+    // güncel N fiş yeterli, tüm geçmişi belleğe çekmek gerekmez. Davranış pratikte AYNI kalır
+    // (çoğu kullanıcı bir mağazadan MAX_CATEGORY_SUGGESTION_SAMPLE'dan az fiş biriktirir).
+    private static final int MAX_CATEGORY_SUGGESTION_SAMPLE = 50;
+
     @Override
     public List<Receipt> findByUserIdAndStoreNameContaining(Long userId, String storeName) {
         User user = requireUser(userId);
         Specification<com.fisbu.api.entity.Receipt> spec = ReceiptSpecifications.hasUser(user)
                 .and(ReceiptSpecifications.storeNameContains(storeName));
-        return receiptRepository.findAll(spec).stream().map(mapper::toDomain).collect(Collectors.toList());
+        Pageable pageable = PageRequest.of(0, MAX_CATEGORY_SUGGESTION_SAMPLE,
+                Sort.by(Sort.Direction.DESC, "receiptDate").and(Sort.by(Sort.Direction.DESC, "id")));
+        return receiptRepository.findAll(spec, pageable).stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 
     @Override
@@ -192,12 +212,51 @@ public class ReceiptPersistenceAdapter implements LoadReceiptPort, LoadReceiptsP
         return receiptRepository.sumTotalAmountByUserAndCategoryAndReceiptDateBetween(user, category, start, end);
     }
 
+    // @Modifying bulk UPDATE, çağıranın (CategoryService.deleteCategory) kendisi @Transactional
+    // olmadığı için burada AÇIKÇA @Transactional gerekiyor — aksi halde Hibernate
+    // "Executing an update/delete query" hatası fırlatır (aktif transaction yok).
     @Override
+    @Transactional
     public void unlinkCategoryFromReceipts(Long categoryId) {
         Category category = requireCategory(categoryId);
-        List<com.fisbu.api.entity.Receipt> receipts = receiptRepository.findByCategory(category);
-        receipts.forEach(r -> r.setCategory(null));
-        receiptRepository.saveAll(receipts);
+        receiptRepository.unlinkCategoryFromAllReceipts(category);
+    }
+
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        User user = requireUser(userId);
+        receiptRepository.deleteAll(receiptRepository.findByUser(user));
+    }
+
+    @Override
+    public List<Receipt> loadByUserIdAndDateRange(Long userId, LocalDate start, LocalDate end) {
+        User user = requireUser(userId);
+        return receiptRepository.findByUserAndReceiptDateBetween(user, start, end).stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Receipt> loadByUserIdsAndDateRange(List<Long> userIds, LocalDate start, LocalDate end) {
+        List<User> users = userRepository.findAllById(userIds);
+        return receiptRepository.findByUserInAndReceiptDateBetween(users, start, end).stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Receipt> loadAllByUserId(Long userId) {
+        User user = requireUser(userId);
+        return receiptRepository.findByUser(user).stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ReceiptItem> loadByUserId(Long userId) {
+        return receiptItemRepository.findByReceipt_User_Id(userId).stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
     }
 
     private User requireUser(Long userId) {

@@ -39,6 +39,12 @@ import com.fisbu.api.repository.UserRepository;
  * canlı Supabase'e KESİNLİKLE bağlanılmaz. Bu sınıf argümansız {@code ./gradlew test}
  * ile ÇALIŞTIRILMAZ — sadece {@code ./gradlew e2eTest} ile.</p>
  *
+ * <p>ARCH-006: adım 7-8, kategori silindiğinde bağlı fişlerin category alanının gerçekten
+ * NULL'a çekildiğini (bkz. {@code ReceiptRepository.unlinkCategoryFromAllReceipts} — bulk
+ * UPDATE) gerçek bir Postgres'e karşı doğrular. Bu, sadece port arayüzünü mock'layan unit
+ * testlerin (CategoryServiceTest) KAPSAMADIĞI bir davranış — @Modifying sorgusunun gerçekten
+ * çalıştığını kanıtlayan tek test budur.</p>
+ *
  * <p>Her HTTP adımının süresi ölçülüp loglanır — E2E-001'in "anormal gecikme/donma"
  * gözlemleme gerekliliği için. Bir adım {@link #SLOW_STEP_THRESHOLD_MS}'i aşarsa test
  * başarısız OLMAZ (bu bir smoke/perf-gözlem testi, katı bir SLA testi değil) ama WARN
@@ -85,6 +91,7 @@ class RegisterToBudgetFlowE2ETest {
     private static String jwtToken;
     private static Long categoryId;
     private static Long budgetId;
+    private static Long receiptId;
     private static final String EMAIL = "e2e-" + System.currentTimeMillis() + "@fisbu-test.com";
     private static final String PASSWORD = "E2eTestPass1!";
     private static final LocalDate RECEIPT_DATE = LocalDate.now();
@@ -192,6 +199,7 @@ class RegisterToBudgetFlowE2ETest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody().get("categoryName")).isEqualTo("E2E Market");
+        receiptId = ((Number) response.getBody().get("id")).longValue();
     }
 
     @Test
@@ -219,5 +227,35 @@ class RegisterToBudgetFlowE2ETest {
 
         assertThatCode(() -> log.info("[E2E] Tam akış başarılı: kayıt->doğrulama->login->kategori->bütçe->fiş->bütçede-yansıma"))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    @Order(7)
+    void adim7_kategoriyiSil() {
+        HttpEntity<Void> request = new HttpEntity<>(authHeaders());
+
+        ResponseEntity<Void> response = timed("DELETE /categories/{id}",
+                () -> restTemplate.exchange("/categories/" + categoryId,
+                        org.springframework.http.HttpMethod.DELETE, request, Void.class));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @Order(8)
+    void adim8_silinenKategoriyeAitFisinKategorisiNullOldu() {
+        // ARCH-006: unlinkCategoryFromAllReceipts (bulk UPDATE) gerçekten çalıştı mı — fiş
+        // silinmedi (sadece kategori bağlantısı kalktı), receipt hâlâ GET ile erişilebilir olmalı.
+        HttpEntity<Void> request = new HttpEntity<>(authHeaders());
+
+        ResponseEntity<Map> response = timed("GET /receipts/{id}",
+                () -> restTemplate.exchange("/receipts/" + receiptId,
+                        org.springframework.http.HttpMethod.GET, request, Map.class));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Map<String, Object> body = response.getBody();
+        assertThat(body).isNotNull();
+        assertThat(body.get("categoryId")).isNull();
+        assertThat(body.get("categoryName")).isNull();
     }
 }

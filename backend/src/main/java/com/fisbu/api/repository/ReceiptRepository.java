@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -29,6 +30,15 @@ public interface ReceiptRepository extends JpaRepository<Receipt, Long>, JpaSpec
 
     @EntityGraph(attributePaths = {"category", "user"})
     List<Receipt> findByCategory(Category category);
+
+    // ARCH-006: kategori silindiğinde bağlı fişlerin category alanını NULL'a çeker.
+    // Önceden findByCategory(...) ile TÜM fişler belleğe yükleniyor, receipt.setCategory(null)
+    // yapılıp saveAll ile geri yazılıyordu — kategoriyi yüzlerce/binlerce fişte kullanan bir
+    // kullanıcı için gereksiz bellek/zaman maliyeti. Bulk UPDATE, aynı sonucu (davranış AYNI:
+    // sadece category alanı NULL olur, başka bir şey değişmez) tek sorguda uygular.
+    @Modifying
+    @Query("UPDATE Receipt r SET r.category = NULL WHERE r.category = :category")
+    void unlinkCategoryFromAllReceipts(@Param("category") Category category);
 
     @EntityGraph(attributePaths = {"category", "user"})
     List<Receipt> findByUserAndReceiptDateBetween(User user, LocalDate start, LocalDate end);

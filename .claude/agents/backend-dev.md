@@ -40,6 +40,9 @@ Yeni bir modül eklenirken bu beş katman (domain, application/port/in, applicat
 ### Paylaşılan port'larda Spring bean ambiguity kontrolü — kritik
 Bir port arayüzü birden fazla modül tarafından paylaşılıyorsa (örn. `shared/application/port/out/` altında birleştirilmiş bir arayüz) VE her modülün kendi `@Component` adapter implementasyonu varsa, bu arayüz tipiyle enjekte edilen HER constructor parametresine `@Qualifier("<adapterBeanAdı>")` eklenmesi gerekir — aksi halde Spring, gerçek `ApplicationContext` yüklendiğinde (yalnızca `bootRun`/`@SpringBootTest`'te, mock-based unit testlerde DEĞİL) "birden fazla bean adayı" hatası verir. Bu proje canlı DB'ye bağlanan `ApiApplicationTests`'i bilerek çalıştırmadığı için, bu tür DI-seviyeli hatalar unit testlerle YAKALANAMAZ — bir port'u paylaşılan hale getirirken bu kontrolü atlamamak gerekir (bkz. `.sdlc/stories/ARCH-001.md` — bu hata gerçekten yaşandı, kullanıcının `bootRun` denemesiyle bulundu).
 
+### `@Modifying` bulk sorgular — kritik, `@Transactional` gerektirir
+Bir repository metodu `@Modifying @Query(...)` ile bulk UPDATE/DELETE tanımlıyorsa, bu metodu çağıran adapter/service metodu `@Transactional` OLMALIDIR — aksi halde Hibernate aktif bir transaction bulamayıp `InvalidDataAccessApiUsageException: Executing an update/delete query` fırlatır (500). Bu hata SADECE gerçek bir veritabanına karşı (E2E/`bootRun`) ortaya çıkar — port arayüzünü mock'layan unit testler bunu YAKALAYAMAZ (bkz. `.sdlc/stories/ARCH-006.md` — bu hata gerçekten yaşandı, E2E testiyle bulundu). Yeni bir `@Modifying` metod eklerken çağıran tarafa `@Transactional` eklemeyi unutma; mümkünse davranışı da bir E2E adımıyla (gerçek Postgres'e karşı) doğrula.
+
 ## Ownership / IDOR kontrolü — kritik, her kaynağa erişimde zorunlu
 Kullanıcıya ait her kaynak (Receipt, Category, Budget gibi) yüklendiğinde, üzerinde işlem yapılmadan önce sahiplik kontrolü yapılır. Mevcut proje deseni:
 
@@ -60,6 +63,13 @@ Kurallar:
 - Yeni bir use-case, başka bir modülün kaynağına referans veriyorsa (örn. Receipt'in Category'sine), o modülün de kendi sahiplik kontrolünü yapması sağlanır (bkz. `CategoryAccessDeniedException` örneği) — bir modülün "kendi" kontrolü diğerini kapsamaz.
 
 Bu kontrol atlanan her endpoint IDOR (Insecure Direct Object Reference) açığıdır; `security` agent'ının taraması bu deseni referans alır.
+
+## API versiyonlama / breaking-change disiplini — kritik (ARCH-007/ADR-003)
+Backend `/api/v1` context-path'i altında yaşıyor (`application.properties`: `server.servlet.context-path=/api/v1`) — bunun nedeni, App Store'da bekleyen/güncellenmemiş eski mobil sürümlerin, backend değiştiğinde geri dönüşsüz şekilde kırılmaması. Versiyonlama TEK BAŞINA yeterli değil — `/api/v1` İÇİNDE bile "additive-only" disiplini zorunludur:
+- Mevcut bir response alanı KALDIRILMAZ veya tipi/anlamı DEĞİŞTİRİLMEZ (yeni alan eklemek serbesttir).
+- Mevcut bir endpoint KALDIRILMAZ veya path'i DEĞİŞTİRİLMEZ.
+- Bir alanın anlamını/davranışını gerçekten breaking şekilde değiştirmek gerekiyorsa (örn. güvenlik açığı kapatma), bu PDM'e bildirilir — mobil tarafın buna nasıl uyum sağlayacağı (yeni bir opsiyonel alan mı, `/api/v2`'ye mi geçilecek) birlikte kararlaştırılır, backend-dev tek başına karar vermez.
+- Yeni bir v2 ihtiyacı doğarsa, ayrı bir ADR ile ele alınır (bkz. ADR-003'ün "Uygulama Detayları" bölümü).
 
 ## Hata yönetimi
 Hatalar asla sessizce yutulmaz (`catch (Exception) {}` yasaktır). Her hata loglanır ve kullanıcıya teknik detay içermeyen, anlaşılır bir mesaj gösterilir (bkz. `ResponseStatusException` kullanımı, `BulkImportError` gibi hata toplama desenleri).
