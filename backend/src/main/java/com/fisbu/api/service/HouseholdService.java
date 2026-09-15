@@ -22,10 +22,10 @@ import com.fisbu.api.dto.HouseholdResponse;
 import com.fisbu.api.dto.HouseholdStatisticsResponse;
 import com.fisbu.api.dto.JoinHouseholdRequest;
 import com.fisbu.api.entity.Household;
-import com.fisbu.api.entity.Receipt;
 import com.fisbu.api.entity.User;
+import com.fisbu.api.receipt.application.port.out.LoadReceiptsByUserIdsAndDateRangePort;
+import com.fisbu.api.receipt.domain.Receipt;
 import com.fisbu.api.repository.HouseholdRepository;
-import com.fisbu.api.repository.ReceiptRepository;
 import com.fisbu.api.repository.UserRepository;
 
 /**
@@ -41,14 +41,14 @@ public class HouseholdService {
 
     private final HouseholdRepository householdRepository;
     private final UserRepository userRepository;
-    private final ReceiptRepository receiptRepository;
+    private final LoadReceiptsByUserIdsAndDateRangePort loadReceiptsByUserIdsAndDateRangePort;
     private final SecureRandom random = new SecureRandom();
 
     public HouseholdService(HouseholdRepository householdRepository, UserRepository userRepository,
-                             ReceiptRepository receiptRepository) {
+                             LoadReceiptsByUserIdsAndDateRangePort loadReceiptsByUserIdsAndDateRangePort) {
         this.householdRepository = householdRepository;
         this.userRepository = userRepository;
-        this.receiptRepository = receiptRepository;
+        this.loadReceiptsByUserIdsAndDateRangePort = loadReceiptsByUserIdsAndDateRangePort;
     }
 
     public HouseholdResponse createHousehold(String email, CreateHouseholdRequest request) {
@@ -115,7 +115,8 @@ public class HouseholdService {
         LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
 
         List<User> members = userRepository.findByHousehold(household);
-        List<Receipt> receipts = receiptRepository.findByUserInAndReceiptDateBetween(members, start, end);
+        List<Long> memberIds = members.stream().map(User::getId).collect(Collectors.toList());
+        List<Receipt> receipts = loadReceiptsByUserIdsAndDateRangePort.loadByUserIdsAndDateRange(memberIds, start, end);
 
         Map<Long, HouseholdMemberTotalResponse> byMember = new LinkedHashMap<>();
         for (User member : members) {
@@ -131,15 +132,15 @@ public class HouseholdService {
         BigDecimal grandTotal = BigDecimal.ZERO;
 
         for (Receipt receipt : receipts) {
-            BigDecimal amount = receipt.getTotalAmount() != null ? receipt.getTotalAmount() : BigDecimal.ZERO;
+            BigDecimal amount = receipt.totalAmount() != null ? receipt.totalAmount() : BigDecimal.ZERO;
             grandTotal = grandTotal.add(amount);
 
-            HouseholdMemberTotalResponse memberEntry = byMember.get(receipt.getUser().getId());
+            HouseholdMemberTotalResponse memberEntry = byMember.get(receipt.userId());
             if (memberEntry != null) {
                 memberEntry.setTotalAmount(memberEntry.getTotalAmount().add(amount));
             }
 
-            String categoryName = receipt.getCategory() != null ? receipt.getCategory().getName() : "Diğer";
+            String categoryName = receipt.categoryName() != null ? receipt.categoryName() : "Diğer";
             byCategory.merge(categoryName, amount, BigDecimal::add);
         }
 

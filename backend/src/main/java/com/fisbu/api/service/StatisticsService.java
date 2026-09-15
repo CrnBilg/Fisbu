@@ -24,13 +24,12 @@ import com.fisbu.api.dto.SpendingPersonalityResponse;
 import com.fisbu.api.dto.StoreStatResponse;
 import com.fisbu.api.dto.SubscriptionCandidateResponse;
 import com.fisbu.api.dto.TopProductResponse;
-import com.fisbu.api.entity.Category;
-import com.fisbu.api.entity.Receipt;
-import com.fisbu.api.entity.ReceiptItem;
-import com.fisbu.api.entity.SavingsGoal;
 import com.fisbu.api.entity.User;
-import com.fisbu.api.repository.ReceiptItemRepository;
-import com.fisbu.api.repository.ReceiptRepository;
+import com.fisbu.api.receipt.application.port.out.LoadAllReceiptsByUserPort;
+import com.fisbu.api.receipt.application.port.out.LoadReceiptItemsByUserPort;
+import com.fisbu.api.receipt.application.port.out.LoadReceiptsByUserAndDateRangePort;
+import com.fisbu.api.receipt.domain.Receipt;
+import com.fisbu.api.receipt.domain.ReceiptItem;
 import com.fisbu.api.repository.SavingsGoalRepository;
 import com.fisbu.api.repository.UserRepository;
 
@@ -46,17 +45,20 @@ public class StatisticsService {
     private static final int MAX_SUBSCRIPTION_INTERVAL_SPREAD_DAYS = 15;
     private static final BigDecimal MAX_SUBSCRIPTION_AMOUNT_VARIANCE = BigDecimal.valueOf(0.15);
 
-    private final ReceiptRepository receiptRepository;
-    private final ReceiptItemRepository receiptItemRepository;
+    private final LoadReceiptsByUserAndDateRangePort loadReceiptsByUserAndDateRangePort;
+    private final LoadAllReceiptsByUserPort loadAllReceiptsByUserPort;
+    private final LoadReceiptItemsByUserPort loadReceiptItemsByUserPort;
     private final UserRepository userRepository;
     private final SavingsGoalRepository savingsGoalRepository;
 
-    public StatisticsService(ReceiptRepository receiptRepository,
-                              ReceiptItemRepository receiptItemRepository,
+    public StatisticsService(LoadReceiptsByUserAndDateRangePort loadReceiptsByUserAndDateRangePort,
+                              LoadAllReceiptsByUserPort loadAllReceiptsByUserPort,
+                              LoadReceiptItemsByUserPort loadReceiptItemsByUserPort,
                               UserRepository userRepository,
                               SavingsGoalRepository savingsGoalRepository) {
-        this.receiptRepository = receiptRepository;
-        this.receiptItemRepository = receiptItemRepository;
+        this.loadReceiptsByUserAndDateRangePort = loadReceiptsByUserAndDateRangePort;
+        this.loadAllReceiptsByUserPort = loadAllReceiptsByUserPort;
+        this.loadReceiptItemsByUserPort = loadReceiptItemsByUserPort;
         this.userRepository = userRepository;
         this.savingsGoalRepository = savingsGoalRepository;
     }
@@ -71,7 +73,7 @@ public class StatisticsService {
         LocalDate start = LocalDate.of(resolvedYear, resolvedMonth, 1);
         LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
 
-        List<Receipt> receipts = receiptRepository.findByUserAndReceiptDateBetween(user, start, end);
+        List<Receipt> receipts = loadReceiptsByUserAndDateRangePort.loadByUserIdAndDateRange(user.getId(), start, end);
         return buildMonthlyStatistics(receipts, resolvedYear, resolvedMonth);
     }
 
@@ -83,7 +85,8 @@ public class StatisticsService {
 
         LocalDate rangeStart = today.minusMonths(months - 1L).withDayOfMonth(1);
         LocalDate rangeEnd = today.withDayOfMonth(today.lengthOfMonth());
-        List<Receipt> rangeReceipts = receiptRepository.findByUserAndReceiptDateBetween(user, rangeStart, rangeEnd);
+        List<Receipt> rangeReceipts =
+                loadReceiptsByUserAndDateRangePort.loadByUserIdAndDateRange(user.getId(), rangeStart, rangeEnd);
 
         List<MonthlyStatisticsResponse> results = new ArrayList<>();
         for (int i = months - 1; i >= 0; i--) {
@@ -91,7 +94,7 @@ public class StatisticsService {
             LocalDate monthStart = monthDate.withDayOfMonth(1);
             LocalDate monthEnd = monthDate.withDayOfMonth(monthDate.lengthOfMonth());
             List<Receipt> monthReceipts = rangeReceipts.stream()
-                    .filter(r -> !r.getReceiptDate().isBefore(monthStart) && !r.getReceiptDate().isAfter(monthEnd))
+                    .filter(r -> !r.receiptDate().isBefore(monthStart) && !r.receiptDate().isAfter(monthEnd))
                     .collect(Collectors.toList());
             results.add(buildMonthlyStatistics(monthReceipts, monthDate.getYear(), monthDate.getMonthValue()));
         }
@@ -103,18 +106,20 @@ public class StatisticsService {
         BigDecimal grandTotal = BigDecimal.ZERO;
 
         for (Receipt receipt : receipts) {
-            BigDecimal amount = receipt.getTotalAmount() != null ? receipt.getTotalAmount() : BigDecimal.ZERO;
+            BigDecimal amount = receipt.totalAmount() != null ? receipt.totalAmount() : BigDecimal.ZERO;
             grandTotal = grandTotal.add(amount);
 
-            Category category = receipt.getCategory();
-            Long key = category != null ? category.getId() : null;
+            Long key = receipt.categoryId();
 
             CategoryTotalResponse entry = totals.get(key);
             if (entry == null) {
                 entry = new CategoryTotalResponse();
                 entry.setCategoryId(key);
-                entry.setCategoryName(category != null ? category.getName() : "Diğer");
-                entry.setColor(category != null ? category.getColor() : null);
+                entry.setCategoryName(receipt.categoryName() != null ? receipt.categoryName() : "Diğer");
+                // ARCH-003/ADR-005: receipt.domain.Receipt kategori rengini taşımıyor (id+ad
+                // dışında). Mobil tarafta (statistics_screen.dart) bu response'un color alanı
+                // hiç okunmuyor — kendi sabit paletini kullanıyor; doğrulandı, gerçek bir
+                // regresyon değil. entry.setColor() bilerek çağrılmıyor (varsayılan null kalır).
                 entry.setTotalAmount(amount);
                 totals.put(key, entry);
             } else {
@@ -136,12 +141,12 @@ public class StatisticsService {
     // Mağaza bazlı harcama özeti — hangi markette ne kadar/ortalama harcandığını gösterir
     public List<StoreStatResponse> getStoreStatistics(String email) {
         User user = getUserByEmail(email);
-        List<Receipt> receipts = receiptRepository.findByUser(user);
+        List<Receipt> receipts = loadAllReceiptsByUserPort.loadAllByUserId(user.getId());
 
         Map<String, StoreStatResponse> byStore = new LinkedHashMap<>();
         for (Receipt receipt : receipts) {
-            String storeName = receipt.getStoreName() != null ? receipt.getStoreName().trim() : "Diğer";
-            BigDecimal amount = receipt.getTotalAmount() != null ? receipt.getTotalAmount() : BigDecimal.ZERO;
+            String storeName = receipt.storeName() != null ? receipt.storeName().trim() : "Diğer";
+            BigDecimal amount = receipt.totalAmount() != null ? receipt.totalAmount() : BigDecimal.ZERO;
 
             StoreStatResponse entry = byStore.get(storeName);
             if (entry == null) {
@@ -170,21 +175,21 @@ public class StatisticsService {
         User user = getUserByEmail(email);
         int resolvedLimit = limit != null && limit > 0 ? limit : DEFAULT_TOP_PRODUCT_LIMIT;
 
-        List<ReceiptItem> items = receiptItemRepository.findByReceipt_User_Id(user.getId());
+        List<ReceiptItem> items = loadReceiptItemsByUserPort.loadByUserId(user.getId());
 
         Map<String, TopProductResponse> byProduct = new LinkedHashMap<>();
         for (ReceiptItem item : items) {
-            BigDecimal quantity = item.getQuantity() != null ? item.getQuantity() : BigDecimal.ONE;
-            BigDecimal spent = item.getUnitPrice() != null ? item.getUnitPrice().multiply(quantity) : BigDecimal.ZERO;
+            BigDecimal quantity = item.quantity() != null ? item.quantity() : BigDecimal.ONE;
+            BigDecimal spent = item.unitPrice() != null ? item.unitPrice().multiply(quantity) : BigDecimal.ZERO;
 
-            TopProductResponse entry = byProduct.get(item.getNormalizedName());
+            TopProductResponse entry = byProduct.get(item.normalizedName());
             if (entry == null) {
                 entry = new TopProductResponse();
-                entry.setNormalizedName(item.getNormalizedName());
-                entry.setDisplayName(item.getProductName());
+                entry.setNormalizedName(item.normalizedName());
+                entry.setDisplayName(item.productName());
                 entry.setPurchaseCount(1);
                 entry.setTotalSpent(spent);
-                byProduct.put(item.getNormalizedName(), entry);
+                byProduct.put(item.normalizedName(), entry);
             } else {
                 entry.setPurchaseCount(entry.getPurchaseCount() + 1);
                 entry.setTotalSpent(entry.getTotalSpent().add(spent));
@@ -200,17 +205,17 @@ public class StatisticsService {
     // Aynı mağazaya ~aylık aralıklarla benzer tutarda ödeme yapılıyorsa "abonelik olabilir" diye işaretler
     public List<SubscriptionCandidateResponse> getPotentialSubscriptions(String email) {
         User user = getUserByEmail(email);
-        List<Receipt> receipts = receiptRepository.findByUser(user);
+        List<Receipt> receipts = loadAllReceiptsByUserPort.loadAllByUserId(user.getId());
         return computeSubscriptionCandidates(receipts);
     }
 
     private List<SubscriptionCandidateResponse> computeSubscriptionCandidates(List<Receipt> receipts) {
         Map<String, List<Receipt>> byStoreKey = new LinkedHashMap<>();
         for (Receipt receipt : receipts) {
-            if (receipt.getStoreName() == null || receipt.getReceiptDate() == null || receipt.getTotalAmount() == null) {
+            if (receipt.storeName() == null || receipt.receiptDate() == null || receipt.totalAmount() == null) {
                 continue;
             }
-            String key = receipt.getStoreName().trim().toLowerCase(Locale.ROOT);
+            String key = receipt.storeName().trim().toLowerCase(Locale.ROOT);
             byStoreKey.computeIfAbsent(key, k -> new ArrayList<>()).add(receipt);
         }
 
@@ -219,11 +224,11 @@ public class StatisticsService {
             if (group.size() < 2) {
                 continue;
             }
-            group.sort(Comparator.comparing(Receipt::getReceiptDate));
+            group.sort(Comparator.comparing(Receipt::receiptDate));
 
             List<Long> gaps = new ArrayList<>();
             for (int i = 1; i < group.size(); i++) {
-                gaps.add(ChronoUnit.DAYS.between(group.get(i - 1).getReceiptDate(), group.get(i).getReceiptDate()));
+                gaps.add(ChronoUnit.DAYS.between(group.get(i - 1).receiptDate(), group.get(i).receiptDate()));
             }
             double averageGap = gaps.stream().mapToLong(Long::longValue).average().orElse(0);
             long minGap = gaps.stream().mapToLong(Long::longValue).min().orElse(0);
@@ -238,7 +243,7 @@ public class StatisticsService {
 
             BigDecimal total = BigDecimal.ZERO;
             for (Receipt receipt : group) {
-                total = total.add(receipt.getTotalAmount());
+                total = total.add(receipt.totalAmount());
             }
             BigDecimal averageAmount = total.divide(BigDecimal.valueOf(group.size()), 2, RoundingMode.HALF_UP);
             if (averageAmount.compareTo(BigDecimal.ZERO) == 0) {
@@ -246,7 +251,7 @@ public class StatisticsService {
             }
 
             boolean amountsConsistent = group.stream().allMatch(r -> {
-                BigDecimal deviation = r.getTotalAmount().subtract(averageAmount).abs()
+                BigDecimal deviation = r.totalAmount().subtract(averageAmount).abs()
                         .divide(averageAmount, 4, RoundingMode.HALF_UP);
                 return deviation.compareTo(MAX_SUBSCRIPTION_AMOUNT_VARIANCE) <= 0;
             });
@@ -254,12 +259,12 @@ public class StatisticsService {
                 continue;
             }
 
-            LocalDate firstDate = group.get(0).getReceiptDate();
-            LocalDate lastDate = group.get(group.size() - 1).getReceiptDate();
+            LocalDate firstDate = group.get(0).receiptDate();
+            LocalDate lastDate = group.get(group.size() - 1).receiptDate();
             int roundedInterval = (int) Math.round(averageGap);
 
             SubscriptionCandidateResponse candidate = new SubscriptionCandidateResponse();
-            candidate.setStoreName(group.get(0).getStoreName().trim());
+            candidate.setStoreName(group.get(0).storeName().trim());
             candidate.setAverageAmount(averageAmount);
             candidate.setOccurrenceCount(group.size());
             candidate.setFirstDate(firstDate);
@@ -276,7 +281,7 @@ public class StatisticsService {
     // Harcama kişiliği + rozetler — mevcut veriden hesaplanır, ayrıca saklanmaz
     public SpendingPersonalityResponse getSpendingPersonality(String email) {
         User user = getUserByEmail(email);
-        List<Receipt> receipts = receiptRepository.findByUser(user);
+        List<Receipt> receipts = loadAllReceiptsByUserPort.loadAllByUserId(user.getId());
 
         SpendingPersonaResponse persona = computePersona(receipts);
         List<BadgeResponse> badges = computeBadges(user, receipts);
@@ -295,17 +300,17 @@ public class StatisticsService {
         int weekendCount = 0;
 
         for (Receipt r : receipts) {
-            BigDecimal amount = r.getTotalAmount() != null ? r.getTotalAmount() : BigDecimal.ZERO;
+            BigDecimal amount = r.totalAmount() != null ? r.totalAmount() : BigDecimal.ZERO;
             totalSpend = totalSpend.add(amount);
 
-            if (r.getCategory() != null) {
-                categoryTotals.merge(r.getCategory().getName(), amount, BigDecimal::add);
+            if (r.categoryName() != null) {
+                categoryTotals.merge(r.categoryName(), amount, BigDecimal::add);
             }
-            if (r.getStoreName() != null) {
-                storeCounts.merge(r.getStoreName().trim(), 1, Integer::sum);
+            if (r.storeName() != null) {
+                storeCounts.merge(r.storeName().trim(), 1, Integer::sum);
             }
-            if (r.getReceiptDate() != null) {
-                var day = r.getReceiptDate().getDayOfWeek();
+            if (r.receiptDate() != null) {
+                var day = r.receiptDate().getDayOfWeek();
                 if (day == java.time.DayOfWeek.SATURDAY || day == java.time.DayOfWeek.SUNDAY) {
                     weekendCount++;
                 }
@@ -357,13 +362,13 @@ public class StatisticsService {
     private List<BadgeResponse> computeBadges(User user, List<Receipt> receipts) {
         int receiptCount = receipts.size();
         long distinctCategories = receipts.stream()
-                .map(Receipt::getCategory).filter(java.util.Objects::nonNull)
-                .map(Category::getId).distinct().count();
+                .map(Receipt::categoryId).filter(java.util.Objects::nonNull)
+                .distinct().count();
         Map<String, Long> storeCounts = receipts.stream()
-                .filter(r -> r.getStoreName() != null)
-                .collect(Collectors.groupingBy(r -> r.getStoreName().trim(), Collectors.counting()));
+                .filter(r -> r.storeName() != null)
+                .collect(Collectors.groupingBy(r -> r.storeName().trim(), Collectors.counting()));
         boolean hasLoyalStore = storeCounts.values().stream().anyMatch(c -> c >= 10);
-        boolean hasSplitReceipt = receipts.stream().anyMatch(r -> r.getSplitDetailsJson() != null);
+        boolean hasSplitReceipt = receipts.stream().anyMatch(r -> r.splitDetailsJson() != null);
         boolean hasSubscription = !computeSubscriptionCandidates(receipts).isEmpty();
         boolean hasAchievedSavingsGoal = savingsGoalRepository.findByUser(user).stream()
                 .anyMatch(g -> g.getCurrentAmount().compareTo(g.getTargetAmount()) >= 0);

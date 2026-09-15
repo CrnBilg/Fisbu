@@ -22,19 +22,23 @@ import com.fisbu.api.dto.SpendingPersonalityResponse;
 import com.fisbu.api.dto.StoreStatResponse;
 import com.fisbu.api.dto.SubscriptionCandidateResponse;
 import com.fisbu.api.dto.TopProductResponse;
-import com.fisbu.api.entity.Category;
-import com.fisbu.api.entity.Receipt;
-import com.fisbu.api.entity.ReceiptItem;
 import com.fisbu.api.entity.SavingsGoal;
 import com.fisbu.api.entity.User;
-import com.fisbu.api.repository.ReceiptItemRepository;
-import com.fisbu.api.repository.ReceiptRepository;
+import com.fisbu.api.receipt.application.port.out.LoadAllReceiptsByUserPort;
+import com.fisbu.api.receipt.application.port.out.LoadReceiptItemsByUserPort;
+import com.fisbu.api.receipt.application.port.out.LoadReceiptsByUserAndDateRangePort;
+import com.fisbu.api.receipt.domain.Receipt;
+import com.fisbu.api.receipt.domain.ReceiptItem;
 import com.fisbu.api.repository.SavingsGoalRepository;
 import com.fisbu.api.repository.UserRepository;
 
 /**
  * TEST-001 — StatisticsService'in mevcut davranışını kilitleyen regresyon testleri.
- * Bu dosya StatisticsService.java'nın kodunu DEĞİŞTİRMEZ, sadece mevcut davranışı test eder.
+ * ARCH-003/ADR-005: bu dosya, servis ReceiptRepository/ReceiptItemRepository'yi doğrudan
+ * kullanırken yazılmıştı (entity.Receipt/entity.ReceiptItem mock'lanıyordu); receipt
+ * modülünün domain-model döndüren port'larına geçildiği için burada da aynı şekilde
+ * güncellendi — ASSERTION'LAR DEĞİŞMEDİ, sadece mock kurulumu (repository -> port,
+ * entity -> domain record) değişti. Bu, refactor'un davranışı bozmadığının kanıtı.
  */
 @ExtendWith(MockitoExtension.class)
 class StatisticsServiceTest {
@@ -42,9 +46,11 @@ class StatisticsServiceTest {
     private static final String EMAIL = "test@fisbu.com";
 
     @Mock
-    private ReceiptRepository receiptRepository;
+    private LoadReceiptsByUserAndDateRangePort loadReceiptsByUserAndDateRangePort;
     @Mock
-    private ReceiptItemRepository receiptItemRepository;
+    private LoadAllReceiptsByUserPort loadAllReceiptsByUserPort;
+    @Mock
+    private LoadReceiptItemsByUserPort loadReceiptItemsByUserPort;
     @Mock
     private UserRepository userRepository;
     @Mock
@@ -56,29 +62,22 @@ class StatisticsServiceTest {
 
     @BeforeEach
     void setUp() {
-        statisticsService = new StatisticsService(receiptRepository, receiptItemRepository,
-                userRepository, savingsGoalRepository);
+        statisticsService = new StatisticsService(loadReceiptsByUserAndDateRangePort, loadAllReceiptsByUserPort,
+                loadReceiptItemsByUserPort, userRepository, savingsGoalRepository);
         user = new User();
         user.setId(1L);
         user.setEmail(EMAIL);
     }
 
-    private Category category(Long id, String name, String color) {
-        Category c = new Category();
-        c.setId(id);
-        c.setName(name);
-        c.setColor(color);
-        return c;
+    private Receipt receipt(Long categoryId, String categoryName, String storeName, BigDecimal amount,
+                             LocalDate date) {
+        return new Receipt(null, user.getId(), categoryId, categoryName, storeName, amount, date, null, null, null,
+                null, null, null, null, null, null);
     }
 
-    private Receipt receipt(Category category, String storeName, BigDecimal amount, LocalDate date) {
-        Receipt r = new Receipt();
-        r.setUser(user);
-        r.setCategory(category);
-        r.setStoreName(storeName);
-        r.setTotalAmount(amount);
-        r.setReceiptDate(date);
-        return r;
+    private ReceiptItem receiptItem(String productName, String normalizedName, BigDecimal unitPrice,
+                                     BigDecimal quantity) {
+        return new ReceiptItem(null, productName, normalizedName, unitPrice, quantity);
     }
 
     // ---------- getMonthlyStatistics ----------
@@ -96,14 +95,11 @@ class StatisticsServiceTest {
     void getMonthlyStatistics_kategoriBazindaGruplarVeTutariBuyuktenKucugeSiralar() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
 
-        Category market = category(1L, "Market", "#FF0000");
-        Category ulasim = category(2L, "Ulaşım", "#00FF00");
-
         List<Receipt> receipts = List.of(
-                receipt(market, "A101", BigDecimal.valueOf(100), LocalDate.of(2024, 5, 1)),
-                receipt(market, "A101", BigDecimal.valueOf(50), LocalDate.of(2024, 5, 10)),
-                receipt(ulasim, "Metro", BigDecimal.valueOf(30), LocalDate.of(2024, 5, 15)));
-        when(receiptRepository.findByUserAndReceiptDateBetween(user,
+                receipt(1L, "Market", "A101", BigDecimal.valueOf(100), LocalDate.of(2024, 5, 1)),
+                receipt(1L, "Market", "A101", BigDecimal.valueOf(50), LocalDate.of(2024, 5, 10)),
+                receipt(2L, "Ulaşım", "Metro", BigDecimal.valueOf(30), LocalDate.of(2024, 5, 15)));
+        when(loadReceiptsByUserAndDateRangePort.loadByUserIdAndDateRange(user.getId(),
                 LocalDate.of(2024, 5, 1), LocalDate.of(2024, 5, 31))).thenReturn(receipts);
 
         MonthlyStatisticsResponse response = statisticsService.getMonthlyStatistics(EMAIL, 2024, 5);
@@ -123,7 +119,8 @@ class StatisticsServiceTest {
         LocalDate today = LocalDate.now();
         LocalDate start = today.withDayOfMonth(1);
         LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
-        when(receiptRepository.findByUserAndReceiptDateBetween(user, start, end)).thenReturn(List.of());
+        when(loadReceiptsByUserAndDateRangePort.loadByUserIdAndDateRange(user.getId(), start, end))
+                .thenReturn(List.of());
 
         MonthlyStatisticsResponse response = statisticsService.getMonthlyStatistics(EMAIL, null, null);
 
@@ -136,8 +133,9 @@ class StatisticsServiceTest {
     @Test
     void getMonthlyStatistics_kategorisizFisDigerOlarakGoruntulenir() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        List<Receipt> receipts = List.of(receipt(null, "Bilinmeyen", BigDecimal.valueOf(20), LocalDate.of(2024, 5, 1)));
-        when(receiptRepository.findByUserAndReceiptDateBetween(user,
+        List<Receipt> receipts = List.of(receipt(null, null, "Bilinmeyen", BigDecimal.valueOf(20),
+                LocalDate.of(2024, 5, 1)));
+        when(loadReceiptsByUserAndDateRangePort.loadByUserIdAndDateRange(user.getId(),
                 LocalDate.of(2024, 5, 1), LocalDate.of(2024, 5, 31))).thenReturn(receipts);
 
         MonthlyStatisticsResponse response = statisticsService.getMonthlyStatistics(EMAIL, 2024, 5);
@@ -162,10 +160,9 @@ class StatisticsServiceTest {
     void getMonthlyStatisticsRange_istenenAySayisiKadarSonucDoner_EskidenYeniyeSirali() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         LocalDate today = LocalDate.now();
-        Category market = category(1L, "Market", "#FF0000");
 
-        Receipt thisMonthReceipt = receipt(market, "A101", BigDecimal.valueOf(75), today.withDayOfMonth(1));
-        when(receiptRepository.findByUserAndReceiptDateBetween(eq(user), any(), any()))
+        Receipt thisMonthReceipt = receipt(1L, "Market", "A101", BigDecimal.valueOf(75), today.withDayOfMonth(1));
+        when(loadReceiptsByUserAndDateRangePort.loadByUserIdAndDateRange(eq(user.getId()), any(), any()))
                 .thenReturn(List.of(thisMonthReceipt));
 
         List<MonthlyStatisticsResponse> results = statisticsService.getMonthlyStatisticsRange(EMAIL, 3);
@@ -191,10 +188,10 @@ class StatisticsServiceTest {
     void getStoreStatistics_magazaBazindaToplarVeOrtalamaHesaplar() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         List<Receipt> receipts = List.of(
-                receipt(null, "A101", BigDecimal.valueOf(100), LocalDate.of(2024, 1, 1)),
-                receipt(null, "A101", BigDecimal.valueOf(50), LocalDate.of(2024, 1, 5)),
-                receipt(null, "  BIM  ", BigDecimal.valueOf(200), LocalDate.of(2024, 1, 10)));
-        when(receiptRepository.findByUser(user)).thenReturn(receipts);
+                receipt(null, null, "A101", BigDecimal.valueOf(100), LocalDate.of(2024, 1, 1)),
+                receipt(null, null, "A101", BigDecimal.valueOf(50), LocalDate.of(2024, 1, 5)),
+                receipt(null, null, "  BIM  ", BigDecimal.valueOf(200), LocalDate.of(2024, 1, 10)));
+        when(loadAllReceiptsByUserPort.loadAllByUserId(user.getId())).thenReturn(receipts);
 
         List<StoreStatResponse> stats = statisticsService.getStoreStatistics(EMAIL);
 
@@ -214,7 +211,7 @@ class StatisticsServiceTest {
     @Test
     void getStoreStatistics_hicFisYok_bosListeDoner() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        when(receiptRepository.findByUser(user)).thenReturn(List.of());
+        when(loadAllReceiptsByUserPort.loadAllByUserId(user.getId())).thenReturn(List.of());
 
         List<StoreStatResponse> stats = statisticsService.getStoreStatistics(EMAIL);
 
@@ -236,25 +233,11 @@ class StatisticsServiceTest {
     void getTopProducts_satinAlmaSayisinaGoreSiralarVeLimitUygular() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
 
-        ReceiptItem sut = new ReceiptItem();
-        sut.setNormalizedName("sut");
-        sut.setProductName("Süt");
-        sut.setUnitPrice(BigDecimal.valueOf(10));
-        sut.setQuantity(BigDecimal.valueOf(2));
+        ReceiptItem sut = receiptItem("Süt", "sut", BigDecimal.valueOf(10), BigDecimal.valueOf(2));
+        ReceiptItem sut2 = receiptItem("Süt", "sut", BigDecimal.valueOf(10), BigDecimal.ONE);
+        ReceiptItem ekmek = receiptItem("Ekmek", "ekmek", BigDecimal.valueOf(5), null);
 
-        ReceiptItem sut2 = new ReceiptItem();
-        sut2.setNormalizedName("sut");
-        sut2.setProductName("Süt");
-        sut2.setUnitPrice(BigDecimal.valueOf(10));
-        sut2.setQuantity(BigDecimal.ONE);
-
-        ReceiptItem ekmek = new ReceiptItem();
-        ekmek.setNormalizedName("ekmek");
-        ekmek.setProductName("Ekmek");
-        ekmek.setUnitPrice(BigDecimal.valueOf(5));
-        ekmek.setQuantity(null);
-
-        when(receiptItemRepository.findByReceipt_User_Id(user.getId())).thenReturn(List.of(sut, sut2, ekmek));
+        when(loadReceiptItemsByUserPort.loadByUserId(user.getId())).thenReturn(List.of(sut, sut2, ekmek));
 
         List<TopProductResponse> topProducts = statisticsService.getTopProducts(EMAIL, 1);
 
@@ -267,7 +250,7 @@ class StatisticsServiceTest {
     @Test
     void getTopProducts_limitNullVeyaNegatifse_varsayilanLimitKullanilir() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        when(receiptItemRepository.findByReceipt_User_Id(user.getId())).thenReturn(List.of());
+        when(loadReceiptItemsByUserPort.loadByUserId(user.getId())).thenReturn(List.of());
 
         List<TopProductResponse> topProducts = statisticsService.getTopProducts(EMAIL, -5);
 
@@ -289,10 +272,10 @@ class StatisticsServiceTest {
     void getPotentialSubscriptions_aylikAraliklaAyniTutarOdenenMagaza_abonelikOlarakBulunur() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         List<Receipt> receipts = List.of(
-                receipt(null, "Netflix", BigDecimal.valueOf(100), LocalDate.of(2024, 1, 1)),
-                receipt(null, "Netflix", BigDecimal.valueOf(100), LocalDate.of(2024, 2, 1)),
-                receipt(null, "Netflix", BigDecimal.valueOf(100), LocalDate.of(2024, 3, 1)));
-        when(receiptRepository.findByUser(user)).thenReturn(receipts);
+                receipt(null, null, "Netflix", BigDecimal.valueOf(100), LocalDate.of(2024, 1, 1)),
+                receipt(null, null, "Netflix", BigDecimal.valueOf(100), LocalDate.of(2024, 2, 1)),
+                receipt(null, null, "Netflix", BigDecimal.valueOf(100), LocalDate.of(2024, 3, 1)));
+        when(loadAllReceiptsByUserPort.loadAllByUserId(user.getId())).thenReturn(receipts);
 
         List<SubscriptionCandidateResponse> candidates = statisticsService.getPotentialSubscriptions(EMAIL);
 
@@ -306,10 +289,10 @@ class StatisticsServiceTest {
     void getPotentialSubscriptions_tutarBuyukFarklilikGosterirse_abonelikSayilmaz() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         List<Receipt> receipts = List.of(
-                receipt(null, "Market", BigDecimal.valueOf(50), LocalDate.of(2024, 1, 1)),
-                receipt(null, "Market", BigDecimal.valueOf(500), LocalDate.of(2024, 2, 1)),
-                receipt(null, "Market", BigDecimal.valueOf(50), LocalDate.of(2024, 3, 1)));
-        when(receiptRepository.findByUser(user)).thenReturn(receipts);
+                receipt(null, null, "Market", BigDecimal.valueOf(50), LocalDate.of(2024, 1, 1)),
+                receipt(null, null, "Market", BigDecimal.valueOf(500), LocalDate.of(2024, 2, 1)),
+                receipt(null, null, "Market", BigDecimal.valueOf(50), LocalDate.of(2024, 3, 1)));
+        when(loadAllReceiptsByUserPort.loadAllByUserId(user.getId())).thenReturn(receipts);
 
         List<SubscriptionCandidateResponse> candidates = statisticsService.getPotentialSubscriptions(EMAIL);
 
@@ -319,8 +302,8 @@ class StatisticsServiceTest {
     @Test
     void getPotentialSubscriptions_tekFis_abonelikSayilmaz() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        when(receiptRepository.findByUser(user)).thenReturn(
-                List.of(receipt(null, "Netflix", BigDecimal.valueOf(100), LocalDate.of(2024, 1, 1))));
+        when(loadAllReceiptsByUserPort.loadAllByUserId(user.getId())).thenReturn(
+                List.of(receipt(null, null, "Netflix", BigDecimal.valueOf(100), LocalDate.of(2024, 1, 1))));
 
         List<SubscriptionCandidateResponse> candidates = statisticsService.getPotentialSubscriptions(EMAIL);
 
@@ -342,8 +325,8 @@ class StatisticsServiceTest {
     void getSpendingPersonality_besFisAltinda_yeniBaslayanPersonasiDoner() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         List<Receipt> receipts = new ArrayList<>();
-        receipts.add(receipt(null, "A", BigDecimal.TEN, LocalDate.of(2024, 1, 1)));
-        when(receiptRepository.findByUser(user)).thenReturn(receipts);
+        receipts.add(receipt(null, null, "A", BigDecimal.TEN, LocalDate.of(2024, 1, 1)));
+        when(loadAllReceiptsByUserPort.loadAllByUserId(user.getId())).thenReturn(receipts);
         when(savingsGoalRepository.findByUser(user)).thenReturn(List.of());
 
         SpendingPersonalityResponse response = statisticsService.getSpendingPersonality(EMAIL);
@@ -357,14 +340,13 @@ class StatisticsServiceTest {
     @Test
     void getSpendingPersonality_birKategoriYarininUzerindeHarcama_kategoriAsigiPersonasiDoner() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        Category market = category(1L, "Market", "#FF0000");
         List<Receipt> receipts = List.of(
-                receipt(market, "A", BigDecimal.valueOf(100), LocalDate.of(2024, 1, 2)),
-                receipt(market, "A", BigDecimal.valueOf(100), LocalDate.of(2024, 1, 3)),
-                receipt(market, "A", BigDecimal.valueOf(100), LocalDate.of(2024, 1, 4)),
-                receipt(null, "B", BigDecimal.valueOf(10), LocalDate.of(2024, 1, 5)),
-                receipt(null, "C", BigDecimal.valueOf(10), LocalDate.of(2024, 1, 6)));
-        when(receiptRepository.findByUser(user)).thenReturn(receipts);
+                receipt(1L, "Market", "A", BigDecimal.valueOf(100), LocalDate.of(2024, 1, 2)),
+                receipt(1L, "Market", "A", BigDecimal.valueOf(100), LocalDate.of(2024, 1, 3)),
+                receipt(1L, "Market", "A", BigDecimal.valueOf(100), LocalDate.of(2024, 1, 4)),
+                receipt(null, null, "B", BigDecimal.valueOf(10), LocalDate.of(2024, 1, 5)),
+                receipt(null, null, "C", BigDecimal.valueOf(10), LocalDate.of(2024, 1, 6)));
+        when(loadAllReceiptsByUserPort.loadAllByUserId(user.getId())).thenReturn(receipts);
         when(savingsGoalRepository.findByUser(user)).thenReturn(List.of());
 
         SpendingPersonalityResponse response = statisticsService.getSpendingPersonality(EMAIL);
@@ -377,9 +359,9 @@ class StatisticsServiceTest {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         List<Receipt> receipts = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
-            receipts.add(receipt(null, "Store" + i, BigDecimal.valueOf(20), LocalDate.of(2024, 1, i + 1)));
+            receipts.add(receipt(null, null, "Store" + i, BigDecimal.valueOf(20), LocalDate.of(2024, 1, i + 1)));
         }
-        when(receiptRepository.findByUser(user)).thenReturn(receipts);
+        when(loadAllReceiptsByUserPort.loadAllByUserId(user.getId())).thenReturn(receipts);
 
         SavingsGoal goal = new SavingsGoal();
         goal.setTargetAmount(BigDecimal.valueOf(100));
