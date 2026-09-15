@@ -23,3 +23,9 @@
 | MOB-003 | auth_service.dart'taki boş catch bloklarını düzelt (Crashlytics'e raporlama eklendi) | Acil — mobil denetim bulgusu A3 | S | Done | - |
 | MOB-004 | Dashboard'a hata durumu (error state) eklendi | Yüksek — mobil denetim bulgusu Y1 | S | Done | - |
 | MOB-005 | Dashboard'daki bağımsız network çağrıları paralelleştirildi (MOB-004 ile birlikte uygulandı) | Yüksek — mobil denetim bulgusu Y2 | S | Done | - |
+| ARCH-007 | API versiyonlama — ADR-003, backend `/api/v1` context-path + mobil baseUrl güncellendi, additive-only kuralı backend-dev.md'ye eklendi | Acil (App Store öncesi) — Sprint 2 denetim bulgusu A2 | L | Done | 3 |
+| ARCH-002 | AuthService God Service — ADR-004, 4 domain out-port + AccountDeletionService ile hesap silme orkestrasyonu ayrıldı | Yüksek — Sprint 2 denetim bulgusu Y1 | L | Done | 3 |
+| ARCH-003 | HouseholdService/StatisticsService receipt port bypass — ADR-005, 4 yeni domain-model port + HouseholdServiceTest (yeni) | Yüksek — Sprint 2 denetim bulgusu Y2 | M | Done | 3 |
+| ARCH-004 | StatementImportService bellek riski değerlendirmesi — SONUÇ: gerçek risk yok, 10MB multipart limiti zaten var, kod değişikliği yapılmadı, koruma testi eklendi | Yüksek — Sprint 2 denetim bulgusu Y3 | M | Done (değerlendirme) | 3 |
+| ARCH-006 | Pagination — kapsam 6 metoddan 2'ye daraltıldı: kategori-fiş unlink bulk UPDATE'e çevrildi, kategori önerisi 50 kayıtla sınırlandı; backend-dev.md'ye @Modifying/@Transactional kuralı eklendi | Orta-Yüksek — Sprint 2 denetim bulgusu Y7 | S-M | Done | 3 |
+| ARCH-005 | UploadController: kullanıcı başına Cloudinary klasörü (CloudinaryPaths) + hesap silmede best-effort toplu Cloudinary temizliği | Orta — Sprint 2 denetim bulgusu Y5, kapsam ön-incelemede genişletildi | S | Done | 3 |
