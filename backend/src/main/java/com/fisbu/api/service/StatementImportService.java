@@ -35,6 +35,15 @@ import com.fisbu.api.repository.UserRepository;
  * kendi CSV export formatındaki dosyaları harcama önerisi listesine dönüştürür.
  * Hiçbir şey veritabanına yazmaz — kullanıcı mobil tarafta gözden geçirip
  * POST /receipts/import/confirm ile onayladıklarını kaydeder.
+ *
+ * ARCH-004: {@link #readAsText}/{@link #extractPdfText} dosyayı TAMAMEN belleğe okur
+ * (streaming değil). Bu, {@code spring.servlet.multipart.max-file-size=10MB}
+ * (application.properties) tarafından zaten sınırlandığı için gerçek bir OOM riski
+ * DEĞİL — Spring bu limiti bu servise ULAŞMADAN önce (servlet/filter katmanında)
+ * uyguluyor, 10MB bir PDF/CSV'yi belleğe almak da önemsiz bir maliyet. Streaming'e
+ * geçmenin somut bir faydası olmadığına karar verildi (bkz. .sdlc/stories/ARCH-004.md,
+ * .sdlc/adr/ değil — bu ölçekte mimari karar gerektirmedi). Limit değeri
+ * {@link com.fisbu.api.config.MultipartFileSizeLimitTest} ile korunuyor.
  */
 @Service
 public class StatementImportService {
