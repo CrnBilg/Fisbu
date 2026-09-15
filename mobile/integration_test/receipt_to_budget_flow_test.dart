@@ -13,7 +13,7 @@
 // ÇALIŞTIRMA: gerçek bir backend'e ihtiyaç var (ör. yerel bir Postgres + `bootRun`,
 // production Supabase'e ASLA bağlanılmaz). Örnek:
 //   flutter test integration_test/receipt_to_budget_flow_test.dart -d <device> \
-//     --dart-define=API_BASE_URL=http://localhost:8090 \
+//     --dart-define=API_BASE_URL=http://localhost:8090/api/v1 \   // ARCH-007: context-path dahil edilmeli
 //     --dart-define=E2E_EMAIL=... --dart-define=E2E_PASSWORD=... \
 //     --dart-define=E2E_CATEGORY_NAME=...
 //

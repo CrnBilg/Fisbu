@@ -13,9 +13,13 @@ class ApiClient {
   // E2E-001: `--dart-define=API_BASE_URL=...` ile override edilebilir — SADECE E2E
   // testlerinin yerel/ephemeral bir backend'e karşı çalışması için (production'a
   // asla bağlanmamaları amacıyla). Override verilmezse davranış AYNI kalır.
+  //
+  // ARCH-007/ADR-003: backend artık `/api/v1` context-path'i altında yaşıyor
+  // (App Store öncesi versiyonlama kararı). Override edilirken de (E2E'de
+  // yerel backend'e karşı) bu segment dahil edilmeli, aksi halde 404 alınır.
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://fisbu-production-613c.up.railway.app',
+    defaultValue: 'https://fisbu-production-613c.up.railway.app/api/v1',
   );
 
   /// 401/403 alındığında (yalnızca Authorization header'ı eklenmiş bir istekte)
