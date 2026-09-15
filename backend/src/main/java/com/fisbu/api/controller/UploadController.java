@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.fisbu.api.shared.CloudinaryPaths;
 
 @RestController
 @RequestMapping("/receipts")
@@ -59,10 +60,14 @@ public class UploadController {
         }
 
         try {
+            // ARCH-005: yükleyen kullanıcı Cloudinary klasör yapısına gömülüyor —
+            // (1) audit/quota/abuse-tracking için "bu görsel kime ait" artık Cloudinary
+            // konsolunda da görünür, (2) hesap silindiğinde AccountDeletionService bu
+            // klasörü prefix'e göre toplu silebiliyor (bkz. deleteResourcesByPrefix).
             Map uploadResult = cloudinary.uploader().upload(
                     bytes,
                     ObjectUtils.asMap(
-                            "folder", "fisbu/receipts",
+                            "folder", CloudinaryPaths.userReceiptsFolder(userDetails.getUsername()),
                             "resource_type", "image"
                     )
             );

@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import com.fisbu.api.budget.application.port.out.DeleteBudgetPort;
+import com.fisbu.api.budget.application.port.out.DeleteBudgetsByUserPort;
 import com.fisbu.api.budget.application.port.out.FindBudgetByCategoryAndPeriodPort;
 import com.fisbu.api.budget.application.port.out.LoadBudgetPort;
 import com.fisbu.api.budget.application.port.out.LoadBudgetsPort;
@@ -23,7 +24,8 @@ import com.fisbu.api.repository.UserRepository;
 
 @Component
 public class BudgetPersistenceAdapter implements LoadBudgetsPort, LoadBudgetPort, FindBudgetByCategoryAndPeriodPort,
-        SaveBudgetPort, DeleteBudgetPort, ResolveUserIdPort, LoadUserNotificationProfilePort {
+        SaveBudgetPort, DeleteBudgetPort, ResolveUserIdPort, LoadUserNotificationProfilePort,
+        DeleteBudgetsByUserPort {
 
     private final BudgetRepository budgetRepository;
     private final UserRepository userRepository;
@@ -86,6 +88,12 @@ public class BudgetPersistenceAdapter implements LoadBudgetsPort, LoadBudgetPort
     @Override
     public void deleteById(Long budgetId) {
         budgetRepository.deleteById(budgetId);
+    }
+
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        User user = requireUser(userId);
+        budgetRepository.deleteAll(budgetRepository.findByUser(user));
     }
 
     @Override

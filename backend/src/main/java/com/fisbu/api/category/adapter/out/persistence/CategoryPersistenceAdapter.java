@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import com.fisbu.api.category.application.port.out.DeleteBudgetsByCategoryPort;
+import com.fisbu.api.category.application.port.out.DeleteCategoriesByUserPort;
 import com.fisbu.api.category.application.port.out.DeleteCategoryPort;
 import com.fisbu.api.category.application.port.out.FindCategoryByNamePort;
 import com.fisbu.api.category.application.port.out.LoadCategoriesPort;
@@ -26,7 +27,8 @@ import com.fisbu.api.repository.UserRepository;
 // (Receipt modülü migrate oldu, bkz. adapter/out/receipt).
 @Component
 public class CategoryPersistenceAdapter implements ResolveUserIdPort, LoadCategoriesPort, LoadCategoryPort,
-        FindCategoryByNamePort, SaveCategoryPort, DeleteCategoryPort, DeleteBudgetsByCategoryPort {
+        FindCategoryByNamePort, SaveCategoryPort, DeleteCategoryPort, DeleteBudgetsByCategoryPort,
+        DeleteCategoriesByUserPort {
 
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
@@ -87,6 +89,12 @@ public class CategoryPersistenceAdapter implements ResolveUserIdPort, LoadCatego
     public void deleteBudgetsByCategory(Long categoryId) {
         com.fisbu.api.entity.Category category = requireCategoryEntity(categoryId);
         budgetRepository.deleteAll(budgetRepository.findByCategory(category));
+    }
+
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        User user = requireUser(userId);
+        categoryRepository.deleteAll(categoryRepository.findByUser(user));
     }
 
     private User requireUser(Long userId) {
