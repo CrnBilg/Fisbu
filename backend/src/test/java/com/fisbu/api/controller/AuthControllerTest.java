@@ -24,6 +24,7 @@ import com.fisbu.api.config.SecurityConfig;
 import com.fisbu.api.dto.ProfileResponse;
 import com.fisbu.api.dto.RegisterResponse;
 import com.fisbu.api.repository.UserRepository;
+import com.fisbu.api.service.AccountDeletionService;
 import com.fisbu.api.service.AuthService;
 import com.fisbu.api.service.JwtService;
 
@@ -42,6 +43,9 @@ class AuthControllerTest {
 
     @MockitoBean
     private AuthService authService;
+
+    @MockitoBean
+    private AccountDeletionService accountDeletionService;
 
     @MockitoBean
     private JwtService jwtService;
@@ -151,7 +155,7 @@ class AuthControllerTest {
         mockMvc.perform(delete("/auth/account"))
                 .andExpect(status().isOk());
 
-        verify(authService).deleteAccount("test@fisbu.com");
+        verify(accountDeletionService).deleteAccount("test@fisbu.com");
     }
 
     @Test

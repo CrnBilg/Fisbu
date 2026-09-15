@@ -3,10 +3,8 @@ package com.fisbu.api.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,10 +29,7 @@ import com.fisbu.api.dto.UpdateProfileRequest;
 import com.fisbu.api.dto.VerifyEmailRequest;
 import com.fisbu.api.entity.Category;
 import com.fisbu.api.entity.User;
-import com.fisbu.api.repository.BudgetRepository;
 import com.fisbu.api.repository.CategoryRepository;
-import com.fisbu.api.repository.ReceiptRepository;
-import com.fisbu.api.repository.SavingsGoalRepository;
 import com.fisbu.api.repository.UserRepository;
 
 /**
@@ -57,12 +52,6 @@ class AuthServiceTest {
     @Mock
     private CategoryRepository categoryRepository;
     @Mock
-    private ReceiptRepository receiptRepository;
-    @Mock
-    private BudgetRepository budgetRepository;
-    @Mock
-    private SavingsGoalRepository savingsGoalRepository;
-    @Mock
     private EmailService emailService;
 
     private AuthService authService;
@@ -70,7 +59,7 @@ class AuthServiceTest {
     @BeforeEach
     void setUp() {
         authService = new AuthService(userRepository, passwordEncoder, jwtService, categoryRepository,
-                receiptRepository, budgetRepository, savingsGoalRepository, emailService);
+                emailService);
     }
 
     private User verifiedUser() {
@@ -438,34 +427,10 @@ class AuthServiceTest {
         verify(emailService, never()).sendVerificationCode(any(), any());
     }
 
-    // ---------- deleteAccount ----------
-
-    @Test
-    void deleteAccount_varOlmayanKullanici_404Doner() {
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> authService.deleteAccount(EMAIL))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("404");
-    }
-
-    @Test
-    void deleteAccount_basarili_FKSirasinaGoreSilmeYapar() {
-        User user = verifiedUser();
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        when(budgetRepository.findByUser(user)).thenReturn(List.of());
-        when(savingsGoalRepository.findByUser(user)).thenReturn(List.of());
-        when(receiptRepository.findByUser(user)).thenReturn(List.of());
-        when(categoryRepository.findByUser(user)).thenReturn(List.of());
-
-        authService.deleteAccount(EMAIL);
-
-        // Budget -> SavingsGoal -> Receipt -> Category -> User sırası: Budget'ın
-        // Category'ye NOT NULL FK ile bağlı olması nedeniyle bu sıra kritik (bkz. AuthService yorumu)
-        verify(budgetRepository, times(1)).deleteAll(anyList());
-        verify(categoryRepository, times(1)).deleteAll(anyList());
-        verify(userRepository).delete(user);
-    }
+    // deleteAccount testleri ARCH-002/ADR-004 ile AccountDeletionServiceTest'e taşındı —
+    // AuthService artık deleteAccount() içermiyor (hesap silme orkestrasyonu ayrı bir
+    // servise, domain port'ları üzerinden taşındı; AuthService sadece kimlik doğrulama
+    // sorumluluğunu taşıyor).
 
     // ---------- getProfile / updateProfile ----------
 

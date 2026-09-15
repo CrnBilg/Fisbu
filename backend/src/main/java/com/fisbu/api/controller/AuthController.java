@@ -20,6 +20,7 @@ import com.fisbu.api.dto.RegisterRequest;
 import com.fisbu.api.dto.RegisterResponse;
 import com.fisbu.api.dto.ResetPasswordRequest;
 import com.fisbu.api.dto.VerifyEmailRequest;
+import com.fisbu.api.service.AccountDeletionService;
 import com.fisbu.api.service.AuthService;
 
 import jakarta.validation.Valid;
@@ -30,9 +31,11 @@ import jakarta.validation.Valid;
 public class AuthController {
 
     private final AuthService authService;// AuthService'i kullanarak kullanıcı kayıt işlemlerini yönetir
+    private final AccountDeletionService accountDeletionService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, AccountDeletionService accountDeletionService) {
         this.authService = authService;
+        this.accountDeletionService = accountDeletionService;
     }
 
     @PostMapping("/register") // HTTP POST isteği ile "/auth/register" endpoint'ine gelen kayıt isteklerini işler.
@@ -74,7 +77,7 @@ public class AuthController {
 
     @DeleteMapping("/account") // Giriş yapmış kullanıcının hesabını ve tüm verilerini siler.
     public void deleteAccount(@AuthenticationPrincipal UserDetails userDetails) {
-        authService.deleteAccount(userDetails.getUsername());
+        accountDeletionService.deleteAccount(userDetails.getUsername());
     }
 
     @GetMapping("/profile")
