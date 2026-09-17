@@ -360,7 +360,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -454,7 +454,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             label: const Text('Aileden Ayrıl'),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.error,
-              side: BorderSide(color: AppColors.error.withOpacity(0.4)),
+              side: BorderSide(color: AppColors.error.withValues(alpha: 0.4)),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),

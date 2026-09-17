@@ -126,7 +126,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
               Icon(
                 Icons.fingerprint,
                 size: 56,
-                color: AppColors.txt(context).withOpacity(0.6),
+                color: AppColors.txt(context).withValues(alpha: 0.6),
               ),
               const SizedBox(height: 16),
               Text(

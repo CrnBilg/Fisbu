@@ -70,7 +70,7 @@ class _SpendingCalendarScreenState extends State<SpendingCalendarScreen> {
     final total = _totalForDay(day);
     if (total <= 0 || _maxDaySpend <= 0) return Colors.transparent;
     final intensity = (total / _maxDaySpend).clamp(0.15, 1.0);
-    return AppColors.primary.withOpacity(isDark ? intensity * 0.5 : intensity * 0.35);
+    return AppColors.primary.withValues(alpha: isDark ? intensity * 0.5 : intensity * 0.35);
   }
 
   Widget _buildDayCell(DateTime day, bool isDark, {bool isSelected = false, bool isToday = false}) {
@@ -200,7 +200,7 @@ class _SpendingCalendarScreenState extends State<SpendingCalendarScreen> {
                                       Container(
                                         padding: const EdgeInsets.all(10),
                                         decoration: BoxDecoration(
-                                          color: CategoryHelper.getColor(receipt.categoryName).withOpacity(0.12),
+                                          color: CategoryHelper.getColor(receipt.categoryName).withValues(alpha: 0.12),
                                           borderRadius: BorderRadius.circular(10),
                                         ),
                                         child: Icon(CategoryHelper.getIcon(receipt.categoryName),

@@ -235,7 +235,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -531,7 +531,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.primDim(context),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -559,7 +559,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.errDim(context),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,

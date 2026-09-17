@@ -230,7 +230,7 @@ class _ExportScreenState extends State<ExportScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.errDim(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [

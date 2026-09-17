@@ -31,7 +31,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _email;
   String? _name;
   String? _profileImageUrl;
-  String? _createdAt;
   bool _isUpdatingPhoto = false;
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
@@ -143,7 +142,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _email = profile['email'];
         _name = profile['name'];
         _profileImageUrl = profile['profileImageUrl'];
-        _createdAt = profile['createdAt'];
       });
     } else {
       final email = await AuthService.getEmail();
@@ -907,7 +905,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: AppColors.errDim(context),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppColors.error.withOpacity(0.2),
+                          color: AppColors.error.withValues(alpha: 0.2),
                         ),
                       ),
                       child: const Row(
@@ -943,7 +941,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: AppColors.errDim(context),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppColors.error.withOpacity(0.2),
+                          color: AppColors.error.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Row(

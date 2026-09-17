@@ -356,7 +356,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.errDim(context),
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                          border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           children: [
@@ -445,10 +445,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         margin: const EdgeInsets.only(bottom: 20),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: CategoryHelper.getColor(_topCategory).withOpacity(0.08),
+                          color: CategoryHelper.getColor(_topCategory).withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: CategoryHelper.getColor(_topCategory).withOpacity(0.2),
+                            color: CategoryHelper.getColor(_topCategory).withValues(alpha: 0.2),
                           ),
                         ),
                         child: Row(
@@ -456,7 +456,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: CategoryHelper.getColor(_topCategory).withOpacity(0.15),
+                                color: CategoryHelper.getColor(_topCategory).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(
@@ -617,7 +617,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         Container(
                                           padding: const EdgeInsets.all(10),
                                           decoration: BoxDecoration(
-                                            color: CategoryHelper.getColor(receipt.categoryName).withOpacity(0.12),
+                                            color: CategoryHelper.getColor(receipt.categoryName).withValues(alpha: 0.12),
                                             borderRadius: BorderRadius.circular(12),
                                           ),
                                           child: Icon(
@@ -648,7 +648,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                       vertical: 2,
                                                     ),
                                                     decoration: BoxDecoration(
-                                                      color: CategoryHelper.getColor(receipt.categoryName).withOpacity(0.1),
+                                                      color: CategoryHelper.getColor(receipt.categoryName).withValues(alpha: 0.1),
                                                       borderRadius: BorderRadius.circular(6),
                                                     ),
                                                     child: Text(
@@ -722,7 +722,7 @@ class _QuickActionCard extends StatelessWidget {
           border: Border.all(color: AppColors.brd(context)),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.08),
+              color: color.withValues(alpha: 0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -733,7 +733,7 @@ class _QuickActionCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: color, size: 20),

@@ -70,7 +70,7 @@ class _CodeInputState extends State<CodeInput> {
                 Text(
                   '-',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.35),
+                    color: Colors.white.withValues(alpha: 0.35),
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
                   ),

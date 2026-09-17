@@ -324,7 +324,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFFF6B6B).withOpacity(0.3)),
+          border: Border.all(color: const Color(0xFFFF6B6B).withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
@@ -388,7 +388,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withOpacity(0.25)),
+        border: Border.all(color: accent.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -697,7 +697,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: _categoryColor(entry.key).withOpacity(0.12),
+                          color: _categoryColor(entry.key).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
@@ -852,7 +852,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFCC5DE8).withOpacity(0.12),
+                  color: const Color(0xFFCC5DE8).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.autorenew, color: Color(0xFFCC5DE8), size: 20),
@@ -938,7 +938,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4D96FF).withOpacity(0.12),
+                  color: const Color(0xFF4D96FF).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.storefront_outlined, color: Color(0xFF4D96FF), size: 20),
@@ -1031,7 +1031,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 height: 28,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6BCB77).withOpacity(0.12),
+                  color: const Color(0xFF6BCB77).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -1113,7 +1113,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: changeColor.withOpacity(0.12),
+              color: changeColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -1292,7 +1292,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             color: isDark ? const Color(0xFF2A2A3E) : Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                                color: const Color(0xFF6C63FF).withOpacity(0.3)),
+                                color: const Color(0xFF6C63FF).withValues(alpha: 0.3)),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<DateTime>(
@@ -1706,7 +1706,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                   height: 40,
                                   decoration: BoxDecoration(
                                     color: _categoryColor(index)
-                                        .withOpacity(0.12),
+                                        .withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Icon(
@@ -1821,7 +1821,7 @@ class _SummaryCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: color, size: 18),

@@ -106,7 +106,7 @@ class _SpendingPersonalityScreenState extends State<SpendingPersonalityScreen> {
                               color: badge.achieved ? AppColors.primDim(context) : AppColors.surf(context),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: badge.achieved ? AppColors.primary.withOpacity(0.4) : AppColors.brd(context),
+                                color: badge.achieved ? AppColors.primary.withValues(alpha: 0.4) : AppColors.brd(context),
                               ),
                             ),
                             child: Column(

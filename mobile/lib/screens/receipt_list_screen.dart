@@ -394,7 +394,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
               try {
                 await ReceiptService.deleteReceipt(receipt.id);
                 setState(() => _receipts.removeAt(index));
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('${receipt.storeName} silindi'),
@@ -404,7 +404,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
                 }
               } catch (e) {
                 _loadReceipts();
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Silinemedi: $e')),
                   );
@@ -441,7 +441,7 @@ class _ReceiptCard extends StatelessWidget {
           border: Border.all(color: AppColors.brd(context)),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.04),
+              color: AppColors.primary.withValues(alpha: 0.04),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -453,7 +453,7 @@ class _ReceiptCard extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: CategoryHelper.getColor(receipt.categoryName)
-                    .withOpacity(0.12),
+                    .withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(

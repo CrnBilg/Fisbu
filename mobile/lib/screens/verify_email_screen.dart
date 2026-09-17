@@ -133,10 +133,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.08),
+                          color: Colors.white.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.1),
+                            color: Colors.white.withValues(alpha: 0.1),
                           ),
                         ),
                         child: const Icon(
@@ -163,7 +163,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                     Text(
                       '${widget.email} adresine gönderilen 6 haneli kodu gir',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.55),
+                        color: Colors.white.withValues(alpha: 0.55),
                         fontSize: 15,
                         fontWeight: FontWeight.w400,
                       ),
@@ -189,7 +189,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                               : 'Kodu tekrar gönder',
                           style: TextStyle(
                             color: _remainingCooldown > 0
-                                ? Colors.white.withOpacity(0.4)
+                                ? Colors.white.withValues(alpha: 0.4)
                                 : AppColors.primaryLight,
                             fontWeight: FontWeight.w600,
                           ),
@@ -213,7 +213,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.5),
+                              color: AppColors.primary.withValues(alpha: 0.5),
                               blurRadius: 24,
                               offset: const Offset(0, 8),
                             ),
@@ -249,7 +249,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                         'FişBu © 2026',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white.withOpacity(0.25),
+                          color: Colors.white.withValues(alpha: 0.25),
                         ),
                       ),
                     ),

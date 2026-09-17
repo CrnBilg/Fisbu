@@ -179,7 +179,7 @@ class _ImportReviewScreenState extends State<ImportReviewScreen> {
               decoration: BoxDecoration(
                 color: AppColors.errDim(context),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+                border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
               ),
               child: Text(
                 widget.result.warnings.join('\n'),
@@ -199,7 +199,7 @@ class _ImportReviewScreenState extends State<ImportReviewScreen> {
                     color: AppColors.surf(context),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: row.selected ? AppColors.primary.withOpacity(0.4) : AppColors.brd(context),
+                      color: row.selected ? AppColors.primary.withValues(alpha: 0.4) : AppColors.brd(context),
                       width: row.selected ? 1.5 : 1,
                     ),
                   ),
@@ -217,7 +217,7 @@ class _ImportReviewScreenState extends State<ImportReviewScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: _confidenceColor(row.original.confidenceScore).withOpacity(0.15),
+                                color: _confidenceColor(row.original.confidenceScore).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(

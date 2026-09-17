@@ -156,10 +156,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.08),
+                          color: Colors.white.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.1),
+                            color: Colors.white.withValues(alpha: 0.1),
                           ),
                         ),
                         child: const Icon(
@@ -186,7 +186,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     Text(
                       '${widget.email} adresine gönderilen 6 haneli kodu ve yeni şifreni gir',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.55),
+                        color: Colors.white.withValues(alpha: 0.55),
                         fontSize: 15,
                         fontWeight: FontWeight.w400,
                       ),
@@ -272,7 +272,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.5),
+                              color: AppColors.primary.withValues(alpha: 0.5),
                               blurRadius: 24,
                               offset: const Offset(0, 8),
                             ),
@@ -322,9 +322,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.07),
+        color: Colors.white.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
       ),
       child: TextField(
         controller: controller,
@@ -337,7 +337,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
-            color: Colors.white.withOpacity(0.45),
+            color: Colors.white.withValues(alpha: 0.45),
             fontSize: 14,
           ),
           prefixIcon: Icon(icon, color: Colors.white38, size: 20),
@@ -347,7 +347,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(
-              color: AppColors.primary.withOpacity(0.6),
+              color: AppColors.primary.withValues(alpha: 0.6),
               width: 1.5,
             ),
           ),

@@ -200,7 +200,7 @@ class _OcrScreenState extends State<OcrScreen> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.08),
+                            color: AppColors.primary.withValues(alpha: 0.08),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -297,12 +297,12 @@ class _OcrScreenState extends State<OcrScreen> {
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primDim(context).withOpacity(
-                    Theme.of(context).brightness == Brightness.dark ? 1 : 0.6,
+                  color: AppColors.primDim(context).withValues(
+                    alpha: Theme.of(context).brightness == Brightness.dark ? 1 : 0.6,
                   ),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                      color: AppColors.primary.withOpacity(0.2)),
+                      color: AppColors.primary.withValues(alpha: 0.2)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,7 +339,7 @@ class _OcrScreenState extends State<OcrScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.warningDim,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
                 ),
                 child: const Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,7 +389,7 @@ class _OcrScreenState extends State<OcrScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.errDim(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -409,7 +409,7 @@ class _OcrScreenState extends State<OcrScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.secondaryDim,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -430,7 +430,7 @@ class _OcrScreenState extends State<OcrScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: _confidenceColor(_aiResult!.confidenceScore).withOpacity(0.15),
+                            color: _confidenceColor(_aiResult!.confidenceScore).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(

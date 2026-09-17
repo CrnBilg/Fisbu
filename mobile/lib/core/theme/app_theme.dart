@@ -25,8 +25,8 @@ class AppTheme {
         scrolledUnderElevation: 0.5,
         centerTitle: true,
         shadowColor: isDark
-            ? Colors.black.withOpacity(0.3)
-            : AppColors.border.withOpacity(0.5),
+            ? Colors.black.withValues(alpha: 0.3)
+            : AppColors.border.withValues(alpha: 0.5),
         titleTextStyle: TextStyle(
           fontFamily: 'Inter',
           fontSize: 17,
@@ -44,7 +44,7 @@ class AppTheme {
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 0,
-          shadowColor: AppColors.primary.withOpacity(0.4),
+          shadowColor: AppColors.primary.withValues(alpha: 0.4),
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

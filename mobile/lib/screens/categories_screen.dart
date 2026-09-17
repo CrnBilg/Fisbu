@@ -263,14 +263,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           onDismissed: (_) async {
             try {
               await ReceiptService.deleteCategory(category.id);
-              if (mounted) {
+              if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('"${category.name}" silindi')),
                 );
               }
             } catch (e) {
               _loadCategories();
-              if (mounted) {
+              if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Silinemedi: $e')),
                 );
@@ -286,7 +286,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               border: Border.all(color: AppColors.brd(context)),
               boxShadow: [
                 BoxShadow(
-                  color: color.withOpacity(0.06),
+                  color: color.withValues(alpha: 0.06),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -298,7 +298,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
+                    color: color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(Icons.label_outline, color: color, size: 22),
@@ -423,7 +423,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: color.withOpacity(0.4),
+                              color: color.withValues(alpha: 0.4),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             )
