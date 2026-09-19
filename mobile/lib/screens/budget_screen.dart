@@ -6,6 +6,9 @@ import '../services/receipt_service.dart';
 import '../services/budget_service.dart';
 import '../core/theme/app_colors.dart';
 import '../core/widgets/offline_banner.dart';
+import '../core/widgets/error_state_widget.dart';
+import '../core/widgets/empty_state_widget.dart';
+import '../core/widgets/loading_state_widget.dart';
 import '../core/utils/network_error.dart';
 
 class BudgetScreen extends StatefulWidget {
@@ -19,7 +22,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
   List<Category> _categories = [];
   List<Budget> _budgets = [];
   bool _isLoading = true;
-  String? _errorMessage;
+  Object? _loadError;
   final _currencyFormat = NumberFormat('#,##0.00', 'tr_TR');
 
   @override
@@ -31,7 +34,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
+      _loadError = null;
     });
 
     try {
@@ -46,7 +49,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = NetworkError.friendlyMessage(e, fallback: 'Bütçeler yüklenemedi, lütfen tekrar deneyin.');
+        _loadError = e;
         _isLoading = false;
       });
     }
@@ -106,7 +109,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
+          SnackBar(content: Text(NetworkError.friendlyMessage(e, fallback: 'Bütçe kaydedilemedi, lütfen tekrar deneyin.'))),
         );
       }
     }
@@ -124,7 +127,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Silinemedi: $e')),
+          SnackBar(content: Text(NetworkError.friendlyMessage(e, fallback: 'Silinemedi, lütfen tekrar deneyin.'))),
         );
       }
     }
@@ -145,46 +148,21 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+      return const LoadingStateWidget();
     }
 
-    if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(_errorMessage!),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: _loadData, child: const Text('Tekrar Dene')),
-          ],
-        ),
+    if (_loadError != null) {
+      return ErrorStateWidget(
+        error: _loadError!,
+        onRetry: _loadData,
+        fallback: 'Bütçeler yüklenemedi, lütfen tekrar deneyin.',
       );
     }
 
     if (_categories.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppColors.primDim(context),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.pie_chart_outline, size: 48, color: AppColors.primary),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Önce bir kategori oluştur',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.txt(context),
-              ),
-            ),
-          ],
-        ),
+      return const EmptyStateWidget(
+        icon: Icons.pie_chart_outline,
+        title: 'Önce bir kategori oluştur',
       );
     }
 

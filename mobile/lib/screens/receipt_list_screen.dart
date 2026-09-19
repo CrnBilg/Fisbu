@@ -11,6 +11,9 @@ import '../core/utils/category_helper.dart';
 import '../core/utils/network_error.dart';
 import '../core/theme/app_colors.dart';
 import '../core/widgets/offline_banner.dart';
+import '../core/widgets/error_state_widget.dart';
+import '../core/widgets/empty_state_widget.dart';
+import '../core/widgets/loading_state_widget.dart';
 
 const String _uncategorizedLabel = 'Kategorisiz';
 
@@ -34,7 +37,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
   bool _isLoadingMore = false;
   String _searchQuery = '';
   String? _selectedCategoryLabel;
-  String? _errorMessage;
+  Object? _loadError;
 
   // Arama/filtre değişince önceki (daha yavaş) isteğin geç gelen cevabının state'i
   // ezmesini önler — her _loadReceipts çağrısı kendi ID'sini alır, cevap geldiğinde
@@ -92,7 +95,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
     setState(() {
       if (reset) {
         _isLoading = true;
-        _errorMessage = null;
+        _loadError = null;
       } else {
         _isLoadingMore = true;
       }
@@ -118,7 +121,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
       setState(() {
         _isLoading = false;
         _isLoadingMore = false;
-        if (reset) _errorMessage = NetworkError.friendlyMessage(e, fallback: 'Fişler yüklenemedi, lütfen tekrar deneyin.');
+        if (reset) _loadError = e;
       });
     }
   }
@@ -253,66 +256,22 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
+      return const LoadingStateWidget();
+    }
+
+    if (_loadError != null) {
+      return ErrorStateWidget(
+        error: _loadError!,
+        onRetry: () => _loadReceipts(reset: true),
+        fallback: 'Fişler yüklenemedi, lütfen tekrar deneyin.',
       );
     }
 
-    if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.errDim(context),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.error_outline,
-                  size: 48, color: AppColors.error),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _errorMessage!,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => _loadReceipts(reset: true),
-              child: Text('Tekrar Dene'),
-            ),
-          ],
-        ),
-      );
-    }
-
-   if (_receipts.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.receipt_long_outlined, size: 80, color: AppColors.primary),
-            const SizedBox(height: 8),
-            Text(
-              'Henüz fiş yok',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.txt(context),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'İlk fişini eklemek için + butonuna bas',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
+    if (_receipts.isEmpty) {
+      return const EmptyStateWidget(
+        icon: Icons.receipt_long_outlined,
+        title: 'Henüz fiş yok',
+        subtitle: 'İlk fişini eklemek için + butonuna bas',
       );
     }
 
@@ -406,7 +365,8 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
                 _loadReceipts();
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Silinemedi: $e')),
+                    SnackBar(content: Text(
+                        NetworkError.friendlyMessage(e, fallback: 'Silinemedi, lütfen tekrar deneyin.'))),
                   );
                 }
               }

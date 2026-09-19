@@ -5,6 +5,7 @@ import '../models/imported_transaction.dart';
 import '../models/parsed_statement_result.dart';
 import '../core/theme/app_colors.dart';
 import '../core/widgets/category_picker.dart';
+import '../core/utils/network_error.dart';
 
 class _RowState {
   final ImportedTransaction original;
@@ -158,7 +159,8 @@ class _ImportReviewScreenState extends State<ImportReviewScreen> {
       Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
+            NetworkError.friendlyMessage(e, fallback: 'İçe aktarılamadı, lütfen tekrar deneyin.'))));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

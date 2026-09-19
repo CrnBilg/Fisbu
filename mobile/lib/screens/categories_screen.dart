@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/category.dart';
 import '../services/receipt_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/widgets/error_state_widget.dart';
+import '../core/widgets/empty_state_widget.dart';
+import '../core/widgets/loading_state_widget.dart';
 import '../core/utils/network_error.dart';
 
 const _categoryColorOptions = [
@@ -36,7 +39,7 @@ class CategoriesScreen extends StatefulWidget {
 class _CategoriesScreenState extends State<CategoriesScreen> {
   List<Category> _categories = [];
   bool _isLoading = true;
-  String? _errorMessage;
+  Object? _loadError;
   bool _isDialogOpen = false;
 
   @override
@@ -48,7 +51,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Future<void> _loadCategories() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
+      _loadError = null;
     });
 
     try {
@@ -59,7 +62,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = NetworkError.friendlyMessage(e, fallback: 'Kategoriler yüklenemedi, lütfen tekrar deneyin.');
+        _loadError = e;
         _isLoading = false;
       });
     }
@@ -90,7 +93,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kategori eklenemedi: $e')),
+          SnackBar(content: Text(NetworkError.friendlyMessage(e, fallback: 'Kategori eklenemedi, lütfen tekrar deneyin.'))),
         );
       }
     }
@@ -119,7 +122,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Güncellenemedi: $e')),
+            SnackBar(content: Text(NetworkError.friendlyMessage(e, fallback: 'Güncellenemedi, lütfen tekrar deneyin.'))),
           );
         }
       }
@@ -143,63 +146,22 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      );
+      return const LoadingStateWidget();
     }
 
-    if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(_errorMessage!),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadCategories,
-              child: Text('Tekrar Dene'),
-            ),
-          ],
-        ),
+    if (_loadError != null) {
+      return ErrorStateWidget(
+        error: _loadError!,
+        onRetry: _loadCategories,
+        fallback: 'Kategoriler yüklenemedi, lütfen tekrar deneyin.',
       );
     }
 
     if (_categories.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppColors.primDim(context),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.category_outlined,
-                size: 48,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Henüz kategori yok',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.txt(context),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '+ butonuna basarak kategori ekle',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
+      return const EmptyStateWidget(
+        icon: Icons.category_outlined,
+        title: 'Henüz kategori yok',
+        subtitle: '+ butonuna basarak kategori ekle',
       );
     }
 
@@ -272,7 +234,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               _loadCategories();
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Silinemedi: $e')),
+                  SnackBar(content: Text(NetworkError.friendlyMessage(e, fallback: 'Silinemedi, lütfen tekrar deneyin.'))),
                 );
               }
             }

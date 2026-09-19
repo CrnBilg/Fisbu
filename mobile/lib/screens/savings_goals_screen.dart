@@ -4,6 +4,9 @@ import '../models/savings_goal.dart';
 import '../services/savings_goal_service.dart';
 import '../core/theme/app_colors.dart';
 import '../core/utils/network_error.dart';
+import '../core/widgets/error_state_widget.dart';
+import '../core/widgets/empty_state_widget.dart';
+import '../core/widgets/loading_state_widget.dart';
 
 class SavingsGoalsScreen extends StatefulWidget {
   const SavingsGoalsScreen({super.key});
@@ -16,7 +19,7 @@ class _SavingsGoalsScreenState extends State<SavingsGoalsScreen> {
   final _currencyFormat = NumberFormat('#,##0.00', 'tr_TR');
   bool _isLoading = true;
   List<SavingsGoal> _goals = [];
-  String? _errorMessage;
+  Object? _loadError;
 
   @override
   void initState() {
@@ -27,13 +30,13 @@ class _SavingsGoalsScreenState extends State<SavingsGoalsScreen> {
   Future<void> _loadGoals() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
+      _loadError = null;
     });
     try {
       final goals = await SavingsGoalService.getGoals();
       setState(() => _goals = goals);
     } catch (e) {
-      setState(() => _errorMessage = NetworkError.friendlyMessage(e, fallback: 'Hedefler alınamadı, lütfen tekrar deneyin.'));
+      setState(() => _loadError = e);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -134,7 +137,8 @@ class _SavingsGoalsScreenState extends State<SavingsGoalsScreen> {
       _loadGoals();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hedef oluşturulamadı: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
+            NetworkError.friendlyMessage(e, fallback: 'Hedef oluşturulamadı, lütfen tekrar deneyin.'))));
       }
     }
   }
@@ -159,7 +163,8 @@ class _SavingsGoalsScreenState extends State<SavingsGoalsScreen> {
     } catch (e) {
       _loadGoals();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Silinemedi: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
+            NetworkError.friendlyMessage(e, fallback: 'Silinemedi, lütfen tekrar deneyin.'))));
       }
     }
   }
@@ -169,23 +174,18 @@ class _SavingsGoalsScreenState extends State<SavingsGoalsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Tasarruf Hedeflerim')),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _errorMessage != null
-              ? Center(child: Text(_errorMessage!, style: TextStyle(color: AppColors.textSecondary)))
+          ? const LoadingStateWidget()
+          : _loadError != null
+              ? ErrorStateWidget(
+                  error: _loadError!,
+                  onRetry: _loadGoals,
+                  fallback: 'Hedefler alınamadı, lütfen tekrar deneyin.',
+                )
               : _goals.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.savings_outlined, size: 72, color: AppColors.primary),
-                          const SizedBox(height: 12),
-                          Text('Henüz tasarruf hedefin yok',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.txt(context))),
-                          const SizedBox(height: 6),
-                          Text('Bir hedef belirlemek için + butonuna bas',
-                              style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                        ],
-                      ),
+                  ? const EmptyStateWidget(
+                      icon: Icons.savings_outlined,
+                      title: 'Henüz tasarruf hedefin yok',
+                      subtitle: 'Bir hedef belirlemek için + butonuna bas',
                     )
                   : RefreshIndicator(
                       onRefresh: _loadGoals,
@@ -345,7 +345,8 @@ class _GoalDetailSheetState extends State<_GoalDetailSheet> {
     } catch (e) {
       setState(() => _isSubmitting = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
+            NetworkError.friendlyMessage(e, fallback: 'İşlem kaydedilemedi, lütfen tekrar deneyin.'))));
       }
     }
   }

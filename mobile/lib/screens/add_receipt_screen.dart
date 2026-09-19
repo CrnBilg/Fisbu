@@ -8,6 +8,7 @@ import '../models/category.dart';
 import '../models/receipt_item.dart';
 import '../core/theme/app_colors.dart';
 import '../core/widgets/category_picker.dart';
+import '../core/utils/network_error.dart';
 
 class _ItemRow {
   final TextEditingController nameController;
@@ -346,7 +347,8 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Hata: $e')));
+        ).showSnackBar(SnackBar(content: Text(
+            NetworkError.friendlyMessage(e, fallback: 'Fiş kaydedilemedi, lütfen tekrar deneyin.'))));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

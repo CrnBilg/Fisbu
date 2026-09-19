@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/chat_message.dart';
 import '../services/financial_chat_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/utils/network_error.dart';
 
 class FinancialChatScreen extends StatefulWidget {
   const FinancialChatScreen({super.key});
@@ -59,7 +60,7 @@ class _FinancialChatScreenState extends State<FinancialChatScreen> {
       final reply = await FinancialChatService.sendMessage(text, historySnapshot);
       setState(() => _messages.add(ChatMessage(role: 'assistant', content: reply)));
     } catch (e) {
-      setState(() => _error = '$e');
+      setState(() => _error = NetworkError.friendlyMessage(e, fallback: 'Yanıt alınamadı, lütfen tekrar deneyin.'));
     } finally {
       if (mounted) setState(() => _isSending = false);
       _scrollToBottom();

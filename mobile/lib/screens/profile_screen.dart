@@ -18,6 +18,7 @@ import 'spending_personality_screen.dart';
 import 'financial_chat_screen.dart';
 import 'notification_settings_screen.dart';
 import '../core/theme/app_colors.dart';
+import '../core/utils/network_error.dart';
 import '../main.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -196,7 +197,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() => _isUpdatingPhoto = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fotoğraf yüklenemedi: $e')),
+          SnackBar(content: Text(
+              NetworkError.friendlyMessage(e, fallback: 'Fotoğraf yüklenemedi, lütfen tekrar deneyin.'))),
         );
       }
     }
@@ -641,7 +643,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Verileriniz indirilemedi: $e')),
+          SnackBar(content: Text(
+              NetworkError.friendlyMessage(e, fallback: 'Verileriniz indirilemedi, lütfen tekrar deneyin.'))),
         );
       }
     } finally {

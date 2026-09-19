@@ -7,6 +7,8 @@ import '../services/household_service.dart';
 import '../core/theme/app_colors.dart';
 import '../core/utils/network_error.dart';
 import '../core/widgets/offline_banner.dart';
+import '../core/widgets/error_state_widget.dart';
+import '../core/widgets/loading_state_widget.dart';
 
 class HouseholdScreen extends StatefulWidget {
   const HouseholdScreen({super.key});
@@ -18,7 +20,7 @@ class HouseholdScreen extends StatefulWidget {
 class _HouseholdScreenState extends State<HouseholdScreen> {
   bool _isLoading = true;
   Household? _household;
-  String? _errorMessage;
+  Object? _loadError;
 
   final _createNameController = TextEditingController();
   final _joinCodeController = TextEditingController();
@@ -49,7 +51,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   Future<void> _loadHousehold() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
+      _loadError = null;
     });
     try {
       final household = await HouseholdService.getMyHousehold();
@@ -60,7 +62,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       if (household != null) _loadStatistics();
     } catch (e) {
       setState(() {
-        _errorMessage = NetworkError.friendlyMessage(e, fallback: 'Aile bilgisi alınamadı, lütfen tekrar deneyin.');
+        _loadError = e;
         _isLoading = false;
       });
     }
@@ -112,7 +114,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     } catch (e) {
       setState(() => _isSubmitting = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
+            NetworkError.friendlyMessage(e, fallback: 'Aile oluşturulamadı, lütfen tekrar deneyin.'))));
       }
     }
   }
@@ -132,7 +135,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     } catch (e) {
       setState(() => _isSubmitting = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
+            NetworkError.friendlyMessage(e, fallback: 'Aileye katılınamadı, lütfen tekrar deneyin.'))));
       }
     }
   }
@@ -167,7 +171,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
+            NetworkError.friendlyMessage(e, fallback: 'Aileden ayrılınamadı, lütfen tekrar deneyin.'))));
       }
     }
   }
@@ -197,31 +202,18 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           const OfflineBanner(),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-                : _errorMessage != null
-                    ? _buildErrorView()
+                ? const LoadingStateWidget()
+                : _loadError != null
+                    ? ErrorStateWidget(
+                        error: _loadError!,
+                        onRetry: _loadHousehold,
+                        fallback: 'Aile bilgisi alınamadı, lütfen tekrar deneyin.',
+                      )
                     : _household == null
                         ? _buildJoinCreateView()
                         : _buildHouseholdView(),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildErrorView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(_errorMessage!, textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary)),
-            const SizedBox(height: 12),
-            ElevatedButton(onPressed: _loadHousehold, child: const Text('Tekrar Dene')),
-          ],
-        ),
       ),
     );
   }
