@@ -105,11 +105,13 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       behavior: HitTestBehavior.opaque,
       child: Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF0F0F1A), Color(0xFF1A1A2E)],
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? [AppColors.backgroundDark, AppColors.surfaceDark]
+                : [AppColors.background, AppColors.surface],
           ),
         ),
         child: SafeArea(
@@ -133,15 +135,15 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.08),
+                          color: AppColors.txt(context).withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.1),
+                            color: AppColors.txt(context).withValues(alpha: 0.1),
                           ),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.arrow_back_rounded,
-                          color: Colors.white,
+                          color: AppColors.txt(context),
                           size: 20,
                         ),
                       ),
@@ -149,10 +151,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
                     const SizedBox(height: 36),
 
-                    const Text(
+                    Text(
                       'E-postanı\nDoğrula',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.txt(context),
                         fontSize: 40,
                         fontWeight: FontWeight.w800,
                         height: 1.1,
@@ -163,7 +165,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                     Text(
                       '${widget.email} adresine gönderilen 6 haneli kodu gir',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.55),
+                        color: AppColors.txtSecondary(context),
                         fontSize: 15,
                         fontWeight: FontWeight.w400,
                       ),
@@ -189,7 +191,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                               : 'Kodu tekrar gönder',
                           style: TextStyle(
                             color: _remainingCooldown > 0
-                                ? Colors.white.withValues(alpha: 0.4)
+                                ? AppColors.txtSecondary(context)
                                 : AppColors.primaryLight,
                             fontWeight: FontWeight.w600,
                           ),
@@ -249,7 +251,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                         'FişBu © 2026',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white.withValues(alpha: 0.25),
+                          color: AppColors.txtSecondary(context).withValues(alpha: 0.6),
                         ),
                       ),
                     ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../theme/app_colors.dart';
 
 /// 6 haneli (varsayılan) tek haneli kutulardan oluşan kod giriş widget'ı.
 /// E-posta doğrulama ve şifre sıfırlama ekranlarında ortak kullanılır.
@@ -70,7 +71,7 @@ class _CodeInputState extends State<CodeInput> {
                 Text(
                   '-',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.35),
+                    color: AppColors.txtSecondary(context),
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
                   ),
@@ -82,9 +83,9 @@ class _CodeInputState extends State<CodeInput> {
                     return IgnorePointer(
                       child: Text(
                         value.text,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Inter',
-                          color: Colors.white,
+                          color: AppColors.txt(context),
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
                         ),

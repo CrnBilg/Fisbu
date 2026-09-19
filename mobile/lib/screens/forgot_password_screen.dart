@@ -63,11 +63,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF0F0F1A), Color(0xFF1A1A2E)],
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? [AppColors.backgroundDark, AppColors.surfaceDark]
+                : [AppColors.background, AppColors.surface],
           ),
         ),
         child: SafeArea(
@@ -92,15 +94,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.08),
+                          color: AppColors.txt(context).withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.1),
+                            color: AppColors.txt(context).withValues(alpha: 0.1),
                           ),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.arrow_back_rounded,
-                          color: Colors.white,
+                          color: AppColors.txt(context),
                           size: 20,
                         ),
                       ),
@@ -108,10 +110,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                     const SizedBox(height: 36),
 
-                    const Text(
+                    Text(
                       'Şifremi\nUnuttum',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.txt(context),
                         fontSize: 40,
                         fontWeight: FontWeight.w800,
                         height: 1.1,
@@ -122,7 +124,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     Text(
                       'E-posta adresini gir, sana bir doğrulama kodu gönderelim',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.55),
+                        color: AppColors.txtSecondary(context),
                         fontSize: 15,
                         fontWeight: FontWeight.w400,
                       ),
@@ -189,7 +191,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         'FişBu © 2026',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white.withValues(alpha: 0.25),
+                          color: AppColors.txtSecondary(context).withValues(alpha: 0.6),
                         ),
                       ),
                     ),
@@ -212,25 +214,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.07),
+        color: AppColors.txt(context).withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
+        border: Border.all(color: AppColors.txt(context).withValues(alpha: 0.1), width: 1),
       ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: AppColors.txt(context),
           fontSize: 15,
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
-            color: Colors.white.withValues(alpha: 0.45),
+            color: AppColors.txtSecondary(context),
             fontSize: 14,
           ),
-          prefixIcon: Icon(icon, color: Colors.white38, size: 20),
+          prefixIcon: Icon(icon, color: AppColors.txtSecondary(context), size: 20),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: OutlineInputBorder(

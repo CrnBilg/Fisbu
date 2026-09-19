@@ -27,7 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1A1A2E),
+      backgroundColor: AppColors.surf(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -47,16 +47,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: AppColors.txt(sheetContext).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'KVKK Aydınlatma Metni',
               style: TextStyle(
-                color: Colors.white,
+                color: AppColors.txt(sheetContext),
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
               ),
@@ -75,7 +75,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   've üçüncü taraflarla paylaşılmaz. Verilerinin silinmesini istediğinde profil ekranından '
                   'hesabını ve tüm verilerini kalıcı olarak silebilirsin. Kaydolarak bu şartları kabul etmiş olursun.',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: AppColors.txtSecondary(sheetContext),
                     fontSize: 14,
                     height: 1.5,
                   ),
@@ -89,15 +89,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onPressed: () => Navigator.pop(sheetContext),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  backgroundColor: Colors.white.withValues(alpha: 0.08),
+                  backgroundColor: AppColors.txt(sheetContext).withValues(alpha: 0.08),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'Kapat',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.txt(sheetContext),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -201,11 +201,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF0F0F1A), Color(0xFF1A1A2E)],
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? [AppColors.backgroundDark, AppColors.surfaceDark]
+                : [AppColors.background, AppColors.surface],
           ),
         ),
         child: SafeArea(
@@ -230,15 +232,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.08),
+                          color: AppColors.txt(context).withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.1),
+                            color: AppColors.txt(context).withValues(alpha: 0.1),
                           ),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.arrow_back_rounded,
-                          color: Colors.white,
+                          color: AppColors.txt(context),
                           size: 20,
                         ),
                       ),
@@ -247,10 +249,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 36),
 
                     // Başlık
-                    const Text(
+                    Text(
                       'Hesap\nOluştur',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.txt(context),
                         fontSize: 40,
                         fontWeight: FontWeight.w800,
                         height: 1.1,
@@ -261,7 +263,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Text(
                       'Fişlerini takip etmeye hemen başla ✨',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.55),
+                        color: AppColors.txtSecondary(context),
                         fontSize: 15,
                         fontWeight: FontWeight.w400,
                       ),
@@ -297,7 +299,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           _obscurePassword
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
-                          color: Colors.white38,
+                          color: AppColors.txtSecondary(context),
                           size: 20,
                         ),
                         onPressed: () => setState(
@@ -318,7 +320,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           _obscurePasswordAgain
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
-                          color: Colors.white38,
+                          color: AppColors.txtSecondary(context),
                           size: 20,
                         ),
                         onPressed: () => setState(
@@ -343,7 +345,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             checkColor: Colors.white,
                             activeColor: AppColors.primary,
                             side: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.3),
+                              color: AppColors.txt(context).withValues(alpha: 0.3),
                             ),
                           ),
                         ),
@@ -354,7 +356,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: RichText(
                               text: TextSpan(
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.6),
+                                  color: AppColors.txtSecondary(context),
                                   fontSize: 13,
                                   height: 1.3,
                                 ),
@@ -437,7 +439,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Text(
                           'Zaten hesabın var mı?',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: AppColors.txtSecondary(context),
                             fontSize: 14,
                           ),
                         ),
@@ -461,7 +463,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         'FişBu © 2026',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white.withValues(alpha: 0.25),
+                          color: AppColors.txtSecondary(context).withValues(alpha: 0.6),
                         ),
                       ),
                     ),
@@ -486,26 +488,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.07),
+        color: AppColors.txt(context).withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
+        border: Border.all(color: AppColors.txt(context).withValues(alpha: 0.1), width: 1),
       ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
         obscureText: obscureText,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: AppColors.txt(context),
           fontSize: 15,
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
-            color: Colors.white.withValues(alpha: 0.45),
+            color: AppColors.txtSecondary(context),
             fontSize: 14,
           ),
-          prefixIcon: Icon(icon, color: Colors.white38, size: 20),
+          prefixIcon: Icon(icon, color: AppColors.txtSecondary(context), size: 20),
           suffixIcon: suffixIcon,
           border: InputBorder.none,
           enabledBorder: InputBorder.none,

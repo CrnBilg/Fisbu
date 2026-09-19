@@ -77,13 +77,16 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Scaffold(
       body: Stack(
         children: [
-          // Koyu gradient arka plan
+          // Tema-duyarlı arka plan gradyanı — MOB-009: önceden sabit koyu
+          // renkler kullanılıyordu, açık temada da zorla koyu kalıyordu.
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF0F0F1A), Color(0xFF1A1A2E)],
+                colors: Theme.of(context).brightness == Brightness.dark
+                    ? [AppColors.backgroundDark, AppColors.surfaceDark]
+                    : [AppColors.background, AppColors.surface],
               ),
             ),
           ),
@@ -100,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 120,
                   height: 180,
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(color: AppColors.txt(context), width: 2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -113,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           vertical: 4,
                         ),
                         height: 2,
-                        color: Colors.white,
+                        color: AppColors.txt(context),
                       ),
                     ),
                   ),
@@ -134,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 100,
                   height: 150,
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(color: AppColors.txt(context), width: 2),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
@@ -147,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           vertical: 4,
                         ),
                         height: 2,
-                        color: Colors.white,
+                        color: AppColors.txt(context),
                       ),
                     ),
                   ),
@@ -199,10 +202,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 40),
 
                       // Başlık
-                      const Text(
+                      Text(
                         'Tekrar\nHoşgeldin',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.txt(context),
                           fontSize: 40,
                           fontWeight: FontWeight.w800,
                           height: 1.1,
@@ -213,7 +216,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         'Fişlerini takip etmeye devam et 👋',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.55),
+                          color: AppColors.txtSecondary(context),
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
                         ),
@@ -241,7 +244,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             _obscurePassword
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
-                            color: Colors.white38,
+                            color: AppColors.txtSecondary(context),
                             size: 20,
                           ),
                           onPressed: () => setState(
@@ -330,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Text(
                             'Hesabın yok mu?',
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.5),
+                              color: AppColors.txtSecondary(context),
                               fontSize: 14,
                             ),
                           ),
@@ -361,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           'FişBu © 2026',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.25),
+                            color: AppColors.txtSecondary(context).withValues(alpha: 0.6),
                           ),
                         ),
                       ),
@@ -388,26 +391,26 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.07),
+        color: AppColors.txt(context).withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
+        border: Border.all(color: AppColors.txt(context).withValues(alpha: 0.1), width: 1),
       ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
         obscureText: obscureText,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: AppColors.txt(context),
           fontSize: 15,
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
-            color: Colors.white.withValues(alpha: 0.45),
+            color: AppColors.txtSecondary(context),
             fontSize: 14,
           ),
-          prefixIcon: Icon(icon, color: Colors.white38, size: 20),
+          prefixIcon: Icon(icon, color: AppColors.txtSecondary(context), size: 20),
           suffixIcon: suffixIcon,
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
