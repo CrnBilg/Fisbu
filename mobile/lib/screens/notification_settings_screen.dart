@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/notification_prefs_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/utils/network_error.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -13,6 +14,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   bool _budgetWarningEnabled = true;
   bool _budgetOverspendEnabled = true;
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -21,13 +23,24 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   }
 
   Future<void> _loadPrefs() async {
-    final result = await NotificationPrefsService.fetchPrefs();
-    if (!mounted) return;
     setState(() {
-      _budgetWarningEnabled = result.warning;
-      _budgetOverspendEnabled = result.overspend;
-      _isLoading = false;
+      _isLoading = true;
+      _errorMessage = null;
     });
+    try {
+      final result = await NotificationPrefsService.fetchPrefs();
+      if (!mounted) return;
+      setState(() {
+        _budgetWarningEnabled = result.warning;
+        _budgetOverspendEnabled = result.overspend;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _errorMessage =
+          NetworkError.friendlyMessage(e, fallback: 'Bildirim tercihleri alınamadı, lütfen tekrar deneyin.'));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _handleToggle(bool value, {required bool isWarning}) async {
@@ -66,7 +79,18 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       appBar: AppBar(title: const Text('Bildirimler')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : Padding(
+          : _errorMessage != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(_errorMessage!, style: TextStyle(color: AppColors.textSecondary)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(onPressed: _loadPrefs, child: const Text('Tekrar Dene')),
+                    ],
+                  ),
+                )
+              : Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

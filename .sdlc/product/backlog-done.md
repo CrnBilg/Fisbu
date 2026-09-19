@@ -30,3 +30,4 @@
 | ARCH-006 | Pagination — kapsam 6 metoddan 2'ye daraltıldı: kategori-fiş unlink bulk UPDATE'e çevrildi, kategori önerisi 50 kayıtla sınırlandı; backend-dev.md'ye @Modifying/@Transactional kuralı eklendi | Orta-Yüksek — Sprint 2 denetim bulgusu Y7 | S-M | Done | 3 |
 | ARCH-005 | UploadController: kullanıcı başına Cloudinary klasörü (CloudinaryPaths) + hesap silmede best-effort toplu Cloudinary temizliği | Orta — Sprint 2 denetim bulgusu Y5, kapsam ön-incelemede genişletildi | S | Done | 3 |
 | MOB-006 | flutter analyze temizliği — withOpacity→withValues (101), use_build_context_synchronously→context.mounted (4), unused_import/field (2). 110→3 | Orta — mobil denetim bulgusu O2 | S | Done | - |
+| MOB-008 | notification_settings_screen.dart sonsuz loading spinner bug'ı düzeltildi — try/catch + NetworkError.friendlyMessage + Tekrar Dene | Acil — UI/UX denetimi Faz 1, bulgu A1 | S | Done | - |
