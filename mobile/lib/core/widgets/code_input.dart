@@ -7,8 +7,9 @@ import '../theme/app_colors.dart';
 class CodeInput extends StatefulWidget {
   final int length;
   final ValueChanged<String> onChanged;
+  final bool obscureText;
 
-  const CodeInput({super.key, this.length = 6, required this.onChanged});
+  const CodeInput({super.key, this.length = 6, required this.onChanged, this.obscureText = false});
 
   @override
   State<CodeInput> createState() => _CodeInputState();
@@ -81,15 +82,24 @@ class _CodeInputState extends State<CodeInput> {
                   builder: (context, value, _) {
                     if (value.text.isEmpty) return const SizedBox.shrink();
                     return IgnorePointer(
-                      child: Text(
-                        value.text,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          color: AppColors.txt(context),
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                      child: widget.obscureText
+                          ? Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: AppColors.txt(context),
+                                shape: BoxShape.circle,
+                              ),
+                            )
+                          : Text(
+                              value.text,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                color: AppColors.txt(context),
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                     );
                   },
                 ),

@@ -497,7 +497,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                             'Galeriden seç veya kamerayla çek',
                             style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color: AppColors.txtSecondary(context),
                             ),
                           ),
                         ],
@@ -643,7 +643,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
             if (_itemRows.isEmpty)
               Text(
                 'Ürün eklersen zamanla fiyat değişimini takip edebilirsin.',
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 12, color: AppColors.txtSecondary(context)),
               ),
             Builder(builder: (context) {
               final amount = double.tryParse(_amountController.text.trim().replaceAll(',', '.'));

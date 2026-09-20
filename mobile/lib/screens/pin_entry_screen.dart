@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show FilteringTextInputFormatter;
 import '../services/pin_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/widgets/code_input.dart';
 
 enum PinEntryMode { set, verify }
 
@@ -18,24 +18,16 @@ class PinEntryScreen extends StatefulWidget {
 }
 
 class _PinEntryScreenState extends State<PinEntryScreen> {
-  final _pinController = TextEditingController();
-  final _confirmController = TextEditingController();
+  String _currentValue = '';
+  int _resetCounter = 0;
   String? _firstStepPin;
   String? _errorMessage;
   bool _isSubmitting = false;
 
   bool get _isConfirmStep => widget.mode == PinEntryMode.set && _firstStepPin != null;
 
-  @override
-  void dispose() {
-    _pinController.dispose();
-    _confirmController.dispose();
-    super.dispose();
-  }
-
   Future<void> _handleSubmit() async {
-    final controller = _isConfirmStep ? _confirmController : _pinController;
-    final value = controller.text.trim();
+    final value = _currentValue.trim();
 
     if (value.length < 4 || value.length > 6) {
       setState(() => _errorMessage = 'PIN 4-6 haneli olmalı');
@@ -49,12 +41,16 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
       });
       final correct = await PinService.verifyPin(value);
       if (!mounted) return;
-      setState(() => _isSubmitting = false);
+      setState(() {
+        _isSubmitting = false;
+        if (!correct) {
+          _errorMessage = 'PIN hatalı, tekrar dene';
+          _currentValue = '';
+          _resetCounter++;
+        }
+      });
       if (correct) {
         Navigator.pop(context, true);
-      } else {
-        setState(() => _errorMessage = 'PIN hatalı, tekrar dene');
-        _pinController.clear();
       }
       return;
     }
@@ -64,6 +60,8 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
       setState(() {
         _firstStepPin = value;
         _errorMessage = null;
+        _currentValue = '';
+        _resetCounter++;
       });
       return;
     }
@@ -72,8 +70,8 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
       setState(() {
         _errorMessage = 'PIN\'ler eşleşmiyor, baştan dene';
         _firstStepPin = null;
-        _pinController.clear();
-        _confirmController.clear();
+        _currentValue = '';
+        _resetCounter++;
       });
       return;
     }
@@ -114,24 +112,12 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
                 const SizedBox(height: 8),
                 Text(subtitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4)),
+                    style: TextStyle(fontSize: 13, color: AppColors.txtSecondary(context), height: 1.4)),
                 const SizedBox(height: 28),
-                TextField(
-                  controller: _isConfirmStep ? _confirmController : _pinController,
-                  autofocus: true,
+                CodeInput(
+                  key: ValueKey(_resetCounter),
                   obscureText: true,
-                  textAlign: TextAlign.center,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  maxLength: 6,
-                  style: const TextStyle(fontSize: 24, letterSpacing: 8),
-                  decoration: InputDecoration(
-                    counterText: '',
-                    filled: true,
-                    fillColor: AppColors.surf(context),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onSubmitted: (_) => _handleSubmit(),
+                  onChanged: (value) => _currentValue = value,
                 ),
                 if (_errorMessage != null) ...[
                   const SizedBox(height: 8),

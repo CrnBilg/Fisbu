@@ -180,7 +180,7 @@ class _ReceiptListScreenState extends State<ReceiptListScreen> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : AppColors.textSecondary,
+            color: isSelected ? Colors.white : AppColors.txtSecondary(context),
           ),
         ),
       ),
@@ -461,7 +461,7 @@ class _ReceiptCard extends StatelessWidget {
                         DateFormatter.formatShort(receipt.receiptDate),
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: AppColors.txtSecondary(context),
                         ),
                       ),
                     ],
@@ -481,9 +481,9 @@ class _ReceiptCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Icon(
+                Icon(
                   Icons.chevron_right,
-                  color: AppColors.textSecondary,
+                  color: AppColors.txtSecondary(context),
                   size: 18,
                 ),
               ],
