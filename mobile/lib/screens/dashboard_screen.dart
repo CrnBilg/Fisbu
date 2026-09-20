@@ -280,7 +280,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _QuickActionCard(
                       icon: Icons.bar_chart_outlined,
                       label: 'İstatistikler',
-                      color: const Color(0xFFFF6B6B),
+                      color: AppColors.accent,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -294,7 +294,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _QuickActionCard(
                       icon: Icons.document_scanner_outlined,
                       label: 'Fişi Tara',
-                      color: Color(0xFF8B5CF6),
+                      color: AppColors.categoryUlasim,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -337,7 +337,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _QuickActionCard(
                       icon: Icons.upload_file_outlined,
                       label: 'Ekstre İçe Aktar',
-                      color: const Color(0xFF10B981),
+                      color: AppColors.categoryMarket,
                       onTap: () async {
                         await Navigator.push(
                           context,

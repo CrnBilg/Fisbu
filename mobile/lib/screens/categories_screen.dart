@@ -14,9 +14,9 @@ const _categoryColorOptions = [
   AppColors.warning,
   AppColors.categoryElektronik,
   AppColors.success,
-  Color(0xFFE91E63),
+  AppColors.categoryGiyim,
   AppColors.categoryUlasim,
-  Color(0xFFFF5722),
+  AppColors.categoryRestoran,
   AppColors.textSecondary,
 ];
 

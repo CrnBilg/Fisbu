@@ -297,9 +297,7 @@ class _OcrScreenState extends State<OcrScreen> {
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primDim(context).withValues(
-                    alpha: Theme.of(context).brightness == Brightness.dark ? 1 : 0.6,
-                  ),
+                  color: AppColors.primDim(context),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                       color: AppColors.primary.withValues(alpha: 0.2)),
