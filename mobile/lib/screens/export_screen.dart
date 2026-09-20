@@ -92,9 +92,14 @@ class _ExportScreenState extends State<ExportScreen> {
       await file.writeAsBytes(bytes);
 
       if (!mounted) return;
-      await SharePlus.instance.share(
+      final result = await SharePlus.instance.share(
         ShareParams(files: [XFile(file.path)], text: 'FişBu fiş raporu'),
       );
+      if (mounted && result.status == ShareResultStatus.dismissed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Paylaşım iptal edildi')),
+        );
+      }
     } catch (e) {
       setState(() => _error = NetworkError.friendlyMessage(e, fallback: 'Dışa aktarma başarısız oldu, lütfen tekrar deneyin.'));
     } finally {

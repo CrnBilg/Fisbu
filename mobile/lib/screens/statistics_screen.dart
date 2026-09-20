@@ -1202,7 +1202,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   const SizedBox(height: 4),
                   Text(
                     '${summary?.trackedProductCount ?? 0} ürün takip ediliyor · aynı ürünü en az 2 kez almalısın',
-                    style: const TextStyle(color: Colors.white70, fontSize: 11),
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
               ),
@@ -1596,7 +1596,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                                       ? '${cat.substring(0, 6)}..'
                                                       : cat,
                                                   style: TextStyle(
-                                                    fontSize: 10,
+                                                    fontSize: 11,
                                                     color: AppColors.txtSecondary(context),
                                                   ),
                                                 ),

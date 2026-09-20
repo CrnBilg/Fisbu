@@ -37,3 +37,4 @@
 | MOB-012 | statistics_screen.dart (106 hardcoded renk) + spending_personality_screen.dart AppColors'a bağlandı — gerçek emulator'da açık/koyu tema kanıtlandı | Acil — UI/UX denetimi Faz 4, bulgu A3 | L | Done | - |
 | MOB-013 | Dağınık sabit renk kalıntıları düzeltildi: dashboard/ocr/categories/household ekranları AppColors token'larına bağlandı; receipt_detail_screen zaten düzeltilmişti (değişiklik yapılmadı) | Yüksek — UI/UX denetimi Faz 6, bulgu A5 | S | Done | - |
 | MOB-014 | pin_entry_screen.dart paylaşılan CodeInput'a (yeni obscureText modu ile) geçirildi; add_receipt/receipt_list/pin_entry'deki context'siz AppColors.textSecondary çağrıları düzeltildi | Orta — UI/UX denetimi Faz 7, bulgu O5/O7 | S | Done | - |
+| MOB-015 | Cila turu 1/6: export sonrası iptal bildirimi, 3 dosyada küçük dokunma alanı düzeltmesi (48dp), 2 grafik font boyutu büyütüldü | Düşük — UI/UX denetimi, düşük öncelikli bulgular | S | Done | - |

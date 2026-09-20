@@ -129,6 +129,7 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 48),
                     padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 40),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),

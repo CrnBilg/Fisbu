@@ -720,6 +720,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                       onPressed: () => _removeItemRow(index),
                       icon: const Icon(Icons.close, size: 18),
                       color: AppColors.error,
+                      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                     ),
                   ],
                 ),
