@@ -39,3 +39,4 @@
 | MOB-014 | pin_entry_screen.dart paylaşılan CodeInput'a (yeni obscureText modu ile) geçirildi; add_receipt/receipt_list/pin_entry'deki context'siz AppColors.textSecondary çağrıları düzeltildi | Orta — UI/UX denetimi Faz 7, bulgu O5/O7 | S | Done | - |
 | MOB-015 | Cila turu 1/6: export sonrası iptal bildirimi, 3 dosyada küçük dokunma alanı düzeltmesi (48dp), 2 grafik font boyutu büyütüldü | Düşük — UI/UX denetimi, düşük öncelikli bulgular | S | Done | - |
 | MOB-016 | Cila turu 2/6: spending_calendar heat-map'e renk-körü erişilebilirlik ipucu (nokta boyutu) eklendi, saf fonksiyona çıkarılıp unit test ile kanıtlandı | Orta — UI/UX denetimi, bulgu O8 | S | Done | - |
+| MOB-017 | Cila turu 3/6: dashboard'da "Fiş Ekle" FAB'a taşındı, "Tüm Fişler" tam genişlik kart oldu — gerçek emulator'da açık/koyu tema kanıtlandı | Orta — UI/UX denetimi, bulgu O3 | S | Done | - |

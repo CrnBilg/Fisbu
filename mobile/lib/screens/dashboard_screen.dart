@@ -239,42 +239,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const OfflineBanner(),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _QuickActionCard(
-                            icon: Icons.add_circle_outline,
-                            label: 'Fiş Ekle',
-                            color: AppColors.primary,
-                            onTap: () async {
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const AddReceiptScreen(),
-                                ),
-                              );
-                              _loadReceipts();
-                            },
+                    _QuickActionCard(
+                      icon: Icons.receipt_long_outlined,
+                      label: 'Tüm Fişler',
+                      color: AppColors.secondary,
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ReceiptListScreen(),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _QuickActionCard(
-                            icon: Icons.receipt_long_outlined,
-                            label: 'Tüm Fişler',
-                            color: AppColors.secondary,
-                            onTap: () async {
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const ReceiptListScreen(),
-                                ),
-                              );
-                              _loadReceipts();
-                            },
-                          ),
-                        ),
-                      ],
+                        );
+                        _loadReceipts();
+                      },
                     ),
                     const SizedBox(height: 12),
                     _QuickActionCard(
@@ -693,7 +670,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addReceipt,
+        icon: const Icon(Icons.add),
+        label: const Text('Fiş Ekle'),
+      ),
     );
+  }
+
+  Future<void> _addReceipt() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddReceiptScreen()),
+    );
+    _loadReceipts();
   }
 }
 
