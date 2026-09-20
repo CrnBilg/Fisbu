@@ -16,6 +16,18 @@ class SpendingCalendarScreen extends StatefulWidget {
   State<SpendingCalendarScreen> createState() => _SpendingCalendarScreenState();
 }
 
+/// Bir günün harcama yoğunluğunu (0 = harcama yok, 1 = ay içindeki en yüksek
+/// harcama günü) hesaplar. Hem rengin opaklığını hem de gün hücresindeki
+/// noktanın boyutunu sürer — böylece renk körü kullanıcılar için de
+/// yoğunluk fark edilebilir kalır (bkz. UI/UX denetimi bulgu O8).
+double calculateSpendingIntensity(double totalForDay, double maxDaySpend) {
+  if (totalForDay <= 0 || maxDaySpend <= 0) return 0;
+  return (totalForDay / maxDaySpend).clamp(0.15, 1.0);
+}
+
+/// Yoğunluğa göre gün hücresindeki noktanın çapı (3-8px arası).
+double calculateSpendingDotSize(double intensity) => 3 + intensity * 5;
+
 class _SpendingCalendarScreenState extends State<SpendingCalendarScreen> {
   final _currencyFormat = NumberFormat('#,##0.00', 'tr_TR');
   bool _isLoading = true;
@@ -67,14 +79,18 @@ class _SpendingCalendarScreenState extends State<SpendingCalendarScreen> {
       _receiptsForDay(day).fold(0.0, (sum, r) => sum + r.totalAmount);
 
   Color _heatColor(DateTime day, bool isDark) {
-    final total = _totalForDay(day);
-    if (total <= 0 || _maxDaySpend <= 0) return Colors.transparent;
-    final intensity = (total / _maxDaySpend).clamp(0.15, 1.0);
+    final intensity = _intensity(day);
+    if (intensity <= 0) return Colors.transparent;
     return AppColors.primary.withValues(alpha: isDark ? intensity * 0.5 : intensity * 0.35);
   }
 
+  double _intensity(DateTime day) =>
+      calculateSpendingIntensity(_totalForDay(day), _maxDaySpend);
+
   Widget _buildDayCell(DateTime day, bool isDark, {bool isSelected = false, bool isToday = false}) {
-    final hasSpend = _totalForDay(day) > 0;
+    final intensity = _intensity(day);
+    final hasSpend = intensity > 0;
+    final dotSize = calculateSpendingDotSize(intensity);
     return Container(
       margin: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -97,8 +113,8 @@ class _SpendingCalendarScreenState extends State<SpendingCalendarScreen> {
           if (hasSpend && !isSelected)
             Container(
               margin: const EdgeInsets.only(top: 1),
-              width: 4,
-              height: 4,
+              width: dotSize,
+              height: dotSize,
               decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
             ),
         ],
