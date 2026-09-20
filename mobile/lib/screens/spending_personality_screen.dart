@@ -55,7 +55,7 @@ class _SpendingPersonalityScreenState extends State<SpendingPersonalityScreen> {
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF6C63FF), Color(0xFF9C8FFF)],
+                            colors: [AppColors.primary, AppColors.primaryLight],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),

@@ -9,6 +9,7 @@ import '../models/top_product.dart';
 import '../models/subscription_candidate.dart';
 import '../core/widgets/offline_banner.dart';
 import '../core/utils/network_error.dart';
+import '../core/theme/app_colors.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -244,7 +245,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   Color _categoryColor(int index) {
     const colors = [
-      Color(0xFF6C63FF),
+      AppColors.primary,
       Color(0xFF00BFA6),
       Color(0xFFFF6B6B),
       Color(0xFFFFD93D),
@@ -291,9 +292,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       _receipts.fold(0.0, (sum, receipt) => sum + receipt.totalAmount);
 
   Widget _buildAiCommentCard(bool isDark) {
-    final surfaceColor = isDark ? const Color(0xFF2A2A3E) : Colors.white;
-    final titleColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
-    const accent = Color(0xFF6C63FF);
+    final surfaceColor = AppColors.surf(context);
+    final titleColor = AppColors.txt(context);
+    const accent = AppColors.primary;
 
     if (_isLoadingAiComment) {
       return Container(
@@ -301,18 +302,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+          border: Border.all(color: (AppColors.brd(context))),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            SizedBox(
+            const SizedBox(
               height: 18,
               width: 18,
               child: CircularProgressIndicator(strokeWidth: 2, color: accent),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Text('AI harcamalarını analiz ediyor...',
-                style: TextStyle(color: Color(0xFF9E9EBF), fontSize: 13)),
+                style: TextStyle(color: AppColors.txtSecondary(context), fontSize: 13)),
           ],
         ),
       );
@@ -347,7 +348,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       return Container(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF6C63FF), Color(0xFF9C8FFF)],
+            colors: [AppColors.primary, AppColors.primaryLight],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -420,7 +421,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             style: TextStyle(
               fontSize: 13,
               height: 1.5,
-              color: isDark ? Colors.white70 : const Color(0xFF1A1A2E),
+              color: AppColors.txt(context),
             ),
           ),
         ],
@@ -434,8 +435,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final monthlyTotals = _monthlyTotals;
     final months = monthlyTotals.keys.toList();
     final totalSpend = _allTimeTotal;
-    final surfaceColor = isDark ? const Color(0xFF2A2A3E) : Colors.white;
-    final titleColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final surfaceColor = AppColors.surf(context);
+    final titleColor = AppColors.txt(context);
 
     Widget emptyCard(String message) {
       return Container(
@@ -443,12 +444,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+          border: Border.all(color: (AppColors.brd(context))),
         ),
         child: Center(
           child: Text(
             message,
-            style: const TextStyle(color: Color(0xFF9E9EBF)),
+            style: TextStyle(color: AppColors.txtSecondary(context)),
           ),
         ),
       );
@@ -467,7 +468,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF6C63FF), Color(0xFF9C8FFF)],
+                  colors: [AppColors.primary, AppColors.primaryLight],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -509,7 +510,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     decoration: BoxDecoration(
                       color: surfaceColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+                      border: Border.all(color: (AppColors.brd(context))),
                     ),
                     child: SizedBox(
                       height: 240,
@@ -556,9 +557,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontSize: 9,
-                                        color: isDark
-                                            ? Colors.white70
-                                            : const Color(0xFF9E9EBF),
+                                        color: AppColors.txtSecondary(context),
                                       ),
                                     ),
                                   );
@@ -611,7 +610,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     decoration: BoxDecoration(
                       color: surfaceColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+                      border: Border.all(color: (AppColors.brd(context))),
                     ),
                     child: Column(
                       children: [
@@ -654,9 +653,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                   '${entry.value}: ${value.toStringAsFixed(2)} TL',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: isDark
-                                        ? Colors.white70
-                                        : const Color(0xFF1A1A2E),
+                                    color: AppColors.txt(context),
                                   ),
                                 ),
                               ],
@@ -689,7 +686,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   decoration: BoxDecoration(
                     color: surfaceColor,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+                    border: Border.all(color: (AppColors.brd(context))),
                   ),
                   child: Row(
                     children: [
@@ -724,7 +721,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
                                 value: percentage / 100,
-                                backgroundColor: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5)),
+                                backgroundColor: (AppColors.brd(context)),
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   _categoryColor(entry.key),
                                 ),
@@ -748,9 +745,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           ),
                           Text(
                             '%${percentage.toStringAsFixed(1)}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF9E9EBF),
+                              color: AppColors.txtSecondary(context),
                             ),
                           ),
                         ],
@@ -803,7 +800,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 12),
-          child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+          child: CircularProgressIndicator(color: AppColors.primary),
         ),
       );
     }
@@ -813,9 +810,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+          border: Border.all(color: (AppColors.brd(context))),
         ),
-        child: Text(_subscriptionsError!, style: const TextStyle(color: Color(0xFF9E9EBF))),
+        child: Text(_subscriptionsError!, style: TextStyle(color: AppColors.txtSecondary(context))),
       );
     }
     if (_subscriptions.isEmpty) {
@@ -824,13 +821,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+          border: Border.all(color: (AppColors.brd(context))),
         ),
-        child: const Center(
+        child: Center(
           child: Text(
             'Henüz tekrarlayan bir ödeme tespit edilmedi.\nAynı mağazadan aylık düzenli alışveriş yaptıkça burası dolacak.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF9E9EBF)),
+            style: TextStyle(color: AppColors.txtSecondary(context)),
           ),
         ),
       );
@@ -844,7 +841,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           decoration: BoxDecoration(
             color: surfaceColor,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+            border: Border.all(color: (AppColors.brd(context))),
           ),
           child: Row(
             children: [
@@ -871,7 +868,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     const SizedBox(height: 2),
                     Text(
                       '${sub.occurrenceCount} kez · ~${sub.averageIntervalDays} günde bir · tahmini sıradaki: ${sub.estimatedNextDate}',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF9E9EBF)),
+                      style: TextStyle(fontSize: 12, color: AppColors.txtSecondary(context)),
                     ),
                   ],
                 ),
@@ -893,7 +890,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 12),
-          child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+          child: CircularProgressIndicator(color: AppColors.primary),
         ),
       );
     }
@@ -903,9 +900,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+          border: Border.all(color: (AppColors.brd(context))),
         ),
-        child: Text(_storeStatsError!, style: const TextStyle(color: Color(0xFF9E9EBF))),
+        child: Text(_storeStatsError!, style: TextStyle(color: AppColors.txtSecondary(context))),
       );
     }
     if (_storeStats.isEmpty) {
@@ -914,10 +911,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+          border: Border.all(color: (AppColors.brd(context))),
         ),
-        child: const Center(
-          child: Text('Henüz mağaza verisi yok', style: TextStyle(color: Color(0xFF9E9EBF))),
+        child: Center(
+          child: Text('Henüz mağaza verisi yok', style: TextStyle(color: AppColors.txtSecondary(context))),
         ),
       );
     }
@@ -930,7 +927,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           decoration: BoxDecoration(
             color: surfaceColor,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+            border: Border.all(color: (AppColors.brd(context))),
           ),
           child: Row(
             children: [
@@ -957,7 +954,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     const SizedBox(height: 2),
                     Text(
                       '${store.receiptCount} fiş · ort. ${store.averageAmount.toStringAsFixed(2)} TL',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF9E9EBF)),
+                      style: TextStyle(fontSize: 12, color: AppColors.txtSecondary(context)),
                     ),
                   ],
                 ),
@@ -979,7 +976,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 12),
-          child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+          child: CircularProgressIndicator(color: AppColors.primary),
         ),
       );
     }
@@ -989,9 +986,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+          border: Border.all(color: (AppColors.brd(context))),
         ),
-        child: Text(_topProductsError!, style: const TextStyle(color: Color(0xFF9E9EBF))),
+        child: Text(_topProductsError!, style: TextStyle(color: AppColors.txtSecondary(context))),
       );
     }
     if (_topProducts.isEmpty) {
@@ -1000,13 +997,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+          border: Border.all(color: (AppColors.brd(context))),
         ),
-        child: const Center(
+        child: Center(
           child: Text(
             'Henüz ürün verisi yok.\nFiş eklerken ürün girdikçe burası dolacak.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF9E9EBF)),
+            style: TextStyle(color: AppColors.txtSecondary(context)),
           ),
         ),
       );
@@ -1022,7 +1019,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           decoration: BoxDecoration(
             color: surfaceColor,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+            border: Border.all(color: (AppColors.brd(context))),
           ),
           child: Row(
             children: [
@@ -1053,7 +1050,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     const SizedBox(height: 2),
                     Text(
                       '${product.purchaseCount} kez alındı',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF9E9EBF)),
+                      style: TextStyle(fontSize: 12, color: AppColors.txtSecondary(context)),
                     ),
                   ],
                 ),
@@ -1073,12 +1070,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   Color _changeColor(double changePercent) {
     if (changePercent > 0) return const Color(0xFFFF6B6B);
     if (changePercent < 0) return const Color(0xFF00BFA6);
-    return const Color(0xFF9E9EBF);
+    return AppColors.txtSecondary(context);
   }
 
   Widget _buildProductInflationRow(ProductInflation product, bool isDark) {
-    final surfaceColor = isDark ? const Color(0xFF2A2A3E) : Colors.white;
-    final titleColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final surfaceColor = AppColors.surf(context);
+    final titleColor = AppColors.txt(context);
     final changeColor = _changeColor(product.changePercent);
     final sign = product.changePercent > 0 ? '+' : '';
 
@@ -1088,7 +1085,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+        border: Border.all(color: (AppColors.brd(context))),
       ),
       child: Row(
         children: [
@@ -1105,7 +1102,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 const SizedBox(height: 2),
                 Text(
                   '${product.firstPrice.toStringAsFixed(2)} TL → ${product.lastPrice.toStringAsFixed(2)} TL',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF9E9EBF)),
+                  style: TextStyle(fontSize: 12, color: AppColors.txtSecondary(context)),
                 ),
               ],
             ),
@@ -1127,8 +1124,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildInflationTab(bool isDark) {
-    final surfaceColor = isDark ? const Color(0xFF2A2A3E) : Colors.white;
-    final titleColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final surfaceColor = AppColors.surf(context);
+    final titleColor = AppColors.txt(context);
 
     Widget emptyCard(String message) {
       return Container(
@@ -1136,17 +1133,17 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+          border: Border.all(color: (AppColors.brd(context))),
         ),
         child: Center(
           child: Text(message, textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF9E9EBF))),
+              style: TextStyle(color: AppColors.txtSecondary(context))),
         ),
       );
     }
 
     if (_isLoadingInflation) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF)));
+      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
 
     if (_inflationError != null) {
@@ -1178,7 +1175,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF6C63FF), Color(0xFF9C8FFF)],
+                  colors: [AppColors.primary, AppColors.primaryLight],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -1248,11 +1245,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor:
-            isDark ? const Color(0xFF1A1A2E) : const Color(0xFFF8F7FF),
+        backgroundColor: AppColors.bg(context),
         appBar: AppBar(
           title: const Text('İstatistikler'),
-          backgroundColor: const Color(0xFF6C63FF),
+          backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           bottom: const TabBar(
             indicatorColor: Colors.white,
@@ -1272,7 +1268,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             Expanded(
               child: _isLoading
                   ? const Center(
-                      child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+                      child: CircularProgressIndicator(color: AppColors.primary),
                     )
                   : TabBarView(
                 children: [
@@ -1289,27 +1285,23 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 4),
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF2A2A3E) : Colors.white,
+                            color: AppColors.surf(context),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                                color: const Color(0xFF6C63FF).withValues(alpha: 0.3)),
+                                color: AppColors.primary.withValues(alpha: 0.3)),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<DateTime>(
                               value: dropdownValue,
                               isExpanded: true,
-                              dropdownColor: isDark
-                                  ? const Color(0xFF2A2A3E)
-                                  : Colors.white,
+                              dropdownColor: AppColors.surf(context),
                               style: TextStyle(
-                                color: isDark
-                                    ? Colors.white
-                                    : const Color(0xFF1A1A2E),
+                                color: AppColors.txt(context),
                                 fontWeight: FontWeight.w600,
                                 fontSize: 15,
                               ),
                               icon: const Icon(Icons.keyboard_arrow_down,
-                                  color: Color(0xFF6C63FF)),
+                                  color: AppColors.primary),
                               items: dropdownMonths.map((month) {
                                 return DropdownMenuItem(
                                   value: month,
@@ -1340,7 +1332,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                 value:
                                     '${_totalSpend.toStringAsFixed(2).replaceAll('.', ',')} TL',
                                 icon: Icons.account_balance_wallet_outlined,
-                                color: const Color(0xFF6C63FF),
+                                color: AppColors.primary,
                                 isDark: isDark,
                               ),
                             ),
@@ -1394,9 +1386,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF1A1A2E),
+                            color: AppColors.txt(context),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -1404,28 +1394,24 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             ? Container(
                                 padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
-                                  color: isDark
-                                      ? const Color(0xFF2A2A3E)
-                                      : Colors.white,
+                                  color: AppColors.surf(context),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
-                                child: const Center(
+                                child: Center(
                                   child: Text(
                                     'Bu ay fiş yok',
                                     style:
-                                        TextStyle(color: Color(0xFF9E9EBF)),
+                                        TextStyle(color: AppColors.txtSecondary(context)),
                                   ),
                                 ),
                               )
                             : Container(
                                 padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
-                                  color: isDark
-                                      ? const Color(0xFF2A2A3E)
-                                      : Colors.white,
+                                  color: AppColors.surf(context),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                      color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+                                      color: (AppColors.brd(context))),
                                 ),
                                 child: Column(
                                   children: [
@@ -1512,10 +1498,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                               '$category: ${value.toStringAsFixed(2)} TL',
                                               style: TextStyle(
                                                 fontSize: 12,
-                                                color: isDark
-                                                    ? Colors.white70
-                                                    : const Color(
-                                                        0xFF1A1A2E),
+                                                color: AppColors.txt(context),
                                               ),
                                             ),
                                           ],
@@ -1533,9 +1516,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF1A1A2E),
+                            color: AppColors.txt(context),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -1543,18 +1524,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             ? Container(
                                 padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
-                                  color: isDark
-                                      ? const Color(0xFF2A2A3E)
-                                      : Colors.white,
+                                  color: AppColors.surf(context),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                      color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+                                      color: (AppColors.brd(context))),
                                 ),
-                                child: const Center(
+                                child: Center(
                                   child: Text(
                                     'Bu ay veri yok',
                                     style: TextStyle(
-                                      color: Color(0xFF9E9EBF),
+                                      color: AppColors.txtSecondary(context),
                                     ),
                                   ),
                                 ),
@@ -1562,12 +1541,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             : Container(
                                 padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
-                                  color: isDark
-                                      ? const Color(0xFF2A2A3E)
-                                      : Colors.white,
+                                  color: AppColors.surf(context),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                      color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+                                      color: (AppColors.brd(context))),
                                 ),
                                 child: SizedBox(
                                   height: 200,
@@ -1620,10 +1597,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                                       : cat,
                                                   style: TextStyle(
                                                     fontSize: 10,
-                                                    color: isDark
-                                                        ? Colors.white70
-                                                        : const Color(
-                                                            0xFF9E9EBF),
+                                                    color: AppColors.txtSecondary(context),
                                                   ),
                                                 ),
                                               );
@@ -1676,9 +1650,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF1A1A2E),
+                            color: AppColors.txt(context),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -1692,12 +1664,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFF2A2A3E)
-                                  : Colors.white,
+                              color: AppColors.surf(context),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                  color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+                                  color: (AppColors.brd(context))),
                             ),
                             child: Row(
                               children: [
@@ -1726,9 +1696,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                         style: TextStyle(
                                           fontWeight: FontWeight.w600,
                                           fontSize: 14,
-                                          color: isDark
-                                              ? Colors.white
-                                              : const Color(0xFF1A1A2E),
+                                          color: AppColors.txt(context),
                                         ),
                                       ),
                                       const SizedBox(height: 4),
@@ -1738,7 +1706,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                         child: LinearProgressIndicator(
                                           value: percentage / 100,
                                           backgroundColor:
-                                              (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5)),
+                                              (AppColors.brd(context)),
                                           valueColor:
                                               AlwaysStoppedAnimation<Color>(
                                             _categoryColor(index),
@@ -1764,9 +1732,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                     ),
                                     Text(
                                       '%${percentage.toStringAsFixed(1)}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
-                                        color: Color(0xFF9E9EBF),
+                                        color: AppColors.txtSecondary(context),
                                       ),
                                     ),
                                   ],
@@ -1811,9 +1779,9 @@ class _SummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2A2A3E) : Colors.white,
+        color: AppColors.surf(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: (isDark ? const Color(0xFF3A3A50) : const Color(0xFFEEEEF5))),
+        border: Border.all(color: (AppColors.brd(context))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1829,9 +1797,9 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Color(0xFF9E9EBF),
+              color: AppColors.txtSecondary(context),
             ),
           ),
           const SizedBox(height: 4),
@@ -1840,7 +1808,7 @@ class _SummaryCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+              color: AppColors.txt(context),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
