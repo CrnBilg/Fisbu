@@ -146,6 +146,7 @@ class _SpendingCalendarScreenState extends State<SpendingCalendarScreen> {
                           color: AppColors.surf(context),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: AppColors.brd(context)),
+                          boxShadow: AppColors.cardShadow(context),
                         ),
                         child: TableCalendar<Receipt>(
                           locale: 'tr_TR',
@@ -210,6 +211,7 @@ class _SpendingCalendarScreenState extends State<SpendingCalendarScreen> {
                                     color: AppColors.surf(context),
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(color: AppColors.brd(context)),
+                                    boxShadow: AppColors.cardShadow(context),
                                   ),
                                   child: Row(
                                     children: [

@@ -184,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           gradient: const LinearGradient(
                             colors: [AppColors.primary, AppColors.primaryDark],
                           ),
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.primary.withValues(alpha: 0.4),
@@ -291,7 +291,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             gradient: const LinearGradient(
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
-                              colors: [AppColors.primary, Color(0xFF818CF8)],
+                              colors: [AppColors.primary, AppColors.primaryLight],
                             ),
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [

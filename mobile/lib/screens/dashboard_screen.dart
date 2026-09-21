@@ -716,13 +716,7 @@ class _QuickActionCard extends StatelessWidget {
           color: AppColors.surf(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.brd(context)),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: AppColors.cardShadow(context, tint: color),
         ),
         child: Row(
           children: [

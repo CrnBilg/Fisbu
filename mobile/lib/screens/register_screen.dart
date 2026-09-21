@@ -416,7 +416,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             gradient: const LinearGradient(
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
-                              colors: [AppColors.primary, Color(0xFF818CF8)],
+                              colors: [AppColors.primary, AppColors.primaryLight],
                             ),
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [

@@ -11,6 +11,17 @@ import '../core/widgets/offline_banner.dart';
 import '../core/utils/network_error.dart';
 import '../core/theme/app_colors.dart';
 
+/// Bir enflasyon/değişim yüzdesinin anlamlı (pozitif/negatif) rengi —
+/// fiyat artışı (kötü) AppColors.error, azalış (iyi) AppColors.success,
+/// değişim yoksa null (çağıran nötr bir renge — ör. txtSecondary — düşer).
+/// budget_screen.dart'taki bütçe aşımı/uyarı renk semantiğiyle aynı paleti
+/// kullanır (bkz. UI/UX denetimi sonrası tutarlılık bulgusu).
+Color? changeSemanticColor(double changePercent) {
+  if (changePercent > 0) return AppColors.error;
+  if (changePercent < 0) return AppColors.success;
+  return null;
+}
+
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
 
@@ -325,15 +336,15 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFFF6B6B).withValues(alpha: 0.3)),
+          border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.error_outline, color: Color(0xFFFF6B6B), size: 18),
+            const Icon(Icons.error_outline, color: AppColors.error, size: 18),
             const SizedBox(width: 8),
             Expanded(
               child: Text(_aiCommentError!,
-                  style: const TextStyle(color: Color(0xFFFF6B6B), fontSize: 13)),
+                  style: const TextStyle(color: AppColors.error, fontSize: 13)),
             ),
             TextButton(
               onPressed: _loadAiAnalysis,
@@ -1067,11 +1078,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
-  Color _changeColor(double changePercent) {
-    if (changePercent > 0) return const Color(0xFFFF6B6B);
-    if (changePercent < 0) return const Color(0xFF00BFA6);
-    return AppColors.txtSecondary(context);
-  }
+  Color _changeColor(double changePercent) =>
+      changeSemanticColor(changePercent) ?? AppColors.txtSecondary(context);
 
   Widget _buildProductInflationRow(ProductInflation product, bool isDark) {
     final surfaceColor = AppColors.surf(context);

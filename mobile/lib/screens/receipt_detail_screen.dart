@@ -158,7 +158,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: const Icon(Icons.event_outlined),
+          prefixIcon: const Icon(Icons.calendar_today_outlined),
           suffixIcon: value != null
               ? IconButton(icon: const Icon(Icons.clear, size: 18), onPressed: onClear)
               : null,

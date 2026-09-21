@@ -109,6 +109,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                       color: AppColors.surf(context),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: AppColors.brd(context)),
+                      boxShadow: AppColors.cardShadow(context),
                     ),
                     child: Column(
                       children: [

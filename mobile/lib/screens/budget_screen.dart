@@ -183,6 +183,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 color: AppColors.surf(context),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.brd(context)),
+                boxShadow: AppColors.cardShadow(context),
               ),
               child: Row(
                 children: [
@@ -255,6 +256,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 color: AppColors.surf(context),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.brd(context)),
+                boxShadow: AppColors.cardShadow(context),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

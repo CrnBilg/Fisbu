@@ -271,6 +271,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                                     color: AppColors.surf(context),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(color: AppColors.brd(context)),
+                                    boxShadow: AppColors.cardShadow(context),
                                   ),
                                   child: Text(
                                     '${_currencyFormat.format(equalShares![index])} TL',

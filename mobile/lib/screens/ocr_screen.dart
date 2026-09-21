@@ -192,6 +192,7 @@ class _OcrScreenState extends State<OcrScreen> {
                 color: AppColors.surf(context),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.brd(context)),
+                boxShadow: AppColors.cardShadow(context),
               ),
               child: _selectedImage == null
                   ? Column(
@@ -540,6 +541,7 @@ class _OcrScreenState extends State<OcrScreen> {
                   color: AppColors.surf(context),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.brd(context)),
+                  boxShadow: AppColors.cardShadow(context),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

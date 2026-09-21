@@ -308,6 +308,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         color: AppColors.surf(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.brd(context)),
+        boxShadow: AppColors.cardShadow(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,6 +393,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   color: AppColors.surf(context),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.brd(context)),
+                  boxShadow: AppColors.cardShadow(context),
                 ),
                 child: Row(
                   children: [
@@ -472,6 +474,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           color: AppColors.surf(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.brd(context)),
+          boxShadow: AppColors.cardShadow(context),
         ),
         child: Text(_statsError!, style: TextStyle(color: AppColors.textSecondary)),
       );
@@ -488,6 +491,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             color: AppColors.surf(context),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.brd(context)),
+            boxShadow: AppColors.cardShadow(context),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -536,6 +540,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         color: AppColors.surf(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.brd(context)),
+        boxShadow: AppColors.cardShadow(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

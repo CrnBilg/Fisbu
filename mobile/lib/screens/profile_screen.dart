@@ -728,7 +728,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700),
                             ),
                             const SizedBox(width: 6),
-                            const Icon(Icons.edit, size: 14, color: Colors.white70),
+                            const Icon(Icons.edit_outlined, size: 14, color: Colors.white70),
                           ],
                         ),
                       ),
@@ -754,6 +754,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: AppColors.surf(context),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: AppColors.brd(context)),
+                      boxShadow: AppColors.cardShadow(context),
                     ),
                     child: Column(
                       children: [

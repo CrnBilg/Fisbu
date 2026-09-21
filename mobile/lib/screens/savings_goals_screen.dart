@@ -264,6 +264,7 @@ class _GoalCard extends StatelessWidget {
           color: AppColors.surf(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.brd(context)),
+          boxShadow: AppColors.cardShadow(context),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

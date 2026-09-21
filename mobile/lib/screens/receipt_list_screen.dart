@@ -400,13 +400,7 @@ class _ReceiptCard extends StatelessWidget {
           color: AppColors.surf(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.brd(context)),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: AppColors.cardShadow(context),
         ),
         child: Row(
           children: [

@@ -273,7 +273,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           gradient: const LinearGradient(
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
-                            colors: [AppColors.primary, Color(0xFF818CF8)],
+                            colors: [AppColors.primary, AppColors.primaryLight],
                           ),
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [

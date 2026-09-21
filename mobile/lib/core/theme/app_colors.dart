@@ -88,4 +88,20 @@ class AppColors {
       Theme.of(context).brightness == Brightness.dark
           ? AppColors.textSecondaryDark
           : AppColors.textSecondary;
+
+  /// Yüzey (surf) renkli, kenarlıklı kartlar için tutarlı standart gölge.
+  /// Proje genelinde birbirine yakın ama farklı (0.04/0.06/0.08 alfa, 10-12
+  /// blur) varyantlarla tekrarlanan deseni tek bir yerde birleştirir.
+  /// Marka rengiyle her zaman renkli gösterilen "hero" kartlar (ör.
+  /// receipt_detail_screen'in üst kartı) bunun kapsamı DIŞINDA — onlar
+  /// bilinçli olarak daha güçlü, ayrı bir gölge kullanıyor.
+  static List<BoxShadow> cardShadow(BuildContext context, {Color? tint}) {
+    return [
+      BoxShadow(
+        color: (tint ?? AppColors.primary).withValues(alpha: 0.06),
+        blurRadius: 12,
+        offset: const Offset(0, 4),
+      ),
+    ];
+  }
 }
