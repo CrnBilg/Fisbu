@@ -70,7 +70,20 @@ class _ReceiptVerificationScreenState extends State<ReceiptVerificationScreen> {
 
   void _goToStep(_Step step) {
     setState(() => _step = step);
-    if (step == _Step.category) _fetchCategorySuggestion();
+    // Kullanıcı kategori adımına DAHA ÖNCE gelip elle bir kategori seçtiyse
+    // (örn. geri gidip tekrar ileri geldiyse), AI önerisini tekrar çekip
+    // o seçimi sessizce ezmiyoruz — sadece ilk gelişte öneri getiriyoruz.
+    if (step == _Step.category && _selectedCategory == null) {
+      _fetchCategorySuggestion();
+    }
+  }
+
+  void _goBack() {
+    if (_stepIndex > 0) {
+      setState(() => _step = _Step.values[_stepIndex - 1]);
+    } else {
+      Navigator.pop(context);
+    }
   }
 
   Future<void> _fetchCategorySuggestion() async {
@@ -239,22 +252,32 @@ class _ReceiptVerificationScreenState extends State<ReceiptVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Bilgileri Doğrula'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(4),
-          child: LinearProgressIndicator(
-            value: (_stepIndex + 1) / _Step.values.length,
-            backgroundColor: AppColors.brd(context),
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+    return PopScope(
+      canPop: _stepIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _goBack();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _goBack,
+          ),
+          title: const Text('Bilgileri Doğrula'),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(4),
+            child: LinearProgressIndicator(
+              value: (_stepIndex + 1) / _Step.values.length,
+              backgroundColor: AppColors.brd(context),
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
           ),
         ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: _buildStepBody(),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: _buildStepBody(),
+          ),
         ),
       ),
     );
