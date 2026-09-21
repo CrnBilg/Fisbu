@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/spending_personality.dart';
 import '../services/receipt_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/theme/app_typography.dart';
 import '../core/utils/network_error.dart';
 
 class SpendingPersonalityScreen extends StatefulWidget {
@@ -68,8 +69,7 @@ class _SpendingPersonalityScreenState extends State<SpendingPersonalityScreen> {
                             const SizedBox(height: 12),
                             Text(
                               _data?.persona.title ?? '',
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800),
+                              style: AppTypography.headlineLarge.copyWith(color: Colors.white),
                             ),
                             const SizedBox(height: 8),
                             Text(

@@ -1,71 +1,87 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
 
+/// Proje genelindeki adlandırılmış tipografi ölçeği. Öncesinde ekranlar
+/// font boyutlarını serbest sayı olarak (14/15/16/18/13/20/22/24/17/30/36/40
+/// gibi birbirine yakın ama tutarsız değerlerle) yazıyordu — bu sınıf o
+/// dağınık kullanımı adlandırılmış, anlamlı bir ölçeğe bağlar.
+///
+/// Renk BURADA sabitlenmez (context-duyarlı AppColors çağrıları çoğu yerde
+/// gerekiyor) — her stil `copyWith(color: ...)` ile kullanılır.
 class AppTypography {
   AppTypography._();
 
-  static const String _fontFamily = 'Inter';
-
+  /// 40 — Auth ekranlarının büyük başlığı ("Tekrar Hoşgeldin" vb.)
   static const TextStyle display = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 36,
-    height: 44 / 36,
+    fontSize: 40,
     fontWeight: FontWeight.w800,
+    height: 1.1,
     letterSpacing: -1.0,
-    color: AppColors.textPrimary,
   );
 
-  static const TextStyle headline = TextStyle(
-    fontFamily: _fontFamily,
+  /// 36 — Dashboard/receipt_detail'deki büyük tutar gösterimi
+  static const TextStyle amountLarge = TextStyle(
+    fontSize: 36,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -1,
+  );
+
+  /// 24 — Ekran içi büyük vurgu metni (ör. persona başlığı)
+  static const TextStyle headlineLarge = TextStyle(
     fontSize: 24,
-    height: 32 / 24,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.5,
-    color: AppColors.textPrimary,
+    fontWeight: FontWeight.w800,
   );
 
+  /// 22 — Kart/bölüm başlıkları (SliverAppBar başlığı, aile bakiyesi vb.)
+  static const TextStyle headline = TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.w800,
+  );
+
+  /// 20 — İkincil ekran/adım başlıkları (doğrulama adımı başlığı vb.)
   static const TextStyle title = TextStyle(
-    fontFamily: _fontFamily,
+    fontSize: 20,
+    fontWeight: FontWeight.w800,
+  );
+
+  /// 18 — Bölüm başlığı (AppBar title, "Henüz X yok" boş durum başlığı)
+  static const TextStyle sectionTitle = TextStyle(
     fontSize: 18,
-    height: 26 / 18,
     fontWeight: FontWeight.w700,
-    letterSpacing: -0.3,
-    color: AppColors.textPrimary,
   );
 
-  static const TextStyle subtitle = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 15,
-    height: 22 / 15,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0,
-    color: AppColors.textPrimary,
+  /// 16 — Alt bölüm/kart başlığı
+  static const TextStyle cardTitle = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
   );
 
+  /// 15 — Standart gövde metni (form alanı değeri, liste satırı başlığı)
   static const TextStyle body = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 14,
-    height: 22 / 14,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 0,
-    color: AppColors.textPrimary,
-  );
-
-  static const TextStyle caption = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 12,
-    height: 18 / 12,
+    fontSize: 15,
     fontWeight: FontWeight.w500,
-    letterSpacing: 0.2,
-    color: AppColors.textSecondary,
   );
 
+  /// 14 — İkincil gövde metni / buton etiketi
+  static const TextStyle bodySecondary = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+  );
+
+  /// 13 — Etiket/altyazı (subtitle, tarih, yardımcı açıklama)
   static const TextStyle label = TextStyle(
-    fontFamily: _fontFamily,
+    fontSize: 13,
+    fontWeight: FontWeight.w500,
+  );
+
+  /// 12 — Küçük altyazı (chip, meta bilgi)
+  static const TextStyle caption = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+  );
+
+  /// 11 — En küçük etiket (grafik ekseni, çok yoğun listeler)
+  static const TextStyle micro = TextStyle(
     fontSize: 11,
-    height: 16 / 11,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0.5,
-    color: AppColors.textSecondary,
+    fontWeight: FontWeight.w500,
   );
 }

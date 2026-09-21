@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
 import '../core/theme/app_colors.dart';
+import '../core/theme/app_typography.dart';
 import 'split_bill_screen.dart';
 
 class ReceiptDetailScreen extends StatefulWidget {
@@ -258,9 +259,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                   const SizedBox(height: 16),
                   Text(
                     receipt.storeName,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
+                    style: AppTypography.headline.copyWith(
                       color: Colors.white,
                       letterSpacing: -0.3,
                     ),
@@ -268,12 +267,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                   const SizedBox(height: 8),
                   Text(
                     '${_currencyFormat.format(receipt.totalAmount)} TL',
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: -1,
-                    ),
+                    style: AppTypography.amountLarge.copyWith(color: Colors.white),
                   ),
                 ],
               ),

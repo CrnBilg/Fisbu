@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/theme/app_typography.dart';
 import '../core/widgets/auth_text_field.dart';
 import 'verify_email_screen.dart';
 
@@ -268,13 +269,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Başlık
                     Text(
                       'Hesap\nOluştur',
-                      style: TextStyle(
-                        color: AppColors.txt(context),
-                        fontSize: 40,
-                        fontWeight: FontWeight.w800,
-                        height: 1.1,
-                        letterSpacing: -1.0,
-                      ),
+                      style: AppTypography.display.copyWith(color: AppColors.txt(context)),
                     ),
                     const SizedBox(height: 10),
                     Text(

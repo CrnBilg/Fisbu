@@ -3,6 +3,7 @@ import '../models/restore_receipt_result.dart';
 import '../models/category.dart';
 import '../services/receipt_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/theme/app_typography.dart';
 import '../core/widgets/category_picker.dart';
 import 'add_receipt_screen.dart';
 
@@ -230,7 +231,7 @@ class _ReceiptVerificationScreenState extends State<ReceiptVerificationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.txt(context))),
+        Text(title, style: AppTypography.title.copyWith(color: AppColors.txt(context))),
         const SizedBox(height: 6),
         Text(subtitle, style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4)),
         const SizedBox(height: 24),

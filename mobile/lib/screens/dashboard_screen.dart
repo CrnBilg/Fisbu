@@ -16,6 +16,7 @@ import '../models/budget.dart';
 import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
 import '../core/theme/app_colors.dart';
+import '../core/theme/app_typography.dart';
 import '../core/widgets/offline_banner.dart';
 import '../core/widgets/pressable_scale.dart';
 
@@ -139,11 +140,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               centerTitle: false,
               title: Text(
                 'FişBu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 22,
-                ),
+                style: AppTypography.headline.copyWith(color: Colors.white),
               ),
               actions: [
                 IconButton(
@@ -180,11 +177,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           Text(
                             'Bu Ay Harcamaların',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: AppTypography.label.copyWith(color: Colors.white70),
                           ),
                           const SizedBox(height: 4),
                           _isLoading
@@ -202,12 +195,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   curve: Curves.easeOutCubic,
                                   builder: (context, value, child) => Text(
                                     '${_currencyFormat.format(value)} TL',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 36,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: -1,
-                                    ),
+                                    style: AppTypography.amountLarge.copyWith(color: Colors.white),
                                   ),
                                 ),
                           const SizedBox(height: 4),

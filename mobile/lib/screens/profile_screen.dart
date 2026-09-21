@@ -18,6 +18,7 @@ import 'spending_personality_screen.dart';
 import 'financial_chat_screen.dart';
 import 'notification_settings_screen.dart';
 import '../core/theme/app_colors.dart';
+import '../core/theme/app_typography.dart';
 import '../core/utils/network_error.dart';
 import '../main.dart';
 
@@ -725,7 +726,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           children: [
                             Text(
                               _name ?? 'Ad Soyad Ekle',
-                              style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700),
+                              style: AppTypography.cardTitle.copyWith(color: Colors.white),
                             ),
                             const SizedBox(width: 6),
                             const Icon(Icons.edit_outlined, size: 14, color: Colors.white70),

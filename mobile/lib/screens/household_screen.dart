@@ -5,6 +5,7 @@ import '../models/household.dart';
 import '../models/household_statistics.dart';
 import '../services/household_service.dart';
 import '../core/theme/app_colors.dart';
+import '../core/theme/app_typography.dart';
 import '../core/utils/network_error.dart';
 import '../core/widgets/offline_banner.dart';
 import '../core/widgets/error_state_widget.dart';
@@ -345,7 +346,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(household.name,
-                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+                    style: AppTypography.title.copyWith(color: Colors.white)),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -500,7 +501,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               const SizedBox(height: 4),
               Text(
                 '${stats.totalAmount.toStringAsFixed(2)} TL',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary),
+                style: AppTypography.headline.copyWith(color: AppColors.primary),
               ),
             ],
           ),
