@@ -17,6 +17,7 @@ import '../core/utils/date_formatter.dart';
 import '../core/utils/category_helper.dart';
 import '../core/theme/app_colors.dart';
 import '../core/widgets/offline_banner.dart';
+import '../core/widgets/pressable_scale.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -195,13 +196,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : Text(
-                                  '${_currencyFormat.format(_thisMonthTotal)} TL',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -1,
+                              : TweenAnimationBuilder<double>(
+                                  tween: Tween(begin: 0, end: _thisMonthTotal),
+                                  duration: const Duration(milliseconds: 800),
+                                  curve: Curves.easeOutCubic,
+                                  builder: (context, value, child) => Text(
+                                    '${_currencyFormat.format(value)} TL',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 36,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -1,
+                                    ),
                                   ),
                                 ),
                           const SizedBox(height: 4),
@@ -702,7 +708,7 @@ class _QuickActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return PressableScale(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),

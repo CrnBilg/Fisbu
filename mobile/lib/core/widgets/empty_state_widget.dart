@@ -28,13 +28,51 @@ class EmptyStateWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppColors.primDim(context),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 48, color: AppColors.primary),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 108,
+                  height: 108,
+                  decoration: BoxDecoration(
+                    color: AppColors.primDim(context),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Positioned(
+                  top: 6,
+                  right: 4,
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.18),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 10,
+                  left: 2,
+                  child: Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.25),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.surf(context),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.15), width: 1.5),
+                  ),
+                  child: Icon(icon, size: 40, color: AppColors.primary),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Text(

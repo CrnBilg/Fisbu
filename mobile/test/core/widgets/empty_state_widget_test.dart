@@ -56,5 +56,19 @@ void main() {
 
       expect(find.byType(ElevatedButton), findsNothing);
     });
+
+    testWidgets('dekoratif illustrasyon (birden fazla daire katmani) render edilir', (tester) async {
+      await tester.pumpWidget(wrap(const EmptyStateWidget(
+        icon: Icons.category_outlined,
+        title: 'Henüz kategori yok',
+      )));
+
+      // Ana ikon dairesi + arka plan rozeti + 2 küçük dekoratif nokta = en az 4 daire katmanı
+      final circles = tester.widgetList<Container>(find.byType(Container)).where((c) {
+        final decoration = c.decoration;
+        return decoration is BoxDecoration && decoration.shape == BoxShape.circle;
+      });
+      expect(circles.length, greaterThanOrEqualTo(4));
+    });
   });
 }

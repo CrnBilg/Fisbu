@@ -43,3 +43,4 @@
 | MOB-018 | Cila turu 4/6: 4 auth ekranındaki tekrarlayan _buildInput fonksiyonu ortak AuthTextField bileşenine çıkarıldı, widget testiyle kanıtlandı | Orta — UI/UX denetimi, bulgu O4 | M | Done | - |
 | MOB-019 | Cila turu 5/6: register/reset_password'daki sıralı SnackBar doğrulaması satır-içi hataya (AuthTextField.errorText) çevrildi | Orta — UI/UX denetimi, bulgu O1 | M | Done | - |
 | MOB-020 | Cila turu 6/6 (son): receipt_verification akışına adım-geri gitme eklendi, kategori önerisinin geri dönüşte kullanıcı seçimini ezmesi engellendi, widget testiyle kanıtlandı | Orta — UI/UX denetimi, düşük öncelikli bulgu | S | Done | - |
+| MOB-023 | Estetik tur 1-4: PressableScale (kart basılı tutma), dashboard sayı animasyonu, LoadingStateWidget shimmer, EmptyStateWidget illüstrasyonu — gerçek emulator'da kanıtlandı | Orta — App Store hazırlık sonrası estetik tur | M | Done | - |

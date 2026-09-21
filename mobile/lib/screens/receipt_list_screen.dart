@@ -14,6 +14,7 @@ import '../core/widgets/offline_banner.dart';
 import '../core/widgets/error_state_widget.dart';
 import '../core/widgets/empty_state_widget.dart';
 import '../core/widgets/loading_state_widget.dart';
+import '../core/widgets/pressable_scale.dart';
 
 const String _uncategorizedLabel = 'Kategorisiz';
 
@@ -390,7 +391,7 @@ class _ReceiptCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return PressableScale(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
