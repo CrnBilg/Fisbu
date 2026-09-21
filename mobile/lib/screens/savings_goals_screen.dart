@@ -188,6 +188,7 @@ class _SavingsGoalsScreenState extends State<SavingsGoalsScreen> {
                       subtitle: 'Bir hedef belirlemek için + butonuna bas',
                     )
                   : RefreshIndicator(
+                    color: AppColors.primary,
                       onRefresh: _loadGoals,
                       child: ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),

@@ -47,6 +47,7 @@ class _SpendingPersonalityScreenState extends State<SpendingPersonalityScreen> {
           : _errorMessage != null
               ? Center(child: Text(_errorMessage!, style: TextStyle(color: AppColors.textSecondary)))
               : RefreshIndicator(
+                color: AppColors.primary,
                   onRefresh: _load,
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),

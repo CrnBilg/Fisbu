@@ -8,6 +8,7 @@ import '../models/category.dart';
 import '../models/receipt_item.dart';
 import '../core/theme/app_colors.dart';
 import '../core/widgets/category_picker.dart';
+import '../core/widgets/success_check_overlay.dart';
 import '../core/utils/network_error.dart';
 
 class _ItemRow {
@@ -307,11 +308,11 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
               ],
             ),
           );
+        } else if (saved != null) {
+          await SuccessCheckOverlay.show(context, message: 'Fiş başarıyla eklendi!');
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(saved != null
-                ? 'Fiş başarıyla eklendi!'
-                : 'Bağlantı yok — fiş kaydedilmek üzere sıraya alındı'),
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Bağlantı yok — fiş kaydedilmek üzere sıraya alındı'),
           ));
         }
         if (mounted) Navigator.pop(context);

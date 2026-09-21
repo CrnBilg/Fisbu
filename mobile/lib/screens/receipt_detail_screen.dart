@@ -257,11 +257,17 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    receipt.storeName,
-                    style: AppTypography.headline.copyWith(
-                      color: Colors.white,
-                      letterSpacing: -0.3,
+                  Hero(
+                    tag: 'receipt-store-${receipt.id}',
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: Text(
+                        receipt.storeName,
+                        style: AppTypography.headline.copyWith(
+                          color: Colors.white,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),

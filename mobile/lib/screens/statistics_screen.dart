@@ -467,6 +467,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     }
 
     return RefreshIndicator(
+      color: AppColors.primary,
       onRefresh: () => Future.wait(
           [_loadReceipts(), _loadStoreStats(), _loadTopProducts(), _loadSubscriptions()]),
       child: SingleChildScrollView(
@@ -1156,6 +1157,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
     if (_inflationError != null) {
       return RefreshIndicator(
+        color: AppColors.primary,
         onRefresh: _loadInflationSummary,
         child: ListView(
           padding: const EdgeInsets.all(20),
@@ -1172,6 +1174,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final personalRate = summary?.personalInflationPercent;
 
     return RefreshIndicator(
+      color: AppColors.primary,
       onRefresh: _loadInflationSummary,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -1281,6 +1284,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   : TabBarView(
                 children: [
                   RefreshIndicator(
+                    color: AppColors.primary,
                     onRefresh: _loadReceipts,
                     child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),

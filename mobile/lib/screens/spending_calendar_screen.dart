@@ -135,6 +135,7 @@ class _SpendingCalendarScreenState extends State<SpendingCalendarScreen> {
           : _errorMessage != null
               ? Center(child: Text(_errorMessage!, style: TextStyle(color: AppColors.textSecondary)))
               : RefreshIndicator(
+                color: AppColors.primary,
                   onRefresh: _loadReceipts,
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),

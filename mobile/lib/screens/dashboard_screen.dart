@@ -128,6 +128,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
 
       body: RefreshIndicator(
+        color: AppColors.primary,
         onRefresh: _loadReceipts,
         child: CustomScrollView(
           slivers: [

@@ -325,6 +325,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   Widget _buildHouseholdView() {
     final household = _household!;
     return RefreshIndicator(
+      color: AppColors.primary,
       onRefresh: () async {
         await _loadHousehold();
       },

@@ -422,12 +422,18 @@ class _ReceiptCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    receipt.storeName,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.txt(context),
+                  Hero(
+                    tag: 'receipt-store-${receipt.id}',
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: Text(
+                        receipt.storeName,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.txt(context),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 4),
