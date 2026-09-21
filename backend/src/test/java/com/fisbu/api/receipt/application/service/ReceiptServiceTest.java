@@ -277,6 +277,72 @@ class ReceiptServiceTest {
     }
 
     @Test
+    void updateReceipt_updatesCoreFields_whenNoCategoryGiven() {
+        Receipt existing = receipt(RECEIPT_ID, USER_ID, null, "Migros", BigDecimal.TEN, LocalDate.of(2026, 1, 1));
+        when(resolveUserIdPort.resolveUserIdByEmail(EMAIL)).thenReturn(Optional.of(USER_ID));
+        when(loadReceiptPort.loadById(RECEIPT_ID)).thenReturn(Optional.of(existing));
+        when(saveReceiptPort.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Receipt result = newService().updateReceipt(EMAIL, RECEIPT_ID, "A101", BigDecimal.valueOf(200),
+                LocalDate.of(2026, 2, 2), null);
+
+        assertThat(result.storeName()).isEqualTo("A101");
+        assertThat(result.totalAmount()).isEqualByComparingTo(BigDecimal.valueOf(200));
+        assertThat(result.receiptDate()).isEqualTo(LocalDate.of(2026, 2, 2));
+        assertThat(result.categoryId()).isNull();
+        assertThat(result.categoryName()).isNull();
+    }
+
+    @Test
+    void updateReceipt_setsCategory_whenOwnedCategoryGiven() {
+        Receipt existing = receipt(RECEIPT_ID, USER_ID, null, "Migros", BigDecimal.TEN, LocalDate.of(2026, 1, 1));
+        when(resolveUserIdPort.resolveUserIdByEmail(EMAIL)).thenReturn(Optional.of(USER_ID));
+        when(loadReceiptPort.loadById(RECEIPT_ID)).thenReturn(Optional.of(existing));
+        when(loadOwnedCategoryPort.loadById(CATEGORY_ID)).thenReturn(Optional.of(category(CATEGORY_ID, USER_ID, "Market")));
+        when(saveReceiptPort.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Receipt result = newService().updateReceipt(EMAIL, RECEIPT_ID, "Migros", BigDecimal.TEN,
+                LocalDate.of(2026, 1, 1), CATEGORY_ID);
+
+        assertThat(result.categoryId()).isEqualTo(CATEGORY_ID);
+        assertThat(result.categoryName()).isEqualTo("Market");
+    }
+
+    @Test
+    void updateReceipt_throws_whenReceiptNotOwnedByUser() {
+        Receipt existing = receipt(RECEIPT_ID, OTHER_USER_ID, null, "Migros", BigDecimal.TEN, LocalDate.of(2026, 1, 1));
+        when(resolveUserIdPort.resolveUserIdByEmail(EMAIL)).thenReturn(Optional.of(USER_ID));
+        when(loadReceiptPort.loadById(RECEIPT_ID)).thenReturn(Optional.of(existing));
+
+        assertThatThrownBy(() -> newService().updateReceipt(EMAIL, RECEIPT_ID, "Migros", BigDecimal.TEN,
+                LocalDate.of(2026, 1, 1), null))
+                .isInstanceOf(ReceiptAccessDeniedException.class);
+    }
+
+    @Test
+    void updateReceipt_throws_whenCategoryNotOwnedByUser() {
+        Receipt existing = receipt(RECEIPT_ID, USER_ID, null, "Migros", BigDecimal.TEN, LocalDate.of(2026, 1, 1));
+        when(resolveUserIdPort.resolveUserIdByEmail(EMAIL)).thenReturn(Optional.of(USER_ID));
+        when(loadReceiptPort.loadById(RECEIPT_ID)).thenReturn(Optional.of(existing));
+        when(loadOwnedCategoryPort.loadById(CATEGORY_ID))
+                .thenReturn(Optional.of(category(CATEGORY_ID, OTHER_USER_ID, "Market")));
+
+        assertThatThrownBy(() -> newService().updateReceipt(EMAIL, RECEIPT_ID, "Migros", BigDecimal.TEN,
+                LocalDate.of(2026, 1, 1), CATEGORY_ID))
+                .isInstanceOf(CategoryAccessDeniedException.class);
+    }
+
+    @Test
+    void updateReceipt_throws_whenReceiptDoesNotExist() {
+        when(resolveUserIdPort.resolveUserIdByEmail(EMAIL)).thenReturn(Optional.of(USER_ID));
+        when(loadReceiptPort.loadById(RECEIPT_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> newService().updateReceipt(EMAIL, RECEIPT_ID, "Migros", BigDecimal.TEN,
+                LocalDate.of(2026, 1, 1), null))
+                .isInstanceOf(ReceiptNotFoundException.class);
+    }
+
+    @Test
     void exportReceipts_throws_whenDatesMissing() {
         when(resolveUserIdPort.resolveUserIdByEmail(EMAIL)).thenReturn(Optional.of(USER_ID));
 

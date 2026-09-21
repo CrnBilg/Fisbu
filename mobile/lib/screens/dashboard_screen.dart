@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'profile_screen.dart';
 import 'add_receipt_screen.dart';
 import 'receipt_list_screen.dart';
+import 'receipt_detail_screen.dart';
 import 'ocr_screen.dart';
 import 'statistics_screen.dart';
 import 'budget_screen.dart';
@@ -110,7 +111,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final Map<String, double> categoryTotals = {};
     for (final receipt in receipts) {
       final category = receipt.categoryName ?? 'Kategorisiz';
-      categoryTotals[category] = (categoryTotals[category] ?? 0) + receipt.totalAmount;
+      categoryTotals[category] =
+          (categoryTotals[category] ?? 0) + receipt.totalAmount;
     }
     return categoryTotals.entries
         .reduce((a, b) => a.value > b.value ? a : b)
@@ -126,7 +128,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: RefreshIndicator(
         color: AppColors.primary,
         onRefresh: _loadReceipts,
@@ -147,12 +148,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 IconButton(
                   icon: const CircleAvatar(
                     backgroundColor: Colors.white24,
-                    child: Icon(Icons.person_outline, color: Colors.white, size: 20),
+                    child: Icon(
+                      Icons.person_outline,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const ProfileScreen(),
+                      ),
                     );
                   },
                 ),
@@ -160,7 +167,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(
-                 decoration: BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -178,7 +185,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           Text(
                             'Bu Ay Harcamaların',
-                            style: AppTypography.label.copyWith(color: Colors.white70),
+                            style: AppTypography.label.copyWith(
+                              color: Colors.white70,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           _isLoading
@@ -196,7 +205,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   curve: Curves.easeOutCubic,
                                   builder: (context, value, child) => Text(
                                     '${_currencyFormat.format(value)} TL',
-                                    style: AppTypography.amountLarge.copyWith(color: Colors.white),
+                                    style: AppTypography.amountLarge.copyWith(
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                           const SizedBox(height: 4),
@@ -237,7 +248,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _QuickActionCard(
                       icon: Icons.receipt_long_outlined,
                       label: 'Tüm Fişler',
-                      color: AppColors.secondary,
+                      color: AppColors.primary,
                       onTap: () async {
                         await Navigator.push(
                           context,
@@ -252,7 +263,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _QuickActionCard(
                       icon: Icons.bar_chart_outlined,
                       label: 'İstatistikler',
-                      color: AppColors.accent,
+                      color: AppColors.categoryGiyim,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -309,7 +320,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _QuickActionCard(
                       icon: Icons.upload_file_outlined,
                       label: 'Ekstre İçe Aktar',
-                      color: AppColors.categoryMarket,
+                      color: AppColors.success,
                       onTap: () async {
                         await Navigator.push(
                           context,
@@ -328,16 +339,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.errDim(context),
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                          border: Border.all(
+                            color: AppColors.error.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.warning_amber_rounded, color: AppColors.error),
+                            const Icon(
+                              Icons.warning_amber_rounded,
+                              color: AppColors.error,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 '${_budgets.where((b) => b.overBudget).length} kategoride bütçe aşıldı',
-                                style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.error),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.error,
+                                ),
                               ),
                             ),
                           ],
@@ -398,9 +417,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(4),
                                       child: LinearProgressIndicator(
-                                        value: (budget.percentage / 100).clamp(0.0, 1.0),
+                                        value: (budget.percentage / 100).clamp(
+                                          0.0,
+                                          1.0,
+                                        ),
                                         backgroundColor: AppColors.brd(context),
-                                        valueColor: AlwaysStoppedAnimation<Color>(color),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              color,
+                                            ),
                                         minHeight: 6,
                                       ),
                                     ),
@@ -417,10 +442,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         margin: const EdgeInsets.only(bottom: 20),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: CategoryHelper.getColor(_topCategory).withValues(alpha: 0.08),
+                          color: CategoryHelper.getColor(
+                            _topCategory,
+                          ).withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: CategoryHelper.getColor(_topCategory).withValues(alpha: 0.2),
+                            color: CategoryHelper.getColor(
+                              _topCategory,
+                            ).withValues(alpha: 0.2),
                           ),
                         ),
                         child: Row(
@@ -428,7 +457,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: CategoryHelper.getColor(_topCategory).withValues(alpha: 0.15),
+                                color: CategoryHelper.getColor(
+                                  _topCategory,
+                                ).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(
@@ -455,7 +486,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
-                                    color: CategoryHelper.getColor(_topCategory),
+                                    color: CategoryHelper.getColor(
+                                      _topCategory,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -510,154 +543,197 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           )
                         : _hasError
-                            ? Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 40),
-                                  child: Column(
-                                    children: [
-                                      Icon(Icons.cloud_off_outlined, size: 80, color: AppColors.error),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'Veriler yüklenemedi',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.txt(context),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        'Bağlantını kontrol edip tekrar dene',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: AppColors.txtSecondary(context),
-                                          height: 1.5,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      OutlinedButton(
-                                        onPressed: _loadReceipts,
-                                        child: const Text('Tekrar dene'),
-                                      ),
-                                    ],
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 40),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.cloud_off_outlined,
+                                    size: 80,
+                                    color: AppColors.error,
                                   ),
-                                ),
-                              )
-                            : _recentReceipts.isEmpty
-                            ? Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 40),
-                                  child: Column(
-                                    children: [
-                                      Icon(Icons.receipt_long_outlined, size: 80, color: AppColors.primary),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'Henüz fiş eklemedin',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.txt(context),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        'İlk fişini eklemek için "Fiş Ekle"\nbutonuna dokun',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: AppColors.txtSecondary(context),
-                                          height: 1.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : Column(
-                                children: _recentReceipts.map((receipt) {
-                                  return Container(
-                                    margin: const EdgeInsets.only(bottom: 10),
-                                    padding: const EdgeInsets.all(14),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.surf(context),
-                                      borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(color: AppColors.brd(context)),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Veriler yüklenemedi',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.txt(context),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(10),
-                                          decoration: BoxDecoration(
-                                            color: CategoryHelper.getColor(receipt.categoryName).withValues(alpha: 0.12),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Icon(
-                                            CategoryHelper.getIcon(receipt.categoryName),
-                                            color: CategoryHelper.getColor(receipt.categoryName),
-                                            size: 22,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Bağlantını kontrol edip tekrar dene',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.txtSecondary(context),
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  OutlinedButton(
+                                    onPressed: _loadReceipts,
+                                    child: const Text('Tekrar dene'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : _recentReceipts.isEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 40),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.receipt_long_outlined,
+                                    size: 80,
+                                    color: AppColors.primary,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Henüz fiş eklemedin',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.txt(context),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'İlk fişini eklemek için "Fiş Ekle"\nbutonuna dokun',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.txtSecondary(context),
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : Column(
+                            children: _recentReceipts.map((receipt) {
+                              return PressableScale(
+                                onTap: () => _goToDetail(receipt),
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surf(context),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: AppColors.brd(context),
+                                    ),
+                                    boxShadow: AppColors.cardShadow(context),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: CategoryHelper.getColor(
+                                            receipt.categoryName,
+                                          ).withValues(alpha: 0.12),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
                                           ),
                                         ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                receipt.storeName,
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 15,
-                                                  color: AppColors.txt(context),
-                                                ),
+                                        child: Icon(
+                                          CategoryHelper.getIcon(
+                                            receipt.categoryName,
+                                          ),
+                                          color: CategoryHelper.getColor(
+                                            receipt.categoryName,
+                                          ),
+                                          size: 22,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              receipt.storeName,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 15,
+                                                color: AppColors.txt(context),
                                               ),
-                                              const SizedBox(height: 4),
-                                              Row(
-                                                children: [
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 2,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      color: CategoryHelper.getColor(receipt.categoryName).withValues(alpha: 0.1),
-                                                      borderRadius: BorderRadius.circular(6),
-                                                    ),
-                                                    child: Text(
-                                                      receipt.categoryName ?? 'Kategorisiz',
-                                                      style: TextStyle(
-                                                        fontSize: 11,
-                                                        fontWeight: FontWeight.w600,
-                                                        color: CategoryHelper.getColor(receipt.categoryName),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 2,
                                                       ),
-                                                    ),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        CategoryHelper.getColor(
+                                                          receipt.categoryName,
+                                                        ).withValues(
+                                                          alpha: 0.1,
+                                                        ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          6,
+                                                        ),
                                                   ),
-                                                  const SizedBox(width: 6),
-                                                  Text(
-                                                    DateFormatter.formatShort(receipt.receiptDate),
+                                                  child: Text(
+                                                    receipt.categoryName ??
+                                                        'Kategorisiz',
                                                     style: TextStyle(
                                                       fontSize: 11,
-                                                      color: AppColors.txtSecondary(context),
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color:
+                                                          CategoryHelper.getColor(
+                                                            receipt
+                                                                .categoryName,
+                                                          ),
                                                     ),
                                                   ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  DateFormatter.formatShort(
+                                                    receipt.receiptDate,
+                                                  ),
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    color:
+                                                        AppColors.txtSecondary(
+                                                          context,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
-                                        Text(
-                                          '${_currencyFormat.format(receipt.totalAmount)} TL',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 15,
-                                            color: AppColors.primary,
-                                          ),
+                                      ),
+                                      Text(
+                                        '${_currencyFormat.format(receipt.totalAmount)} TL',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 15,
+                                          color: AppColors.primary,
                                         ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
                   ],
                 ),
               ),
@@ -679,6 +755,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       MaterialPageRoute(builder: (context) => const AddReceiptScreen()),
     );
     _loadReceipts();
+  }
+
+  Future<void> _goToDetail(Receipt receipt) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ReceiptDetailScreen(receipt: receipt),
+      ),
+    );
+    if (result == true) _loadReceipts();
   }
 }
 

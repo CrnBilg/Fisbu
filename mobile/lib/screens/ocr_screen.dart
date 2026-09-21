@@ -373,7 +373,7 @@ class _OcrScreenState extends State<OcrScreen> {
                       : const Icon(Icons.auto_awesome),
                   label: Text(_isRestoring ? 'AI okuyor...' : 'AI ile Güçlendir'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secondary,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -406,23 +406,23 @@ class _OcrScreenState extends State<OcrScreen> {
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.secondaryDim,
+                  color: AppColors.primDim(context),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.auto_awesome, color: AppColors.secondaryDark, size: 18),
+                        const Icon(Icons.auto_awesome, color: AppColors.primary, size: 18),
                         const SizedBox(width: 8),
                         const Text(
                           'AI Restorasyonu',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.secondaryDark,
+                            color: AppColors.primary,
                           ),
                         ),
                         const Spacer(),
@@ -522,7 +522,7 @@ class _OcrScreenState extends State<OcrScreen> {
                             ),
                           );
                         },
-                        style: TextButton.styleFrom(foregroundColor: AppColors.secondaryDark),
+                        style: TextButton.styleFrom(foregroundColor: AppColors.primary),
                         child: Text(
                           _aiResult!.confidenceScore < 60
                               ? 'Bilgileri Tek Tek Doğrula →'

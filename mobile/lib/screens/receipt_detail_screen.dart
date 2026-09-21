@@ -8,6 +8,7 @@ import '../core/utils/category_helper.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_typography.dart';
 import 'split_bill_screen.dart';
+import 'add_receipt_screen.dart';
 
 class ReceiptDetailScreen extends StatefulWidget {
   final Receipt receipt;
@@ -194,6 +195,24 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
     if (confirmed == true) _deleteReceipt();
   }
 
+  Future<void> _editReceipt(Receipt receipt) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddReceiptScreen(
+          editingReceiptId: receipt.id,
+          initialStoreName: receipt.storeName,
+          initialAmount: receipt.totalAmount.toStringAsFixed(2),
+          initialDate: receipt.receiptDate,
+          initialCategoryId: receipt.categoryId,
+        ),
+      ),
+    );
+    if (result is Receipt && mounted) {
+      setState(() => _receipt = result);
+    }
+  }
+
   Future<void> _deleteReceipt() async {
     setState(() => _isDeleting = true);
     try {
@@ -218,6 +237,13 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
 
       appBar: AppBar(
         title: Text('Fiş Detayı'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Düzenle',
+            onPressed: () => _editReceipt(receipt),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

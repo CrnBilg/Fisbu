@@ -8,13 +8,13 @@ class CategoryHelper {
     if (categoryName == null) return AppColors.categoryDiger;
     switch (categoryName.toLowerCase()) {
       case 'market':
-        return AppColors.categoryMarket;
+        return AppColors.success;
       case 'giyim':
         return AppColors.categoryGiyim;
       case 'elektronik':
-        return AppColors.categoryElektronik;
+        return AppColors.primary;
       case 'restoran':
-        return AppColors.categoryRestoran;
+        return AppColors.warning;
       case 'ulaşım':
       case 'ulasim':
         return AppColors.categoryUlasim;

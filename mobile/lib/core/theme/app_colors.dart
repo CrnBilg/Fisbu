@@ -10,15 +10,6 @@ class AppColors {
   static const Color primaryDim = Color(0xFFEEF2FF);     // Indigo-50
   static const Color primaryDimDark = Color(0xFF1E1B4B); // Indigo-950
 
-  // Secondary — Vibrant Cyan/Teal
-  static const Color secondary = Color(0xFF06B6D4);      // Cyan-500
-  static const Color secondaryDim = Color(0xFFECFEFF);   // Cyan-50
-  static const Color secondaryDark = Color(0xFF0891B2);  // Cyan-600
-
-  // Accent — Rose (trending 2025)
-  static const Color accent = Color(0xFFF43F5E);         // Rose-500
-  static const Color accentDim = Color(0xFFFFF1F2);      // Rose-50
-
   // Light Mode
   static const Color background = Color(0xFFF8FAFC);     // Slate-50
   static const Color surface = Color(0xFFFFFFFF);
@@ -52,13 +43,14 @@ class AppColors {
   static const Color warning = Color(0xFFF59E0B);         // Amber-500
   static const Color warningDim = Color(0xFFFFFBEB);      // Amber-50
 
-  // Kategori renkleri (vibrant & modern)
-  static const Color categoryMarket = Color(0xFF10B981);   // Emerald
+  // Kategori renkleri — sadece semantic token'larla birebir aynı olmayan,
+  // GERÇEKTEN kategoriye özel iki renk burada tanımlı (renk paleti disiplini:
+  // market/elektronik/restoran kategorileri zaten success/primary/warning ile
+  // aynı hex değerine sahipti, ayrı sabit olarak tutmak yerine doğrudan o
+  // semantic token'lar kullanılıyor — bkz. category_helper.dart).
   static const Color categoryGiyim = Color(0xFFF43F5E);    // Rose
-  static const Color categoryElektronik = Color(0xFF6366F1); // Indigo
-  static const Color categoryRestoran = Color(0xFFF59E0B);  // Amber
   static const Color categoryUlasim = Color(0xFF8B5CF6);    // Violet
-  static const Color categoryDiger = Color(0xFF64748B); 
+  static const Color categoryDiger = Color(0xFF64748B);
   // Context'ten tema rengini al
   static Color bg(BuildContext context) =>
       Theme.of(context).scaffoldBackgroundColor;

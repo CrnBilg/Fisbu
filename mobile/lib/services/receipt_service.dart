@@ -188,6 +188,32 @@ class ReceiptService {
     }
   }
 
+  /// OCR yanlış okuduysa ya da kullanıcı bir yazım hatası fark ettiyse, fişi
+  /// silip baştan eklemek yerine çekirdek alanlarını düzeltebilmesi için.
+  static Future<Receipt> updateReceipt(
+    int receiptId, {
+    required String storeName,
+    required double totalAmount,
+    required String receiptDate,
+    int? categoryId,
+  }) async {
+    final response = await ApiClient.put('/receipts/$receiptId', body: {
+      'storeName': storeName,
+      'totalAmount': totalAmount,
+      'receiptDate': receiptDate,
+      'categoryId': categoryId,
+    });
+    if (response.statusCode == 200) {
+      return Receipt.fromJson(jsonDecode(response.body));
+    } else {
+      String message = 'Fiş güncellenemedi (${response.statusCode})';
+      try {
+        message = jsonDecode(response.body)['error'] as String? ?? message;
+      } catch (_) {}
+      throw Exception(message);
+    }
+  }
+
   static Future<Receipt> saveSplit(int receiptId, List<SplitParticipant> participants) async {
     final response = await ApiClient.put('/receipts/$receiptId/split', body: {
       'participants': participants.map((e) => e.toJson()).toList(),

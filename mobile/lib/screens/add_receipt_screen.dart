@@ -17,9 +17,9 @@ class _ItemRow {
   final TextEditingController qtyController;
 
   _ItemRow({String name = '', String price = '', String qty = '1'})
-      : nameController = TextEditingController(text: name),
-        priceController = TextEditingController(text: price),
-        qtyController = TextEditingController(text: qty);
+    : nameController = TextEditingController(text: name),
+      priceController = TextEditingController(text: price),
+      qtyController = TextEditingController(text: qty);
 
   void dispose() {
     nameController.dispose();
@@ -36,6 +36,11 @@ class AddReceiptScreen extends StatefulWidget {
   final int? initialCategoryId;
   final List<ReceiptItem>? initialItems;
 
+  /// Verildiğinde ekran "düzenle" modunda çalışır: fotoğraf/ürün alanları
+  /// gizlenir (bu alanlar düzenlemeyi desteklemiyor), kaydet butonu
+  /// ReceiptService.updateReceipt çağırır (yeni fiş oluşturmaz).
+  final int? editingReceiptId;
+
   const AddReceiptScreen({
     super.key,
     this.initialStoreName,
@@ -44,6 +49,7 @@ class AddReceiptScreen extends StatefulWidget {
     this.initialImagePath,
     this.initialCategoryId,
     this.initialItems,
+    this.editingReceiptId,
   });
 
   @override
@@ -72,11 +78,13 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
 
     if (widget.initialItems != null && widget.initialItems!.isNotEmpty) {
       for (final item in widget.initialItems!) {
-        _itemRows.add(_ItemRow(
-          name: item.productName,
-          price: item.unitPrice.toStringAsFixed(2),
-          qty: item.quantity.toStringAsFixed(0),
-        ));
+        _itemRows.add(
+          _ItemRow(
+            name: item.productName,
+            price: item.unitPrice.toStringAsFixed(2),
+            qty: item.quantity.toStringAsFixed(0),
+          ),
+        );
       }
     }
 
@@ -243,6 +251,58 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
     );
   }
 
+  /// Düzenleme modunda çekirdek alanları (mağaza/tutar/tarih/kategori)
+  /// günceller — yeni fiş oluşturmaz, fotoğraf/ürünlere dokunmaz.
+  Future<void> _handleUpdate() async {
+    final store = _storeController.text.trim();
+    final amountText = _amountController.text.trim();
+
+    if (store.isEmpty || amountText.isEmpty || _selectedDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lütfen tüm alanları doldur')),
+      );
+      return;
+    }
+
+    final amount = double.tryParse(amountText.replaceAll(',', '.'));
+    if (amount == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Geçerli bir tutar gir')));
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final updated = await ReceiptService.updateReceipt(
+        widget.editingReceiptId!,
+        storeName: store,
+        totalAmount: amount,
+        receiptDate: _formatDate(_selectedDate!),
+        categoryId: _selectedCategory?.id,
+      );
+      if (mounted) {
+        await SuccessCheckOverlay.show(context, message: 'Fiş güncellendi!');
+        if (mounted) Navigator.pop(context, updated);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              NetworkError.friendlyMessage(
+                e,
+                fallback: 'Fiş güncellenemedi, lütfen tekrar deneyin.',
+              ),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _handleSave({bool allowDuplicate = false}) async {
     final store = _storeController.text.trim();
     final amountText = _amountController.text.trim();
@@ -265,11 +325,13 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
     final items = _collectItems();
     final itemsTotal = _itemsTotal(items);
     if (itemsTotal > amount + 0.01) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-          'Ürünlerin toplamı (${itemsTotal.toStringAsFixed(2)} TL) tutardan (${amount.toStringAsFixed(2)} TL) fazla olamaz',
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Ürünlerin toplamı (${itemsTotal.toStringAsFixed(2)} TL) tutardan (${amount.toStringAsFixed(2)} TL) fazla olamaz',
+          ),
         ),
-      ));
+      );
       return;
     }
 
@@ -291,7 +353,9 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
           await showDialog<void>(
             context: context,
             builder: (context) => AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               title: Row(
                 children: [
                   Icon(Icons.warning_amber_rounded, color: AppColors.warning),
@@ -309,11 +373,18 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
             ),
           );
         } else if (saved != null) {
-          await SuccessCheckOverlay.show(context, message: 'Fiş başarıyla eklendi!');
+          await SuccessCheckOverlay.show(
+            context,
+            message: 'Fiş başarıyla eklendi!',
+          );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Bağlantı yok — fiş kaydedilmek üzere sıraya alındı'),
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Bağlantı yok — fiş kaydedilmek üzere sıraya alındı',
+              ),
+            ),
+          );
         }
         if (mounted) Navigator.pop(context);
       }
@@ -346,10 +417,16 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
       return;
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(
-            NetworkError.friendlyMessage(e, fallback: 'Fiş kaydedilemedi, lütfen tekrar deneyin.'))));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              NetworkError.friendlyMessage(
+                e,
+                fallback: 'Fiş kaydedilemedi, lütfen tekrar deneyin.',
+              ),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -370,19 +447,23 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
   void _onStoreNameChanged(String value) {
     _categorySuggestionDebounce?.cancel();
     if (_selectedCategory != null || value.trim().length < 2) {
-      if (_categorySuggestion != null) setState(() => _categorySuggestion = null);
+      if (_categorySuggestion != null)
+        setState(() => _categorySuggestion = null);
       return;
     }
-    _categorySuggestionDebounce = Timer(const Duration(milliseconds: 500), () async {
-      try {
-        final suggestion = await ReceiptService.getCategorySuggestion(value);
-        if (mounted && _selectedCategory == null) {
-          setState(() => _categorySuggestion = suggestion);
+    _categorySuggestionDebounce = Timer(
+      const Duration(milliseconds: 500),
+      () async {
+        try {
+          final suggestion = await ReceiptService.getCategorySuggestion(value);
+          if (mounted && _selectedCategory == null) {
+            setState(() => _categorySuggestion = suggestion);
+          }
+        } catch (_) {
+          // Öneri ikincil bir UX iyileştirmesi — sessizce yok say
         }
-      } catch (_) {
-        // Öneri ikincil bir UX iyileştirmesi — sessizce yok say
-      }
-    });
+      },
+    );
   }
 
   void _applyCategorySuggestion() {
@@ -418,10 +499,16 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
     final items = <ReceiptItem>[];
     for (final row in _itemRows) {
       final name = row.nameController.text.trim();
-      final price = double.tryParse(row.priceController.text.trim().replaceAll(',', '.'));
+      final price = double.tryParse(
+        row.priceController.text.trim().replaceAll(',', '.'),
+      );
       if (name.isEmpty || price == null || price <= 0) continue;
-      final qty = double.tryParse(row.qtyController.text.trim().replaceAll(',', '.')) ?? 1;
-      items.add(ReceiptItem(productName: name, unitPrice: price, quantity: qty));
+      final qty =
+          double.tryParse(row.qtyController.text.trim().replaceAll(',', '.')) ??
+          1;
+      items.add(
+        ReceiptItem(productName: name, unitPrice: price, quantity: qty),
+      );
     }
     return items;
   }
@@ -433,78 +520,83 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Fiş Ekle')),
+      appBar: AppBar(
+        title: Text(
+          widget.editingReceiptId != null ? 'Fişi Düzenle' : 'Fiş Ekle',
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Fotoğraf seçim alanı
-            GestureDetector(
-              onTap: _showImagePickerOptions,
-              child: Container(
-                height: 160,
-                decoration: BoxDecoration(
-                  color: AppColors.surf(context),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: _selectedImage != null
-                        ? AppColors.primary
-                        : AppColors.brd(context),
-                    width: _selectedImage != null ? 2 : 1,
+            // Fotoğraf seçim alanı — düzenleme modunda desteklenmiyor
+            if (widget.editingReceiptId == null)
+              GestureDetector(
+                onTap: _showImagePickerOptions,
+                child: Container(
+                  height: 160,
+                  decoration: BoxDecoration(
+                    color: AppColors.surf(context),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _selectedImage != null
+                          ? AppColors.primary
+                          : AppColors.brd(context),
+                      width: _selectedImage != null ? 2 : 1,
+                    ),
                   ),
-                ),
-                child: _selectedImage != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(15),
-                        child: kIsWeb
-                            ? Image.network(
-                                _selectedImage!.path,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                              )
-                            : Image.file(
-                                File(_selectedImage!.path),
-                                fit: BoxFit.cover,
-                                width: double.infinity,
+                  child: _selectedImage != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(15),
+                          child: kIsWeb
+                              ? Image.network(
+                                  _selectedImage!.path,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                )
+                              : Image.file(
+                                  File(_selectedImage!.path),
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                ),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppColors.primDim(context),
+                                shape: BoxShape.circle,
                               ),
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppColors.primDim(context),
-                              shape: BoxShape.circle,
+                              child: const Icon(
+                                Icons.add_photo_alternate_outlined,
+                                size: 32,
+                                color: AppColors.primary,
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.add_photo_alternate_outlined,
-                              size: 32,
-                              color: AppColors.primary,
+                            const SizedBox(height: 12),
+                            Text(
+                              'Fiş Fotoğrafı Ekle',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Fiş Fotoğrafı Ekle',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
+                            const SizedBox(height: 4),
+                            Text(
+                              'Galeriden seç veya kamerayla çek',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.txtSecondary(context),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Galeriden seç veya kamerayla çek',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.txtSecondary(context),
-                            ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                ),
               ),
-            ),
             const SizedBox(height: 20),
 
             // Mağaza adı
@@ -577,15 +669,24 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                 child: GestureDetector(
                   onTap: _applyCategorySuggestion,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primDim(context),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.auto_awesome, size: 16, color: AppColors.primary),
+                        const Icon(
+                          Icons.auto_awesome,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -599,7 +700,11 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
                         ),
                         const Text(
                           'Kullan',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
                         ),
                       ],
                     ),
@@ -621,118 +726,146 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Ürünler (opsiyonel) — kişisel enflasyon takibi için satır kalemleri
-            Row(
-              children: [
+            // Ürünler (opsiyonel) — kişisel enflasyon takibi için satır kalemleri,
+            // düzenleme modunda desteklenmiyor
+            if (widget.editingReceiptId == null) ...[
+              Row(
+                children: [
+                  Text(
+                    'Ürünler (opsiyonel)',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.txt(context),
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: _addItemRow,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Ürün Ekle'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+              if (_itemRows.isEmpty)
                 Text(
-                  'Ürünler (opsiyonel)',
+                  'Ürün eklersen zamanla fiyat değişimini takip edebilirsin.',
                   style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.txt(context),
+                    fontSize: 12,
+                    color: AppColors.txtSecondary(context),
                   ),
                 ),
-                const Spacer(),
-                TextButton.icon(
-                  onPressed: _addItemRow,
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Ürün Ekle'),
-                  style: TextButton.styleFrom(foregroundColor: AppColors.primary),
-                ),
-              ],
-            ),
-            if (_itemRows.isEmpty)
-              Text(
-                'Ürün eklersen zamanla fiyat değişimini takip edebilirsin.',
-                style: TextStyle(fontSize: 12, color: AppColors.txtSecondary(context)),
+              Builder(
+                builder: (context) {
+                  final amount = double.tryParse(
+                    _amountController.text.trim().replaceAll(',', '.'),
+                  );
+                  final itemsTotal = _itemsTotal(_collectItems());
+                  if (amount == null || itemsTotal <= amount + 0.01)
+                    return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Ürünlerin toplamı (${itemsTotal.toStringAsFixed(2)} TL) tutardan (${amount.toStringAsFixed(2)} TL) fazla olamaz',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  );
+                },
               ),
-            Builder(builder: (context) {
-              final amount = double.tryParse(_amountController.text.trim().replaceAll(',', '.'));
-              final itemsTotal = _itemsTotal(_collectItems());
-              if (amount == null || itemsTotal <= amount + 0.01) return const SizedBox.shrink();
-              return Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Ürünlerin toplamı (${itemsTotal.toStringAsFixed(2)} TL) tutardan (${amount.toStringAsFixed(2)} TL) fazla olamaz',
-                  style: TextStyle(fontSize: 12, color: AppColors.error, fontWeight: FontWeight.w600),
-                ),
-              );
-            }),
-            ..._itemRows.asMap().entries.map((entry) {
-              final index = entry.key;
-              final row = entry.value;
-              return Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      flex: 4,
-                      child: TextField(
-                        controller: row.nameController,
-                        decoration: InputDecoration(
-                          labelText: 'Ürün adı',
-                          isDense: true,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
+              ..._itemRows.asMap().entries.map((entry) {
+                final index = entry.key;
+                final row = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        flex: 4,
+                        child: TextField(
+                          controller: row.nameController,
+                          decoration: InputDecoration(
+                            labelText: 'Ürün adı',
+                            isDense: true,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            filled: true,
+                            fillColor: AppColors.surf(context),
                           ),
-                          filled: true,
-                          fillColor: AppColors.surf(context),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      flex: 2,
-                      child: TextField(
-                        controller: row.priceController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          labelText: 'Fiyat',
-                          isDense: true,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: row.priceController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
                           ),
-                          filled: true,
-                          fillColor: AppColors.surf(context),
+                          onChanged: (_) => setState(() {}),
+                          decoration: InputDecoration(
+                            labelText: 'Fiyat',
+                            isDense: true,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            filled: true,
+                            fillColor: AppColors.surf(context),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      flex: 2,
-                      child: TextField(
-                        controller: row.qtyController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          labelText: 'Adet',
-                          isDense: true,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: row.qtyController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
                           ),
-                          filled: true,
-                          fillColor: AppColors.surf(context),
+                          onChanged: (_) => setState(() {}),
+                          decoration: InputDecoration(
+                            labelText: 'Adet',
+                            isDense: true,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            filled: true,
+                            fillColor: AppColors.surf(context),
+                          ),
                         ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () => _removeItemRow(index),
-                      icon: const Icon(Icons.close, size: 18),
-                      color: AppColors.error,
-                      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                    ),
-                  ],
-                ),
-              );
-            }),
+                      IconButton(
+                        onPressed: () => _removeItemRow(index),
+                        icon: const Icon(Icons.close, size: 18),
+                        color: AppColors.error,
+                        constraints: const BoxConstraints(
+                          minWidth: 48,
+                          minHeight: 48,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
 
             const SizedBox(height: 32),
 
             // Kaydet butonu
             ElevatedButton(
-              onPressed: _isLoading ? null : _handleSave,
+              onPressed: _isLoading
+                  ? null
+                  : (widget.editingReceiptId != null
+                        ? _handleUpdate
+                        : _handleSave),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,

@@ -36,6 +36,7 @@ import com.fisbu.api.receipt.application.port.in.SaveSplitUseCase.SplitParticipa
 import com.fisbu.api.receipt.application.port.in.SearchReceiptsUseCase;
 import com.fisbu.api.receipt.application.port.in.SetReceiptRemindersUseCase;
 import com.fisbu.api.receipt.application.port.in.SuggestCategoryUseCase;
+import com.fisbu.api.receipt.application.port.in.UpdateReceiptUseCase;
 import com.fisbu.api.receipt.application.port.in.SuggestCategoryUseCase.CategorySuggestion;
 import com.fisbu.api.receipt.application.port.out.ReceiptPage;
 
@@ -52,13 +53,15 @@ public class ReceiptController {
     private final SaveSplitUseCase saveSplitUseCase;
     private final SetReceiptRemindersUseCase setReceiptRemindersUseCase;
     private final ExportReceiptsUseCase exportReceiptsUseCase;
+    private final UpdateReceiptUseCase updateReceiptUseCase;
     private final ReceiptWebMapper mapper;
 
     public ReceiptController(GetReceiptsUseCase getReceiptsUseCase, SearchReceiptsUseCase searchReceiptsUseCase,
                               SuggestCategoryUseCase suggestCategoryUseCase, CreateReceiptUseCase createReceiptUseCase,
                               GetReceiptByIdUseCase getReceiptByIdUseCase, DeleteReceiptUseCase deleteReceiptUseCase,
                               SaveSplitUseCase saveSplitUseCase, SetReceiptRemindersUseCase setReceiptRemindersUseCase,
-                              ExportReceiptsUseCase exportReceiptsUseCase, ReceiptWebMapper mapper) {
+                              ExportReceiptsUseCase exportReceiptsUseCase, UpdateReceiptUseCase updateReceiptUseCase,
+                              ReceiptWebMapper mapper) {
         this.getReceiptsUseCase = getReceiptsUseCase;
         this.searchReceiptsUseCase = searchReceiptsUseCase;
         this.suggestCategoryUseCase = suggestCategoryUseCase;
@@ -68,6 +71,7 @@ public class ReceiptController {
         this.saveSplitUseCase = saveSplitUseCase;
         this.setReceiptRemindersUseCase = setReceiptRemindersUseCase;
         this.exportReceiptsUseCase = exportReceiptsUseCase;
+        this.updateReceiptUseCase = updateReceiptUseCase;
         this.mapper = mapper;
     }
 
@@ -120,6 +124,17 @@ public class ReceiptController {
     public void deleteReceipt(@AuthenticationPrincipal UserDetails userDetails,
                                @PathVariable Long id) {
         deleteReceiptUseCase.deleteReceipt(userDetails.getUsername(), id);
+    }
+
+    // OCR yanlış okuduysa ya da kullanıcı bir yazım hatası fark ettiyse, fişi silip
+    // baştan eklemek yerine çekirdek alanlarını düzeltebilmesi için
+    @PutMapping("/{id}")
+    public ReceiptResponse updateReceipt(@AuthenticationPrincipal UserDetails userDetails,
+                                          @PathVariable Long id,
+                                          @RequestBody @Valid UpdateReceiptRequest request) {
+        return mapper.toResponse(updateReceiptUseCase.updateReceipt(userDetails.getUsername(), id,
+                request.getStoreName(), request.getTotalAmount(), request.getReceiptDate(),
+                request.getCategoryId()));
     }
 
     @PutMapping("/{id}/split")

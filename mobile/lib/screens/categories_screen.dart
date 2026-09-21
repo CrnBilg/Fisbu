@@ -7,16 +7,17 @@ import '../core/widgets/empty_state_widget.dart';
 import '../core/widgets/loading_state_widget.dart';
 import '../core/utils/network_error.dart';
 
+// Not: AppColors.categoryElektronik/categoryRestoran kasıtlı olarak burada
+// yok — primary/warning ile birebir aynı hex değerine sahipler (bkz.
+// app_colors.dart), listeye eklemek görsel olarak aynı rengi iki kez
+// göstermek anlamına gelirdi.
 const _categoryColorOptions = [
   AppColors.primary,
   AppColors.error,
-  AppColors.secondary,
   AppColors.warning,
-  AppColors.categoryElektronik,
   AppColors.success,
   AppColors.categoryGiyim,
   AppColors.categoryUlasim,
-  AppColors.categoryRestoran,
   AppColors.textSecondary,
 ];
 

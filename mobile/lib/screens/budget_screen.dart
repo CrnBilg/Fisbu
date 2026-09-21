@@ -69,10 +69,85 @@ class _BudgetScreenState extends State<BudgetScreen> {
     return AppColors.primary;
   }
 
-  Future<void> _showSetBudgetDialog(Category category, {Budget? existing}) async {
+  double get _totalLimit =>
+      _budgets.fold(0.0, (sum, b) => sum + b.monthlyLimit);
+  double get _totalSpend =>
+      _budgets.fold(0.0, (sum, b) => sum + b.currentSpend);
+  double get _totalPercentage =>
+      _totalLimit > 0 ? (_totalSpend / _totalLimit) * 100 : 0;
+
+  // Kategori-kategori listeye girmeden önce "bu ay toplamda ne kadar
+  // harcadım / bütçemin ne kadarı kaldı" sorusunu tek bakışta yanıtlar
+  // (bkz. UI/UX denetimi bulgusu: özet kartı eksikliği)
+  Widget _buildSummaryCard() {
+    final color = _percentageColor(_totalPercentage);
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surf(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.brd(context)),
+        boxShadow: AppColors.cardShadow(context),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Toplam Bütçe',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.txtSecondary(context),
+                ),
+              ),
+              Text(
+                '%${_totalPercentage.toStringAsFixed(0)} kullanıldı',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${_currencyFormat.format(_totalSpend)} / ${_currencyFormat.format(_totalLimit)} TL',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: AppColors.txt(context),
+            ),
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: _totalLimit > 0
+                  ? (_totalSpend / _totalLimit).clamp(0.0, 1.0)
+                  : 0,
+              minHeight: 8,
+              backgroundColor: AppColors.brd(context),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showSetBudgetDialog(
+    Category category, {
+    Budget? existing,
+  }) async {
     final limitText = await showDialog<String>(
       context: context,
-      builder: (context) => _SetBudgetDialog(category: category, existing: existing),
+      builder: (context) =>
+          _SetBudgetDialog(category: category, existing: existing),
     );
 
     if (limitText == null) return;
@@ -80,9 +155,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
     final limit = double.tryParse(limitText.replaceAll(',', '.'));
     if (limit == null || limit <= 0) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Geçerli bir tutar gir')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Geçerli bir tutar gir')));
       }
       return;
     }
@@ -109,7 +184,14 @@ class _BudgetScreenState extends State<BudgetScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(NetworkError.friendlyMessage(e, fallback: 'Bütçe kaydedilemedi, lütfen tekrar deneyin.'))),
+          SnackBar(
+            content: Text(
+              NetworkError.friendlyMessage(
+                e,
+                fallback: 'Bütçe kaydedilemedi, lütfen tekrar deneyin.',
+              ),
+            ),
+          ),
         );
       }
     }
@@ -120,14 +202,21 @@ class _BudgetScreenState extends State<BudgetScreen> {
       await BudgetService.deleteBudget(budget.id);
       _loadData();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Bütçe kaldırıldı')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Bütçe kaldırıldı')));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(NetworkError.friendlyMessage(e, fallback: 'Silinemedi, lütfen tekrar deneyin.'))),
+          SnackBar(
+            content: Text(
+              NetworkError.friendlyMessage(
+                e,
+                fallback: 'Silinemedi, lütfen tekrar deneyin.',
+              ),
+            ),
+          ),
         );
       }
     }
@@ -166,140 +255,177 @@ class _BudgetScreenState extends State<BudgetScreen> {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      itemCount: _categories.length,
-      itemBuilder: (context, index) {
-        final category = _categories[index];
-        final budget = _budgetForCategory(category.id);
+    return Column(
+      children: [
+        if (_budgets.isNotEmpty) _buildSummaryCard(),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            itemCount: _categories.length,
+            itemBuilder: (context, index) {
+              final category = _categories[index];
+              final budget = _budgetForCategory(category.id);
 
-        if (budget == null) {
-          return GestureDetector(
-            onTap: () => _showSetBudgetDialog(category),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppColors.surf(context),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.brd(context)),
-                boxShadow: AppColors.cardShadow(context),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      category.name,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.txt(context),
-                      ),
+              if (budget == null) {
+                return GestureDetector(
+                  onTap: () => _showSetBudgetDialog(category),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
                     ),
-                  ),
-                  Text(
-                    'Bütçe belirlenmedi',
-                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(Icons.add_circle_outline, color: AppColors.primary, size: 20),
-                ],
-              ),
-            ),
-          );
-        }
-
-        final color = _percentageColor(budget.percentage);
-
-        return Dismissible(
-          key: Key('budget_${budget.id}'),
-          direction: DismissDirection.endToStart,
-          background: Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            decoration: BoxDecoration(
-              color: AppColors.error,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 20),
-            child: const Icon(Icons.delete_outline, color: Colors.white, size: 26),
-          ),
-          confirmDismiss: (_) async {
-            final confirmed = await showDialog<bool>(
-              context: context,
-              builder: (context) => AlertDialog(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                title: const Text('Bütçeyi Kaldır', style: TextStyle(fontWeight: FontWeight.w700)),
-                content: Text('"${category.name}" için belirlenen bütçeyi kaldırmak istediğine emin misin?'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text('Vazgeç'),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    style: TextButton.styleFrom(foregroundColor: AppColors.error),
-                    child: const Text('Kaldır'),
-                  ),
-                ],
-              ),
-            );
-            return confirmed == true;
-          },
-          onDismissed: (_) => _deleteBudget(budget),
-          child: GestureDetector(
-            onTap: () => _showSetBudgetDialog(category, existing: budget),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.surf(context),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.brd(context)),
-                boxShadow: AppColors.cardShadow(context),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          category.name,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.txt(context),
+                    decoration: BoxDecoration(
+                      color: AppColors.surf(context),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.brd(context)),
+                      boxShadow: AppColors.cardShadow(context),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            category.name,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.txt(context),
+                            ),
                           ),
                         ),
-                      ),
-                      Text(
-                        '%${budget.percentage.toStringAsFixed(0)}',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: color),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: (budget.percentage / 100).clamp(0.0, 1.0),
-                      backgroundColor: AppColors.brd(context),
-                      valueColor: AlwaysStoppedAnimation<Color>(color),
-                      minHeight: 6,
+                        Text(
+                          'Bütçe belirlenmedi',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.add_circle_outline,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${_currencyFormat.format(budget.currentSpend)} / ${_currencyFormat.format(budget.monthlyLimit)} TL',
-                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                );
+              }
+
+              final color = _percentageColor(budget.percentage);
+
+              return Dismissible(
+                key: Key('budget_${budget.id}'),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                ],
-              ),
-            ),
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+                confirmDismiss: (_) async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      title: const Text(
+                        'Bütçeyi Kaldır',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      content: Text(
+                        '"${category.name}" için belirlenen bütçeyi kaldırmak istediğine emin misin?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Vazgeç'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.error,
+                          ),
+                          child: const Text('Kaldır'),
+                        ),
+                      ],
+                    ),
+                  );
+                  return confirmed == true;
+                },
+                onDismissed: (_) => _deleteBudget(budget),
+                child: GestureDetector(
+                  onTap: () => _showSetBudgetDialog(category, existing: budget),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surf(context),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.brd(context)),
+                      boxShadow: AppColors.cardShadow(context),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                category.name,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.txt(context),
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '%${budget.percentage.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: color,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: (budget.percentage / 100).clamp(0.0, 1.0),
+                            backgroundColor: AppColors.brd(context),
+                            valueColor: AlwaysStoppedAnimation<Color>(color),
+                            minHeight: 6,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${_currencyFormat.format(budget.currentSpend)} / ${_currencyFormat.format(budget.monthlyLimit)} TL',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 }
@@ -323,7 +449,9 @@ class _SetBudgetDialogState extends State<_SetBudgetDialog> {
   void initState() {
     super.initState();
     _limitController = TextEditingController(
-      text: widget.existing != null ? widget.existing!.monthlyLimit.toStringAsFixed(0) : '',
+      text: widget.existing != null
+          ? widget.existing!.monthlyLimit.toStringAsFixed(0)
+          : '',
     );
   }
 
@@ -352,7 +480,12 @@ class _SetBudgetDialogState extends State<_SetBudgetDialog> {
       setState(() => _suggestionComment = suggestion.comment);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _suggestionComment = NetworkError.friendlyMessage(e, fallback: 'Öneri alınamadı, lütfen tekrar deneyin.'));
+      setState(
+        () => _suggestionComment = NetworkError.friendlyMessage(
+          e,
+          fallback: 'Öneri alınamadı, lütfen tekrar deneyin.',
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isLoadingSuggestion = false);
     }
@@ -401,7 +534,9 @@ class _SetBudgetDialogState extends State<_SetBudgetDialog> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.auto_awesome, size: 16),
-              label: Text(_isLoadingSuggestion ? 'Hesaplanıyor...' : 'AI ile Öner'),
+              label: Text(
+                _isLoadingSuggestion ? 'Hesaplanıyor...' : 'AI ile Öner',
+              ),
               style: TextButton.styleFrom(foregroundColor: AppColors.primary),
             ),
           ),

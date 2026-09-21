@@ -26,6 +26,7 @@ import com.fisbu.api.receipt.application.port.in.SaveSplitUseCase;
 import com.fisbu.api.receipt.application.port.in.SearchReceiptsUseCase;
 import com.fisbu.api.receipt.application.port.in.SetReceiptRemindersUseCase;
 import com.fisbu.api.receipt.application.port.in.SuggestCategoryUseCase;
+import com.fisbu.api.receipt.application.port.in.UpdateReceiptUseCase;
 import com.fisbu.api.receipt.application.port.out.AverageAmountByCategoryPort;
 import com.fisbu.api.receipt.application.port.out.CountReceiptsByCategoryPort;
 import com.fisbu.api.receipt.application.port.out.DeleteReceiptPort;
@@ -54,7 +55,7 @@ import com.fisbu.api.shared.application.port.out.LoadOwnedCategoryPort;
 @Service
 public class ReceiptService implements GetReceiptsUseCase, SearchReceiptsUseCase, SuggestCategoryUseCase,
         CreateReceiptUseCase, CreateReceiptsBulkUseCase, GetReceiptByIdUseCase, SetReceiptRemindersUseCase,
-        SaveSplitUseCase, DeleteReceiptUseCase, ExportReceiptsUseCase {
+        SaveSplitUseCase, DeleteReceiptUseCase, ExportReceiptsUseCase, UpdateReceiptUseCase {
 
     // GET /receipts gerçek sayfalamaya geçene kadar (mobil taraf hâlâ tüm listeyi tek
     // seferde bekliyor) sınırsız büyümeyi önlemek için üst sınır — normal kullanım için yeterince geniş
@@ -257,6 +258,32 @@ public class ReceiptService implements GetReceiptsUseCase, SearchReceiptsUseCase
                 receipt.storeName(), receipt.totalAmount(), receipt.receiptDate(), receipt.imageUrl(),
                 receipt.rawOcrText(), receipt.splitDetailsJson(), receipt.createdAt(), returnDeadline,
                 warrantyExpiryDate, false, false, receipt.items());
+
+        return saveReceiptPort.save(updated);
+    }
+
+    // OCR yanlış okuduysa ya da kullanıcı bir yazım hatası fark ettiyse, fişi silip baştan
+    // eklemek yerine çekirdek alanlarını (mağaza/tutar/tarih/kategori) düzeltebilmesi için
+    @Override
+    public Receipt updateReceipt(String email, Long receiptId, String storeName, BigDecimal totalAmount,
+                                  LocalDate receiptDate, Long categoryId) {
+        Long userId = resolveUserId(email);
+        Receipt receipt = getOwnedReceipt(userId, receiptId);
+
+        Category category = null;
+        if (categoryId != null) {
+            category = loadOwnedCategoryPort.loadById(categoryId).orElseThrow(CategoryNotFoundException::new);
+
+            if (!category.userId().equals(userId)) {
+                throw new CategoryAccessDeniedException();
+            }
+        }
+
+        Receipt updated = new Receipt(receipt.id(), receipt.userId(), categoryId,
+                category != null ? category.name() : null, storeName, totalAmount, receiptDate,
+                receipt.imageUrl(), receipt.rawOcrText(), receipt.splitDetailsJson(), receipt.createdAt(),
+                receipt.returnDeadline(), receipt.warrantyExpiryDate(), receipt.returnReminderSent(),
+                receipt.warrantyReminderSent(), receipt.items());
 
         return saveReceiptPort.save(updated);
     }
