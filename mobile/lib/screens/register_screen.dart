@@ -24,6 +24,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePasswordAgain = true;
   bool _kvkkAccepted = false;
 
+  String? _nameError;
+  String? _emailError;
+  String? _passwordError;
+  String? _passwordAgainError;
+
   void _showKvkkSheet() {
     showModalBottomSheet(
       context: context,
@@ -110,11 +115,64 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Future<void> _handleRegister() async {
+  /// Tüm alanları tek seferde doğrular, hataları satır-içi gösterir.
+  /// Sıralı SnackBar'lar yerine kullanıcı tüm sorunları aynı anda görür.
+  bool _validate() {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final passwordAgain = _passwordAgainController.text.trim();
+
+    String? nameError;
+    String? emailError;
+    String? passwordError;
+    String? passwordAgainError;
+
+    if (name.isEmpty) {
+      nameError = 'Ad soyad gerekli';
+    }
+
+    if (email.isEmpty) {
+      emailError = 'E-posta gerekli';
+    } else if (!_emailRegex.hasMatch(email)) {
+      emailError = 'Geçerli bir e-posta adresi gir';
+    }
+
+    if (password.isEmpty) {
+      passwordError = 'Şifre gerekli';
+    } else if (password.length < 8) {
+      passwordError = 'Şifre en az 8 karakter olmalı';
+    } else if (!password.contains(RegExp(r'\d'))) {
+      passwordError = 'Şifre en az bir rakam içermeli';
+    } else if (!password.contains(RegExp(r'[^a-zA-Z0-9]'))) {
+      passwordError = 'Şifre en az bir özel karakter içermeli';
+    }
+
+    if (passwordAgain.isEmpty) {
+      passwordAgainError = 'Şifreyi tekrar gir';
+    } else if (password != passwordAgain) {
+      passwordAgainError = 'Şifreler aynı değil';
+    }
+
+    setState(() {
+      _nameError = nameError;
+      _emailError = emailError;
+      _passwordError = passwordError;
+      _passwordAgainError = passwordAgainError;
+    });
+
+    return nameError == null &&
+        emailError == null &&
+        passwordError == null &&
+        passwordAgainError == null;
+  }
+
+  Future<void> _handleRegister() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final name = _nameController.text.trim();
+
+    if (!_validate()) return;
 
     if (!_kvkkAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -124,48 +182,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
       );
-      return;
-    }
-
-    if (name.isEmpty || email.isEmpty || password.isEmpty || passwordAgain.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen tüm alanları doldur')),
-      );
-      return;
-    }
-
-    if (!_emailRegex.hasMatch(email)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Geçerli bir e-posta adresi gir')),
-      );
-      return;
-    }
-
-    if (password.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Şifre en az 8 karakter olmalı')),
-      );
-      return;
-    }
-
-    if (!password.contains(RegExp(r'\d'))) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Şifre en az bir rakam içermeli')),
-      );
-      return;
-    }
-
-    if (!password.contains(RegExp(r'[^a-zA-Z0-9]'))) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Şifre en az bir özel karakter içermeli')),
-      );
-      return;
-    }
-
-    if (password != passwordAgain) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Şifreler aynı değil')));
       return;
     }
 
@@ -277,6 +293,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _nameController,
                       label: 'Ad Soyad',
                       icon: Icons.person_outline,
+                      errorText: _nameError,
                     ),
                     const SizedBox(height: 14),
 
@@ -286,6 +303,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       label: 'E-posta',
                       icon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
+                      errorText: _emailError,
                     ),
                     const SizedBox(height: 14),
 
@@ -295,6 +313,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       label: 'Şifre',
                       icon: Icons.lock_outline,
                       obscureText: _obscurePassword,
+                      errorText: _passwordError,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword
@@ -316,6 +335,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       label: 'Şifre Tekrar',
                       icon: Icons.lock_outline,
                       obscureText: _obscurePasswordAgain,
+                      errorText: _passwordAgainError,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePasswordAgain

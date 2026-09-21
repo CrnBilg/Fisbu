@@ -41,3 +41,4 @@
 | MOB-016 | Cila turu 2/6: spending_calendar heat-map'e renk-körü erişilebilirlik ipucu (nokta boyutu) eklendi, saf fonksiyona çıkarılıp unit test ile kanıtlandı | Orta — UI/UX denetimi, bulgu O8 | S | Done | - |
 | MOB-017 | Cila turu 3/6: dashboard'da "Fiş Ekle" FAB'a taşındı, "Tüm Fişler" tam genişlik kart oldu — gerçek emulator'da açık/koyu tema kanıtlandı | Orta — UI/UX denetimi, bulgu O3 | S | Done | - |
 | MOB-018 | Cila turu 4/6: 4 auth ekranındaki tekrarlayan _buildInput fonksiyonu ortak AuthTextField bileşenine çıkarıldı, widget testiyle kanıtlandı | Orta — UI/UX denetimi, bulgu O4 | M | Done | - |
+| MOB-019 | Cila turu 5/6: register/reset_password'daki sıralı SnackBar doğrulaması satır-içi hataya (AuthTextField.errorText) çevrildi | Orta — UI/UX denetimi, bulgu O1 | M | Done | - |

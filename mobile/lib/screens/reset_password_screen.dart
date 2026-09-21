@@ -24,6 +24,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
+  String? _newPasswordError;
+  String? _confirmPasswordError;
+
   Future<void> _handleResend() async {
     setState(() => _isResending = true);
     final result = await AuthService.forgotPassword(widget.email);
@@ -40,9 +43,40 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     );
   }
 
-  Future<void> _handleReset() async {
+  /// Şifre alanlarını tek seferde doğrular, hataları satır-içi gösterir.
+  bool _validate() {
     final newPassword = _newPasswordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
+
+    String? newPasswordError;
+    String? confirmPasswordError;
+
+    if (newPassword.isEmpty) {
+      newPasswordError = 'Yeni şifreni gir';
+    } else if (newPassword.length < 8) {
+      newPasswordError = 'Şifre en az 8 karakter olmalı';
+    } else if (!newPassword.contains(RegExp(r'\d'))) {
+      newPasswordError = 'Şifre en az bir rakam içermeli';
+    } else if (!newPassword.contains(RegExp(r'[^a-zA-Z0-9]'))) {
+      newPasswordError = 'Şifre en az bir özel karakter içermeli';
+    }
+
+    if (confirmPassword.isEmpty) {
+      confirmPasswordError = 'Şifreyi tekrar gir';
+    } else if (newPassword != confirmPassword) {
+      confirmPasswordError = 'Şifreler aynı değil';
+    }
+
+    setState(() {
+      _newPasswordError = newPasswordError;
+      _confirmPasswordError = confirmPasswordError;
+    });
+
+    return newPasswordError == null && confirmPasswordError == null;
+  }
+
+  Future<void> _handleReset() async {
+    final newPassword = _newPasswordController.text.trim();
 
     if (_code.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -51,40 +85,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       return;
     }
 
-    if (newPassword.isEmpty || confirmPassword.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Lütfen yeni şifreni gir')));
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Şifre en az 8 karakter olmalı')),
-      );
-      return;
-    }
-
-    if (!newPassword.contains(RegExp(r'\d'))) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Şifre en az bir rakam içermeli')),
-      );
-      return;
-    }
-
-    if (!newPassword.contains(RegExp(r'[^a-zA-Z0-9]'))) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Şifre en az bir özel karakter içermeli')),
-      );
-      return;
-    }
-
-    if (newPassword != confirmPassword) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Şifreler aynı değil')));
-      return;
-    }
+    if (!_validate()) return;
 
     setState(() => _isLoading = true);
     final result = await AuthService.resetPassword(
@@ -224,6 +225,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       label: 'Yeni Şifre',
                       icon: Icons.lock_outline,
                       obscureText: _obscurePassword,
+                      errorText: _newPasswordError,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword
@@ -244,6 +246,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       label: 'Yeni Şifre Tekrar',
                       icon: Icons.lock_outline,
                       obscureText: _obscureConfirmPassword,
+                      errorText: _confirmPasswordError,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscureConfirmPassword

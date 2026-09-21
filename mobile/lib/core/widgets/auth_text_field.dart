@@ -12,6 +12,7 @@ class AuthTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final bool obscureText;
   final Widget? suffixIcon;
+  final String? errorText;
 
   const AuthTextField({
     super.key,
@@ -21,15 +22,22 @@ class AuthTextField extends StatelessWidget {
     this.keyboardType,
     this.obscureText = false,
     this.suffixIcon,
+    this.errorText,
   });
 
   @override
   Widget build(BuildContext context) {
+    final hasError = errorText != null;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.txt(context).withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.txt(context).withValues(alpha: 0.1), width: 1),
+        border: Border.all(
+          color: hasError
+              ? AppColors.error.withValues(alpha: 0.6)
+              : AppColors.txt(context).withValues(alpha: 0.1),
+          width: hasError ? 1.5 : 1,
+        ),
       ),
       child: TextField(
         controller: controller,
@@ -48,6 +56,8 @@ class AuthTextField extends StatelessWidget {
           ),
           prefixIcon: Icon(icon, color: AppColors.txtSecondary(context), size: 20),
           suffixIcon: suffixIcon,
+          errorText: errorText,
+          errorMaxLines: 2,
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: OutlineInputBorder(

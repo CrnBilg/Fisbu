@@ -54,6 +54,35 @@ void main() {
     expect(tapped, isTrue);
   });
 
+  testWidgets('errorText verildiginde satir-ici hata mesaji gosterilir', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: AuthTextField(
+          controller: TextEditingController(),
+          label: 'E-posta',
+          icon: Icons.email_outlined,
+          errorText: 'Geçerli bir e-posta adresi gir',
+        ),
+      ),
+    ));
+
+    expect(find.text('Geçerli bir e-posta adresi gir'), findsOneWidget);
+  });
+
+  testWidgets('errorText verilmezse hata mesaji gosterilmez', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: AuthTextField(
+          controller: TextEditingController(),
+          label: 'E-posta',
+          icon: Icons.email_outlined,
+        ),
+      ),
+    ));
+
+    expect(find.textContaining('gir'), findsNothing);
+  });
+
   testWidgets('yazilan metin controller\'a yansir', (tester) async {
     final controller = TextEditingController();
     await tester.pumpWidget(MaterialApp(
