@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../core/theme/app_colors.dart';
 import '../core/widgets/code_input.dart';
+import '../core/widgets/auth_text_field.dart';
 import 'login_screen.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -218,7 +219,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
                     const SizedBox(height: 10),
 
-                    _buildInput(
+                    AuthTextField(
                       controller: _newPasswordController,
                       label: 'Yeni Şifre',
                       icon: Icons.lock_outline,
@@ -238,7 +239,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    _buildInput(
+                    AuthTextField(
                       controller: _confirmPasswordController,
                       label: 'Yeni Şifre Tekrar',
                       icon: Icons.lock_outline,
@@ -311,54 +312,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           ),
         ),
       ),
-      ),
-    );
-  }
-
-  Widget _buildInput({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool obscureText = false,
-    Widget? suffixIcon,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.txt(context).withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.txt(context).withValues(alpha: 0.1), width: 1),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscureText,
-        style: TextStyle(
-          color: AppColors.txt(context),
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(
-            color: AppColors.txtSecondary(context),
-            fontSize: 14,
-          ),
-          prefixIcon: Icon(icon, color: AppColors.txtSecondary(context), size: 20),
-          suffixIcon: suffixIcon,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: AppColors.primary.withValues(alpha: 0.6),
-              width: 1.5,
-            ),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
-          filled: false,
-        ),
       ),
     );
   }
