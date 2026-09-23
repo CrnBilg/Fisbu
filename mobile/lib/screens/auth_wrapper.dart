@@ -88,6 +88,18 @@ class _AuthWrapperState extends State<AuthWrapper> {
     );
   }
 
+  // Biyometrik doğrulama kalıcı olarak başarısız olursa (ör. arızalı sensör)
+  // ve kullanıcının PIN'i yoksa, önceden e-posta/şifreyle giriş yapmaya
+  // dönecek hiçbir yol yoktu — kullanıcı kilitli kalıyordu.
+  Future<void> _logout() async {
+    await AuthService.logout();
+    if (!mounted) return;
+    setState(() {
+      _isLoggedIn = false;
+      _gateStatus = _GateStatus.checking;
+    });
+  }
+
   Future<void> _unlockWithPin() async {
     final result = await Navigator.push<bool>(
       context,
@@ -158,6 +170,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
                   child: const Text('PIN ile Aç'),
                 ),
               ],
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: _logout,
+                style: TextButton.styleFrom(foregroundColor: AppColors.error),
+                child: const Text('Çıkış Yap'),
+              ),
             ],
           ),
         ),
