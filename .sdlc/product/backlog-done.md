@@ -52,3 +52,4 @@
 | ARCH-008 | Grup 1 işlevsel denetimi madde 2: fiş düzenleme özelliği — backend'e PUT /receipts/{id} (UpdateReceiptUseCase + testler) eklendi, mobilde AddReceiptScreen düzenle modunda yeniden kullanıldı, gerçek emulator'da uçtan uca kanıtlandı | Yüksek — Grup 1 işlevsel denetim | M-L | Done | - |
 | MOB-030 | Grup 1 renk paleti analizi (Öneri A): AppColors.secondary/accent kaldırıldı, kategori renkleri gizli semantic-token kopyalarından arındırılıp 7 gerçekten distinct tona indirildi | Orta — Grup 1 renk paleti analizi | M | Done | - |
 | MOB-031 | Grup 1 işlevsel denetimi madde 4: budget_screen'e toplam bütçe/harcama özet kartı eklendi | Orta — Grup 1 işlevsel denetim | S | Done | - |
+| MOB-034 | Grup 2 işlevsel denetimi madde 1: spending_calendar/spending_personality (MOB-011'de atlanmış 2 dosya) artık ErrorStateWidget/LoadingStateWidget kullanıyor, "Tekrar Dene" butonu eklendi | Yüksek — Grup 2 işlevsel denetim | S | Done | - |
